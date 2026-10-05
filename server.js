@@ -12,18 +12,17 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Test endpoint
-  if (req.method === "GET" && req.url === "/") {
+  // Browser test
+  if (req.method === "GET" && req.url === "/chat") {
     res.writeHead(200);
     res.end(JSON.stringify({
-      status: "online",
-      api: "My AI Chat API",
-      message: "Server is ready!"
+      success: true,
+      reply: "🎉 Chat API ঠিকমতো কাজ করছে!"
     }));
     return;
   }
 
-  // Chat API
+  // POST Chat API
   if (req.method === "POST" && req.url === "/chat") {
     let body = "";
 
@@ -41,8 +40,7 @@ const server = http.createServer((req, res) => {
           success: true,
           reply: `তুমি বলেছ: ${message}`
         }));
-
-      } catch (error) {
+      } catch {
         res.writeHead(400);
         res.end(JSON.stringify({
           success: false,
@@ -51,6 +49,16 @@ const server = http.createServer((req, res) => {
       }
     });
 
+    return;
+  }
+
+  if (req.method === "GET" && req.url === "/") {
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      status: "online",
+      api: "My AI Chat API",
+      message: "Server is ready!"
+    }));
     return;
   }
 
