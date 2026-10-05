@@ -1,64 +1,48 @@
 const http = require("http");
+const { Client } = require("pg");
 
 const server = http.createServer((req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS") {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
-
-  // Browser test
-  if (req.method === "GET" && req.url === "/chat") {
-    res.writeHead(200);
-    res.end(JSON.stringify({
-      success: true,
-      reply: "🎉 Chat API ঠিকমতো কাজ করছে!"
-    }));
-    return;
-  }
-
-  // POST Chat API
-  if (req.method === "POST" && req.url === "/chat") {
-    let body = "";
-
-    req.on("data", chunk => {
-      body += chunk;
-    });
-
-    req.on("end", () => {
-      try {
-        const data = JSON.parse(body);
-        const message = data.message || "";
-
-        res.writeHead(200);
-        res.end(JSON.stringify({
-          success: true,
-          reply: `তুমি বলেছ: ${message}`
-        }));
-      } catch {
-        res.writeHead(400);
-        res.end(JSON.stringify({
-          success: false,
-          error: "Invalid JSON"
-        }));
-      }
-    });
-
-    return;
-  }
 
   if (req.method === "GET" && req.url === "/") {
     res.writeHead(200);
     res.end(JSON.stringify({
       status: "online",
       api: "My AI Chat API",
-      message: "Server is ready!"
+      database: "ready to test"
     }));
+    return;
+  }
+
+  if (req.method === "GET" && req.url === "/database-test") {
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false
+      }
+    });
+
+    client.connect()
+      .then(() => client.query("SELECT NOW() AS time"))
+      .then(result => {
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          success: true,
+          database: "connected",
+          time: result.rows[0].time
+        }));
+        return client.end();
+      })
+      .catch(error => {
+        res.writeHead(500);
+        res.end(JSON.stringify({
+          success: false,
+          database: "connection_failed",
+          error: error.message
+        }));
+      });
+
     return;
   }
 
