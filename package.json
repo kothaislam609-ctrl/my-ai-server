@@ -1,0 +1,12 @@
+{
+  "name": "my-ai-server",
+  "version": "1.0.0",
+  "description": "My AI Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
+}
