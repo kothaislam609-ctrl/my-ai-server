@@ -12,9 +12,10 @@ const pool = new Pool({
   }
 });
 
-// -----------------------------
-// Database Setup
-// -----------------------------
+// ==============================
+// DATABASE SETUP
+// ==============================
+
 async function initDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -49,27 +50,29 @@ async function initDatabase() {
     ON messages(chat_id);
   `);
 
-  console.log("Database tables are ready.");
+  console.log("Database tables ready.");
 }
 
-// -----------------------------
-// Password Hash
-// -----------------------------
+// ==============================
+// PASSWORD HASH
+// ==============================
+
 async function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("hex");
 
-  const derivedKey = await scrypt(
+  const key = await scrypt(
     password,
     salt,
     64
   );
 
-  return `${salt}:${derivedKey.toString("hex")}`;
+  return `${salt}:${key.toString("hex")}`;
 }
 
-// -----------------------------
-// Read Request Body
-// -----------------------------
+// ==============================
+// READ JSON BODY
+// ==============================
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
@@ -77,16 +80,16 @@ function readBody(req) {
     req.on("data", chunk => {
       body += chunk;
 
-      // Prevent extremely large request bodies
       if (body.length > 10000) {
-        req.destroy();
         reject(new Error("Request body too large"));
+        req.destroy();
       }
     });
 
     req.on("end", () => {
       try {
-        resolve(JSON.parse(body || "{}"));
+        const data = JSON.parse(body || "{}");
+        resolve(data);
       } catch {
         reject(new Error("Invalid JSON"));
       }
@@ -96,57 +99,82 @@ function readBody(req) {
   });
 }
 
-// -----------------------------
-// Server
-// -----------------------------
+// ==============================
+// SERVER
+// ==============================
+
 const server = http.createServer(async (req, res) => {
+
   res.setHeader("Content-Type", "application/json");
-  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "*"
+  );
+
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, OPTIONS"
   );
+
   res.setHeader(
     "Access-Control-Allow-Headers",
     "Content-Type"
   );
 
+  // OPTIONS
   if (req.method === "OPTIONS") {
     res.writeHead(204);
     res.end();
     return;
   }
 
-  // ---------------------------
-  // Home
-  // ---------------------------
-  if (req.method === "GET" && req.url === "/") {
+  // ============================
+  // HOME
+  // ============================
+
+  if (
+    req.method === "GET" &&
+    req.url === "/"
+  ) {
     res.writeHead(200);
+
     res.end(JSON.stringify({
       status: "online",
-      api: "My AI Chat API",
-      database: "connected"
+      api: "My AI Server",
+      database: "connected",
+      register: "available"
     }));
+
     return;
   }
 
-  // ---------------------------
-  // Database Test
-  // ---------------------------
-  if (req.method === "GET" && req.url === "/database-test") {
+  // ============================
+  // DATABASE TEST
+  // ============================
+
+  if (
+    req.method === "GET" &&
+    req.url === "/database-test"
+  ) {
     try {
+
       const result = await pool.query(
         "SELECT NOW() AS time"
       );
 
       res.writeHead(200);
+
       res.end(JSON.stringify({
         success: true,
         database: "connected",
         time: result.rows[0].time
       }));
+
     } catch (error) {
+
       res.writeHead(500);
+
       res.end(JSON.stringify({
         success: false,
         database: "connection_failed"
@@ -156,133 +184,227 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // ---------------------------
-  // Register
-  // ---------------------------
-  if (req.method === "POST" && req.url === "/register") {
+  // ============================
+  // REGISTER
+  // ============================
+
+  if (
+    req.method === "POST" &&
+    req.url === "/register"
+  ) {
+
     try {
+
       const data = await readBody(req);
 
-      const name = String(data.name || "").trim();
-      const email = String(data.email || "")
-        .trim()
-        .toLowerCase();
-      const password = String(data.password || "");
+      const name =
+        String(data.name || "").trim();
 
-      // Name validation
-      if (name.length < 2 || name.length > 100) {
+      const email =
+        String(data.email || "")
+          .trim()
+          .toLowerCase();
+
+      const password =
+        String(data.password || "");
+
+      // NAME CHECK
+
+      if (
+        name.length < 2 ||
+        name.length > 100
+      ) {
+
         res.writeHead(400);
+
         res.end(JSON.stringify({
           success: false,
-          error: "Name must be between 2 and 100 characters."
+          error: "Invalid name."
         }));
+
         return;
       }
 
-      // Email validation
+      // EMAIL CHECK
+
       const emailRegex =
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-      if (!emailRegex.test(email) || email.length > 255) {
+      if (
+        !emailRegex.test(email) ||
+        email.length > 255
+      ) {
+
         res.writeHead(400);
+
         res.end(JSON.stringify({
           success: false,
-          error: "Please enter a valid email."
+          error: "Invalid email."
         }));
+
         return;
       }
 
-      // Password validation
-      if (password.length < 8 || password.length > 128) {
+      // PASSWORD CHECK
+
+      if (
+        password.length < 8 ||
+        password.length > 128
+      ) {
+
         res.writeHead(400);
+
         res.end(JSON.stringify({
           success: false,
-          error: "Password must be 8 to 128 characters."
+          error:
+            "Password must be 8 to 128 characters."
         }));
+
         return;
       }
 
-      // Check existing user
-      const existingUser = await pool.query(
-        "SELECT id FROM users WHERE email = $1 LIMIT 1",
-        [email]
-      );
+      // CHECK EXISTING USER
 
-      if (existingUser.rows.length > 0) {
+      const existing =
+        await pool.query(
+          "SELECT id FROM users WHERE email = $1 LIMIT 1",
+          [email]
+        );
+
+      if (existing.rows.length > 0) {
+
         res.writeHead(409);
+
         res.end(JSON.stringify({
           success: false,
-          error: "An account with this email already exists."
+          error:
+            "An account with this email already exists."
         }));
+
         return;
       }
 
-      // Hash password
-      const passwordHash = await hashPassword(password);
+      // HASH PASSWORD
 
-      // Create user
-      const result = await pool.query(
-        `
-        INSERT INTO users
-        (name, email, password_hash, plan, role)
-        VALUES ($1, $2, $3, 'free', 'user')
-        RETURNING id, name, email, plan, role, created_at
-        `,
-        [name, email, passwordHash]
-      );
+      const passwordHash =
+        await hashPassword(password);
 
-      const user = result.rows[0];
+      // CREATE USER
+
+      const result =
+        await pool.query(
+          `
+          INSERT INTO users
+          (
+            name,
+            email,
+            password_hash,
+            plan,
+            role
+          )
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            'free',
+            'user'
+          )
+          RETURNING
+            id,
+            name,
+            email,
+            plan,
+            role,
+            created_at
+          `,
+          [
+            name,
+            email,
+            passwordHash
+          ]
+        );
+
+      const user =
+        result.rows[0];
 
       res.writeHead(201);
+
       res.end(JSON.stringify({
         success: true,
-        message: "Account created successfully.",
+        message:
+          "Account created successfully.",
         user: user
       }));
 
     } catch (error) {
-      console.error("Register error:", error);
+
+      console.error(
+        "Register error:",
+        error
+      );
 
       res.writeHead(500);
+
       res.end(JSON.stringify({
         success: false,
-        error: "Unable to create account."
+        error:
+          "Unable to create account."
       }));
     }
 
     return;
   }
 
-  // ---------------------------
-  // Browser Chat Test
-  // ---------------------------
-  if (req.method === "GET" && req.url === "/chat") {
+  // ============================
+  // GET CHAT TEST
+  // ============================
+
+  if (
+    req.method === "GET" &&
+    req.url === "/chat"
+  ) {
+
     res.writeHead(200);
+
     res.end(JSON.stringify({
       success: true,
-      reply: "🎉 Chat API ঠিকমতো কাজ করছে!"
+      reply:
+        "🎉 Chat API ঠিকমতো কাজ করছে!"
     }));
+
     return;
   }
 
-  // ---------------------------
-  // POST Chat Test
-  // ---------------------------
-  if (req.method === "POST" && req.url === "/chat") {
+  // ============================
+  // POST CHAT TEST
+  // ============================
+
+  if (
+    req.method === "POST" &&
+    req.url === "/chat"
+  ) {
+
     try {
-      const data = await readBody(req);
+
+      const data =
+        await readBody(req);
 
       res.writeHead(200);
+
       res.end(JSON.stringify({
         success: true,
         reply:
           `তুমি বলেছো: ${
-            data.message || "কোনো message পাওয়া যায়নি"
+            data.message ||
+            "কোনো message পাওয়া যায়নি"
           }`
       }));
 
     } catch {
+
       res.writeHead(400);
+
       res.end(JSON.stringify({
         success: false,
         error: "Invalid JSON"
@@ -292,38 +414,55 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // ---------------------------
-  // Not Found
-  // ---------------------------
+  // ============================
+  // NOT FOUND
+  // ============================
+
   res.writeHead(404);
+
   res.end(JSON.stringify({
     success: false,
     error: "Not Found"
   }));
 });
 
-// -----------------------------
-// Start Server
-// -----------------------------
-const PORT = process.env.PORT || 3000;
+// ==============================
+// START SERVER
+// ==============================
+
+const PORT =
+  process.env.PORT || 3000;
 
 async function startServer() {
+
   try {
+
     await initDatabase();
 
-    server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+    server.listen(
+      PORT,
+      () => {
+        console.log(
+          `Server running on port ${PORT}`
+        );
+      }
+    );
 
   } catch (error) {
+
     console.error(
       "Database initialization failed:",
       error
     );
 
-    server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+    server.listen(
+      PORT,
+      () => {
+        console.log(
+          `Server running on port ${PORT}`
+        );
+      }
+    );
   }
 }
 
