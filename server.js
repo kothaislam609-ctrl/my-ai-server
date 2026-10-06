@@ -6,7 +6,6 @@ const { promisify } = require("util");
 const { Pool } = require("pg");
 
 const PORT = process.env.PORT || 10000;
-
 const scrypt = promisify(crypto.scrypt);
 
 const pool = new Pool({
@@ -15,7 +14,6 @@ const pool = new Pool({
     ? { rejectUnauthorized: false }
     : false
 });
-
 
 /* =========================================================
    DATABASE
@@ -86,7 +84,6 @@ async function initDatabase() {
   console.log("Database initialized.");
 }
 
-
 /* =========================================================
    HELPERS
 ========================================================= */
@@ -103,8 +100,7 @@ function sendJSON(res, status, data) {
   res.end(JSON.stringify(data));
 }
 
-
-function readBody(req, maxSize = 100000) {
+function readBody(req, maxSize = 12000000) {
   return new Promise((resolve, reject) => {
     let body = "";
     let finished = false;
@@ -137,13 +133,10 @@ function readBody(req, maxSize = 100000) {
     });
 
     req.on("error", error => {
-      if (!finished) {
-        reject(error);
-      }
+      if (!finished) reject(error);
     });
   });
 }
-
 
 function hashToken(token) {
   return crypto
@@ -152,11 +145,9 @@ function hashToken(token) {
     .digest("hex");
 }
 
-
 function createRandomToken() {
   return crypto.randomBytes(48).toString("hex");
 }
-
 
 /* =========================================================
    PASSWORD
@@ -174,14 +165,11 @@ async function hashPassword(password) {
   return `${salt}:${derivedKey.toString("hex")}`;
 }
 
-
 async function verifyPassword(password, storedHash) {
   try {
     const parts = storedHash.split(":");
 
-    if (parts.length !== 2) {
-      return false;
-    }
+    if (parts.length !== 2) return false;
 
     const salt = parts[0];
 
@@ -204,12 +192,10 @@ async function verifyPassword(password, storedHash) {
       storedKey,
       derivedKey
     );
-
   } catch {
     return false;
   }
 }
-
 
 /* =========================================================
    SESSION
@@ -217,15 +203,12 @@ async function verifyPassword(password, storedHash) {
 
 async function createSession(userId) {
   const token = createRandomToken();
+  const tokenHash = hashToken(token);
 
-  const tokenHash =
-    hashToken(token);
-
-  const expiresAt =
-    new Date(
-      Date.now() +
-      7 * 24 * 60 * 60 * 1000
-    );
+  const expiresAt = new Date(
+    Date.now() +
+    7 * 24 * 60 * 60 * 1000
+  );
 
   await pool.query(
     `
@@ -243,7 +226,6 @@ async function createSession(userId) {
   return token;
 }
 
-
 function getBearerToken(req) {
   const header =
     req.headers.authorization || "";
@@ -252,50 +234,39 @@ function getBearerToken(req) {
     return null;
   }
 
-  return header
-    .slice(7)
-    .trim();
+  return header.slice(7).trim();
 }
-
 
 async function getCurrentUser(req) {
-  const token =
-    getBearerToken(req);
+  const token = getBearerToken(req);
 
-  if (!token) {
-    return null;
-  }
+  if (!token) return null;
 
-  const tokenHash =
-    hashToken(token);
+  const tokenHash = hashToken(token);
 
-  const result =
-    await pool.query(
-      `
-        SELECT
-          u.id,
-          u.name,
-          u.email,
-          u.plan,
-          u.role,
-          u.created_at
-        FROM sessions s
-        JOIN users u
-          ON u.id = s.user_id
-        WHERE s.token_hash = $1
-          AND s.expires_at > NOW()
-        LIMIT 1
-      `,
-      [tokenHash]
-    );
+  const result = await pool.query(
+    `
+      SELECT
+        u.id,
+        u.name,
+        u.email,
+        u.plan,
+        u.role,
+        u.created_at
+      FROM sessions s
+      JOIN users u
+        ON u.id = s.user_id
+      WHERE s.token_hash = $1
+        AND s.expires_at > NOW()
+      LIMIT 1
+    `,
+    [tokenHash]
+  );
 
-  if (!result.rows.length) {
-    return null;
-  }
-
-  return result.rows[0];
+  return result.rows.length
+    ? result.rows[0]
+    : null;
 }
-
 
 /* =========================================================
    OPENAI CHAT
@@ -315,48 +286,41 @@ async function askAI(messages) {
     process.env.OPENAI_MODEL ||
     "gpt-6-luna";
 
-  const input =
-    messages.map(message => ({
-      role:
-        message.role === "assistant"
-          ? "assistant"
-          : "user",
+  const input = messages.map(message => ({
+    role:
+      message.role === "assistant"
+        ? "assistant"
+        : "user",
+    content: message.content
+  }));
 
-      content:
-        message.content
-    }));
+  const response = await fetch(
+    "https://api.openai.com/v1/responses",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+        "Authorization":
+          `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
 
-  const response =
-    await fetch(
-      "https://api.openai.com/v1/responses",
-      {
-        method: "POST",
+        instructions:
+          "You are EMORA AI, a helpful and intelligent AI assistant. " +
+          "Answer naturally and clearly. " +
+          "If the user writes Bengali, reply in Bengali. " +
+          "If the user writes English, reply in English. " +
+          "Do not repeatedly introduce yourself. " +
+          "Do not say your name unnecessarily.",
 
-        headers: {
-          "Content-Type":
-            "application/json",
+        input
+      })
+    }
+  );
 
-          "Authorization":
-            `Bearer ${apiKey}`
-        },
-
-        body: JSON.stringify({
-          model,
-
-          instructions:
-            "You are EMORA AI, a helpful and intelligent AI assistant. " +
-            "Answer naturally and clearly. " +
-            "If the user writes Bengali, reply in Bengali. " +
-            "If the user writes English, reply in English. " +
-            "Do not repeatedly introduce yourself or say your name unnecessarily.",
-
-          input
-        })
-      }
-    );
-
-  const data =
-    await response.json();
+  const data = await response.json();
 
   if (!response.ok) {
     console.error(
@@ -377,15 +341,10 @@ async function askAI(messages) {
   let text = "";
 
   if (Array.isArray(data.output)) {
-
     for (const item of data.output) {
-
-      if (!Array.isArray(item.content)) {
-        continue;
-      }
+      if (!Array.isArray(item.content)) continue;
 
       for (const content of item.content) {
-
         if (
           content.type === "output_text" &&
           content.text
@@ -396,8 +355,7 @@ async function askAI(messages) {
     }
   }
 
-  text =
-    text.trim();
+  text = text.trim();
 
   if (!text) {
     throw new Error(
@@ -408,49 +366,52 @@ async function askAI(messages) {
   return text;
 }
 
-
 /* =========================================================
-   AI IMAGE GENERATION
+   IMAGE ANALYSIS
 ========================================================= */
 
-async function generateImage(req, res) {
-
-  const user =
-    await getCurrentUser(req);
+async function analyzeImage(req, res) {
+  const user = await getCurrentUser(req);
 
   if (!user) {
-
     sendJSON(res, 401, {
       error: "Unauthorized."
     });
-
     return;
   }
 
-  const body =
-    await readBody(req, 20000);
+  const body = await readBody(
+    req,
+    12000000
+  );
+
+  const image =
+    String(body.image || "").trim();
 
   const prompt =
-    String(body.prompt || "")
-      .trim();
+    String(
+      body.prompt ||
+      "Describe and analyze this image clearly."
+    ).trim();
 
-  if (!prompt) {
-
+  if (!image) {
     sendJSON(res, 400, {
-      error:
-        "Image prompt is required."
+      error: "Image is required."
     });
-
     return;
   }
 
-  if (prompt.length > 4000) {
-
+  if (!image.startsWith("data:image/")) {
     sendJSON(res, 400, {
-      error:
-        "Image prompt is too long."
+      error: "Invalid image format."
     });
+    return;
+  }
 
+  if (image.length > 10000000) {
+    sendJSON(res, 400, {
+      error: "Image is too large."
+    });
     return;
   }
 
@@ -458,21 +419,168 @@ async function generateImage(req, res) {
     process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
-
     sendJSON(res, 500, {
       error:
         "OPENAI_API_KEY is not configured."
     });
-
     return;
   }
 
   try {
+    const model =
+      process.env.OPENAI_MODEL ||
+      "gpt-6-luna";
 
-    console.log(
-      `Image generation requested by user ${user.id}`
+    const response = await fetch(
+      "https://api.openai.com/v1/responses",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+          "Authorization":
+            `Bearer ${apiKey}`
+        },
+
+        body: JSON.stringify({
+          model,
+
+          instructions:
+            "You are EMORA AI. Analyze the provided image accurately. " +
+            "Answer in Bengali if the user's prompt is Bengali, otherwise English.",
+
+          input: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "input_text",
+                  text: prompt
+                },
+                {
+                  type: "input_image",
+                  image_url: image,
+                  detail: "auto"
+                }
+              ]
+            }
+          ]
+        })
+      }
     );
 
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      console.error(
+        "Image analysis error:",
+        data
+      );
+
+      sendJSON(res, 500, {
+        error:
+          data?.error?.message ||
+          "Image analysis failed."
+      });
+
+      return;
+    }
+
+    let reply =
+      data.output_text || "";
+
+    if (!reply && Array.isArray(data.output)) {
+      for (const item of data.output) {
+        if (!Array.isArray(item.content)) continue;
+
+        for (const content of item.content) {
+          if (
+            content.type === "output_text" &&
+            content.text
+          ) {
+            reply += content.text;
+          }
+        }
+      }
+    }
+
+    reply = reply.trim();
+
+    if (!reply) {
+      throw new Error(
+        "AI returned an empty image analysis."
+      );
+    }
+
+    sendJSON(res, 200, {
+      success: true,
+      reply
+    });
+
+  } catch (error) {
+    console.error(
+      "Image analysis exception:",
+      error
+    );
+
+    sendJSON(res, 500, {
+      error:
+        error.message ||
+        "Image analysis failed."
+    });
+  }
+}
+
+/* =========================================================
+   AI IMAGE GENERATION
+========================================================= */
+
+async function generateImage(req, res) {
+  const user = await getCurrentUser(req);
+
+  if (!user) {
+    sendJSON(res, 401, {
+      error: "Unauthorized."
+    });
+    return;
+  }
+
+  const body =
+    await readBody(req, 20000);
+
+  const prompt =
+    String(body.prompt || "").trim();
+
+  if (!prompt) {
+    sendJSON(res, 400, {
+      error:
+        "Image prompt is required."
+    });
+    return;
+  }
+
+  if (prompt.length > 4000) {
+    sendJSON(res, 400, {
+      error:
+        "Image prompt is too long."
+    });
+    return;
+  }
+
+  const apiKey =
+    process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    sendJSON(res, 500, {
+      error:
+        "OPENAI_API_KEY is not configured."
+    });
+    return;
+  }
+
+  try {
     const response =
       await fetch(
         "https://api.openai.com/v1/images/generations",
@@ -482,13 +590,11 @@ async function generateImage(req, res) {
           headers: {
             "Content-Type":
               "application/json",
-
             "Authorization":
               `Bearer ${apiKey}`
           },
 
           body: JSON.stringify({
-
             model:
               process.env.OPENAI_IMAGE_MODEL ||
               "gpt-image-2",
@@ -510,9 +616,8 @@ async function generateImage(req, res) {
       await response.json();
 
     if (!response.ok) {
-
       console.error(
-        "OpenAI Image API error:",
+        "Image API error:",
         data
       );
 
@@ -526,33 +631,22 @@ async function generateImage(req, res) {
     }
 
     if (
-      !data.data ||
       !Array.isArray(data.data) ||
       !data.data.length
     ) {
-
       sendJSON(res, 500, {
         error:
           "Image API returned no image."
       });
-
       return;
     }
 
     const image =
       data.data[0];
 
-    /*
-      OpenAI image generation responses
-      can contain base64 image data.
-    */
-
     if (image.b64_json) {
-
       sendJSON(res, 200, {
-
         success: true,
-
         prompt,
 
         image: {
@@ -564,17 +658,9 @@ async function generateImage(req, res) {
       return;
     }
 
-    /*
-      Some response formats/providers
-      may return an image URL.
-    */
-
     if (image.url) {
-
       sendJSON(res, 200, {
-
         success: true,
-
         prompt,
 
         image: {
@@ -588,11 +674,10 @@ async function generateImage(req, res) {
 
     sendJSON(res, 500, {
       error:
-        "Image was generated but no usable image data was returned."
+        "No usable image data returned."
     });
 
   } catch (error) {
-
     console.error(
       "Image generation error:",
       error
@@ -606,13 +691,11 @@ async function generateImage(req, res) {
   }
 }
 
-
 /* =========================================================
    STATIC WEBSITE
 ========================================================= */
 
 function sendWebsite(res) {
-
   const filePath =
     path.join(
       __dirname,
@@ -621,33 +704,27 @@ function sendWebsite(res) {
     );
 
   if (!fs.existsSync(filePath)) {
-
     sendJSON(res, 404, {
       error:
         "public/index.html not found."
     });
-
     return;
   }
 
   fs.readFile(
     filePath,
     (error, data) => {
-
       if (error) {
-
         sendJSON(res, 500, {
           error:
             "Could not load website."
         });
-
         return;
       }
 
       res.writeHead(200, {
         "Content-Type":
           "text/html; charset=utf-8",
-
         "Cache-Control":
           "no-store"
       });
@@ -657,19 +734,15 @@ function sendWebsite(res) {
   );
 }
 
-
 /* =========================================================
    REGISTER
 ========================================================= */
 
 async function register(req, res) {
-
-  const body =
-    await readBody(req);
+  const body = await readBody(req);
 
   const name =
-    String(body.name || "")
-      .trim();
+    String(body.name || "").trim();
 
   const email =
     String(body.email || "")
@@ -680,22 +753,18 @@ async function register(req, res) {
     String(body.password || "");
 
   if (!name || !email || !password) {
-
     sendJSON(res, 400, {
       error:
         "Name, email and password are required."
     });
-
     return;
   }
 
   if (password.length < 6) {
-
     sendJSON(res, 400, {
       error:
         "Password must be at least 6 characters."
     });
-
     return;
   }
 
@@ -711,12 +780,10 @@ async function register(req, res) {
     );
 
   if (existing.rows.length) {
-
     sendJSON(res, 409, {
       error:
         "An account with this email already exists."
     });
-
     return;
   }
 
@@ -748,29 +815,22 @@ async function register(req, res) {
     result.rows[0];
 
   const token =
-    await createSession(
-      user.id
-    );
+    await createSession(user.id);
 
   sendJSON(res, 201, {
     message:
       "Registration successful.",
-
     token,
-
     user
   });
 }
-
 
 /* =========================================================
    LOGIN
 ========================================================= */
 
 async function login(req, res) {
-
-  const body =
-    await readBody(req);
+  const body = await readBody(req);
 
   const email =
     String(body.email || "")
@@ -781,12 +841,10 @@ async function login(req, res) {
     String(body.password || "");
 
   if (!email || !password) {
-
     sendJSON(res, 400, {
       error:
         "Email and password are required."
     });
-
     return;
   }
 
@@ -802,12 +860,10 @@ async function login(req, res) {
     );
 
   if (!result.rows.length) {
-
     sendJSON(res, 401, {
       error:
         "Invalid email or password."
     });
-
     return;
   }
 
@@ -821,66 +877,47 @@ async function login(req, res) {
     );
 
   if (!valid) {
-
     sendJSON(res, 401, {
       error:
         "Invalid email or password."
     });
-
     return;
   }
 
   const token =
-    await createSession(
-      userRow.id
-    );
+    await createSession(userRow.id);
 
   sendJSON(res, 200, {
-
     message:
       "Login successful.",
 
     token,
 
     user: {
-      id:
-        userRow.id,
-
-      name:
-        userRow.name,
-
-      email:
-        userRow.email,
-
-      plan:
-        userRow.plan,
-
-      role:
-        userRow.role,
-
+      id: userRow.id,
+      name: userRow.name,
+      email: userRow.email,
+      plan: userRow.plan,
+      role: userRow.role,
       created_at:
         userRow.created_at
     }
   });
 }
 
-
 /* =========================================================
    ME
 ========================================================= */
 
 async function me(req, res) {
-
   const user =
     await getCurrentUser(req);
 
   if (!user) {
-
     sendJSON(res, 401, {
       error:
         "Unauthorized."
     });
-
     return;
   }
 
@@ -889,27 +926,21 @@ async function me(req, res) {
   });
 }
 
-
 /* =========================================================
    LOGOUT
 ========================================================= */
 
 async function logout(req, res) {
-
   const token =
     getBearerToken(req);
 
   if (token) {
-
-    const tokenHash =
-      hashToken(token);
-
     await pool.query(
       `
         DELETE FROM sessions
         WHERE token_hash = $1
       `,
-      [tokenHash]
+      [hashToken(token)]
     );
   }
 
@@ -919,23 +950,19 @@ async function logout(req, res) {
   });
 }
 
-
 /* =========================================================
-   CREATE / CONTINUE CHAT
+   CHAT
 ========================================================= */
 
 async function chat(req, res) {
-
   const user =
     await getCurrentUser(req);
 
   if (!user) {
-
     sendJSON(res, 401, {
       error:
         "Unauthorized."
     });
-
     return;
   }
 
@@ -943,8 +970,7 @@ async function chat(req, res) {
     await readBody(req);
 
   const message =
-    String(body.message || "")
-      .trim();
+    String(body.message || "").trim();
 
   let chatId =
     body.chatId
@@ -952,30 +978,22 @@ async function chat(req, res) {
       : null;
 
   if (!message) {
-
     sendJSON(res, 400, {
       error:
         "Message is required."
     });
-
     return;
   }
 
   if (message.length > 5000) {
-
     sendJSON(res, 400, {
       error:
         "Message is too long."
     });
-
     return;
   }
 
-
-  /* CREATE NEW CHAT */
-
   if (!chatId) {
-
     const title =
       message.length > 80
         ? message.slice(0, 80) + "..."
@@ -999,9 +1017,6 @@ async function chat(req, res) {
       chatResult.rows[0].id;
   }
 
-
-  /* CHECK CHAT OWNERSHIP */
-
   const chatResult =
     await pool.query(
       `
@@ -1021,17 +1036,12 @@ async function chat(req, res) {
     );
 
   if (!chatResult.rows.length) {
-
     sendJSON(res, 404, {
       error:
         "Chat not found."
     });
-
     return;
   }
-
-
-  /* SAVE USER MESSAGE */
 
   const userMessageResult =
     await pool.query(
@@ -1050,9 +1060,6 @@ async function chat(req, res) {
   const userMessageId =
     userMessageResult.rows[0].id;
 
-
-  /* LOAD CHAT HISTORY */
-
   const historyResult =
     await pool.query(
       `
@@ -1069,18 +1076,12 @@ async function chat(req, res) {
   const history =
     historyResult.rows.slice(-40);
 
-
-  /* ASK AI */
-
   let reply;
 
   try {
-
     reply =
       await askAI(history);
-
   } catch (error) {
-
     console.error(
       "AI error:",
       error
@@ -1103,9 +1104,6 @@ async function chat(req, res) {
     return;
   }
 
-
-  /* SAVE AI MESSAGE */
-
   await pool.query(
     `
       INSERT INTO messages
@@ -1118,45 +1116,32 @@ async function chat(req, res) {
     ]
   );
 
-
-  /* RESPONSE */
-
   sendJSON(res, 200, {
-
     reply,
-
     chat:
       chatResult.rows[0],
-
     chatId,
 
     message: {
-      role:
-        "assistant",
-
-      content:
-        reply
+      role: "assistant",
+      content: reply
     }
   });
 }
 
-
 /* =========================================================
-   GET ALL CHATS
+   CHATS
 ========================================================= */
 
 async function getChats(req, res) {
-
   const user =
     await getCurrentUser(req);
 
   if (!user) {
-
     sendJSON(res, 401, {
       error:
         "Unauthorized."
     });
-
     return;
   }
 
@@ -1180,23 +1165,15 @@ async function getChats(req, res) {
   });
 }
 
-
-/* =========================================================
-   GET ONE CHAT + MESSAGES
-========================================================= */
-
 async function getChat(req, res, chatId) {
-
   const user =
     await getCurrentUser(req);
 
   if (!user) {
-
     sendJSON(res, 401, {
       error:
         "Unauthorized."
     });
-
     return;
   }
 
@@ -1219,12 +1196,10 @@ async function getChat(req, res, chatId) {
     );
 
   if (!chatResult.rows.length) {
-
     sendJSON(res, 404, {
       error:
         "Chat not found."
     });
-
     return;
   }
 
@@ -1244,32 +1219,22 @@ async function getChat(req, res, chatId) {
     );
 
   sendJSON(res, 200, {
-
     chat:
       chatResult.rows[0],
-
     messages:
       messagesResult.rows
   });
 }
 
-
-/* =========================================================
-   DELETE CHAT
-========================================================= */
-
 async function deleteChat(req, res, chatId) {
-
   const user =
     await getCurrentUser(req);
 
   if (!user) {
-
     sendJSON(res, 401, {
       error:
         "Unauthorized."
     });
-
     return;
   }
 
@@ -1288,12 +1253,10 @@ async function deleteChat(req, res, chatId) {
     );
 
   if (!result.rows.length) {
-
     sendJSON(res, 404, {
       error:
         "Chat not found."
     });
-
     return;
   }
 
@@ -1303,31 +1266,24 @@ async function deleteChat(req, res, chatId) {
   });
 }
 
-
 /* =========================================================
    DATABASE TEST
 ========================================================= */
 
 async function databaseTest(req, res) {
-
   const result =
     await pool.query(
       "SELECT NOW() AS now"
     );
 
   sendJSON(res, 200, {
-
-    success:
-      true,
-
+    success: true,
     message:
       "Database connection is working.",
-
     time:
       result.rows[0].now
   });
 }
-
 
 /* =========================================================
    SERVER
@@ -1336,30 +1292,21 @@ async function databaseTest(req, res) {
 const server =
   http.createServer(
     async (req, res) => {
-
       try {
 
-        /* OPTIONS */
-
         if (req.method === "OPTIONS") {
-
           res.writeHead(204, {
-
             "Access-Control-Allow-Origin":
               "*",
-
             "Access-Control-Allow-Headers":
               "Content-Type, Authorization",
-
             "Access-Control-Allow-Methods":
               "GET, POST, DELETE, OPTIONS"
           });
 
           res.end();
-
           return;
         }
-
 
         const url =
           new URL(
@@ -1370,135 +1317,77 @@ const server =
         const pathname =
           url.pathname;
 
-
-        /* WEBSITE */
-
         if (
           req.method === "GET" &&
           pathname === "/"
         ) {
-
           sendWebsite(res);
-
           return;
         }
-
-
-        /* REGISTER */
 
         if (
           req.method === "POST" &&
           pathname === "/register"
         ) {
-
-          await register(
-            req,
-            res
-          );
-
+          await register(req, res);
           return;
         }
-
-
-        /* LOGIN */
 
         if (
           req.method === "POST" &&
           pathname === "/login"
         ) {
-
-          await login(
-            req,
-            res
-          );
-
+          await login(req, res);
           return;
         }
-
-
-        /* ME */
 
         if (
           req.method === "GET" &&
           pathname === "/me"
         ) {
-
-          await me(
-            req,
-            res
-          );
-
+          await me(req, res);
           return;
         }
-
-
-        /* LOGOUT */
 
         if (
           req.method === "POST" &&
           pathname === "/logout"
         ) {
-
-          await logout(
-            req,
-            res
-          );
-
+          await logout(req, res);
           return;
         }
-
-
-        /* DATABASE TEST */
 
         if (
           req.method === "GET" &&
           pathname === "/database-test"
         ) {
-
-          await databaseTest(
-            req,
-            res
-          );
-
+          await databaseTest(req, res);
           return;
         }
-
-
-        /* =================================================
-           AI IMAGE GENERATION
-        ================================================= */
 
         if (
           req.method === "POST" &&
           pathname === "/generate-image"
         ) {
-
-          await generateImage(
-            req,
-            res
-          );
-
+          await generateImage(req, res);
           return;
         }
 
-
-        /* GET ALL CHATS */
+        if (
+          req.method === "POST" &&
+          pathname === "/analyze-image"
+        ) {
+          await analyzeImage(req, res);
+          return;
+        }
 
         if (
           req.method === "GET" &&
           pathname === "/chats"
         ) {
-
-          await getChats(
-            req,
-            res
-          );
-
+          await getChats(req, res);
           return;
         }
-
-
-        /* GET / DELETE SINGLE CHAT */
 
         const chatMatch =
           pathname.match(
@@ -1506,72 +1395,46 @@ const server =
           );
 
         if (chatMatch) {
-
           const chatId =
             Number(chatMatch[1]);
 
-          if (
-            req.method === "GET"
-          ) {
-
+          if (req.method === "GET") {
             await getChat(
               req,
               res,
               chatId
             );
-
             return;
           }
 
-          if (
-            req.method === "DELETE"
-          ) {
-
+          if (req.method === "DELETE") {
             await deleteChat(
               req,
               res,
               chatId
             );
-
             return;
           }
         }
-
-
-        /* CHAT */
 
         if (
           req.method === "POST" &&
           pathname === "/chat"
         ) {
-
-          await chat(
-            req,
-            res
-          );
-
+          await chat(req, res);
           return;
         }
-
-
-        /* CHAT STATUS */
 
         if (
           req.method === "GET" &&
           pathname === "/chat"
         ) {
-
           sendJSON(res, 200, {
-
             message:
               "EMORA AI Real Chat API is ready."
           });
-
           return;
         }
-
-
-        /* NOT FOUND */
 
         sendJSON(res, 404, {
           error:
@@ -1579,7 +1442,6 @@ const server =
         });
 
       } catch (error) {
-
         console.error(
           "SERVER ERROR:",
           error
@@ -1587,28 +1449,25 @@ const server =
 
         sendJSON(res, 500, {
           error:
+            error.message ||
             "Internal server error."
         });
       }
     }
   );
 
-
 /* =========================================================
    START
 ========================================================= */
 
 async function start() {
-
   try {
-
     await initDatabase();
 
     server.listen(
       PORT,
       "0.0.0.0",
       () => {
-
         console.log(
           `EMORA AI Server running on port ${PORT}`
         );
@@ -1616,7 +1475,6 @@ async function start() {
     );
 
   } catch (error) {
-
     console.error(
       "Startup failed:",
       error
@@ -1625,6 +1483,5 @@ async function start() {
     process.exit(1);
   }
 }
-
 
 start();
