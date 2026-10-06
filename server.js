@@ -1,1737 +1,1362 @@
-const http = require("http");
-const crypto = require("crypto");
-const fs = require("fs");
-const path = require("path");
-const { promisify } = require("util");
-const { Pool } = require("pg");
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMORA AI</title>
 
-const scrypt = promisify(crypto.scrypt);
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
-
-// ========================================
-// DATABASE SETUP
-// ========================================
-
-async function initDatabase() {
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id BIGSERIAL PRIMARY KEY,
-      name VARCHAR(100) NOT NULL,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      plan VARCHAR(20) NOT NULL DEFAULT 'free',
-      role VARCHAR(20) NOT NULL DEFAULT 'user',
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS chats (
-      id BIGSERIAL PRIMARY KEY,
-      user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-      title VARCHAR(255),
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS messages (
-      id BIGSERIAL PRIMARY KEY,
-      chat_id BIGINT REFERENCES chats(id) ON DELETE CASCADE,
-      role VARCHAR(20) NOT NULL,
-      content TEXT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS sessions (
-      id BIGSERIAL PRIMARY KEY,
-      user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-      token_hash TEXT UNIQUE NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      expires_at TIMESTAMPTZ NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_chats_user_id
-    ON chats(user_id);
-
-    CREATE INDEX IF NOT EXISTS idx_messages_chat_id
-    ON messages(chat_id);
-
-    CREATE INDEX IF NOT EXISTS idx_sessions_token_hash
-    ON sessions(token_hash);
-
-    CREATE INDEX IF NOT EXISTS idx_sessions_user_id
-    ON sessions(user_id);
-  `);
-
-  console.log("Database tables ready.");
-}
-
-
-// ========================================
-// PASSWORD HASH
-// ========================================
-
-async function hashPassword(password) {
-
-  const salt =
-    crypto.randomBytes(16).toString("hex");
-
-  const key =
-    await scrypt(password, salt, 64);
-
-  return `${salt}:${key.toString("hex")}`;
-}
-
-
-// ========================================
-// VERIFY PASSWORD
-// ========================================
-
-async function verifyPassword(password, storedHash) {
-
-  try {
-
-    const parts = storedHash.split(":");
-
-    if (parts.length !== 2) {
-      return false;
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    const salt = parts[0];
-
-    const storedKey =
-      Buffer.from(parts[1], "hex");
-
-    const derivedKey =
-      await scrypt(password, salt, 64);
-
-    if (
-      storedKey.length !==
-      derivedKey.length
-    ) {
-      return false;
+    body {
+      font-family: Arial, sans-serif;
+      background: #08090d;
+      color: #fff;
+      height: 100vh;
+      overflow: hidden;
     }
 
-    return crypto.timingSafeEqual(
-      storedKey,
-      derivedKey
-    );
+    button,
+    textarea,
+    input {
+      font: inherit;
+    }
 
-  } catch {
+    button {
+      cursor: pointer;
+    }
 
-    return false;
-  }
-}
+    /* LOGIN */
 
+    #loginScreen {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background:
+        radial-gradient(circle at top, #20253b 0, #08090d 45%);
+    }
 
-// ========================================
-// READ JSON BODY
-// ========================================
+    .loginBox {
+      width: 100%;
+      max-width: 400px;
+      padding: 30px;
+      border: 1px solid #272b3a;
+      border-radius: 22px;
+      background: rgba(17, 18, 25, .94);
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    }
 
-function readBody(req) {
+    .logo {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
 
-  return new Promise((resolve, reject) => {
+    .subtitle {
+      text-align: center;
+      color: #9297a8;
+      margin-bottom: 28px;
+    }
 
-    let body = "";
+    .input {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 12px;
+      border: 1px solid #303445;
+      border-radius: 12px;
+      outline: none;
+      background: #0d0f16;
+      color: white;
+    }
 
-    req.on("data", chunk => {
+    .input:focus {
+      border-color: #6573ff;
+    }
 
-      body += chunk;
+    .primaryBtn {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 14px;
+      background: #5865f2;
+      color: white;
+      font-weight: bold;
+      margin-top: 5px;
+    }
 
-      if (body.length > 10000) {
+    .primaryBtn:disabled {
+      opacity: .6;
+    }
 
-        reject(
-          new Error("Request body too large")
-        );
+    #loginError {
+      color: #ff7777;
+      margin-top: 14px;
+      text-align: center;
+      min-height: 20px;
+    }
 
-        req.destroy();
+    /* APP */
+
+    #app {
+      display: none;
+      height: 100vh;
+      position: relative;
+    }
+
+    .appLayout {
+      height: 100%;
+      display: flex;
+    }
+
+    /* SIDEBAR */
+
+    .sidebar {
+      width: 290px;
+      background: #0d0f15;
+      border-right: 1px solid #242733;
+      display: flex;
+      flex-direction: column;
+      z-index: 20;
+    }
+
+    .sideTop {
+      padding: 16px;
+      border-bottom: 1px solid #242733;
+    }
+
+    .brandSmall {
+      font-size: 19px;
+      font-weight: 800;
+      margin-bottom: 15px;
+      letter-spacing: 1px;
+    }
+
+    .newChatBtn {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #34394c;
+      border-radius: 12px;
+      background: #171a25;
+      color: white;
+      font-weight: bold;
+    }
+
+    .newChatBtn:hover {
+      background: #202436;
+    }
+
+    .historyTitle {
+      padding: 15px 16px 8px;
+      color: #888fa3;
+      font-size: 13px;
+    }
+
+    .history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 5px 10px;
+    }
+
+    .historyItem {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px;
+      border-radius: 10px;
+      margin-bottom: 4px;
+      color: #ddd;
+      background: transparent;
+    }
+
+    .historyItem:hover {
+      background: #191c27;
+    }
+
+    .historyItem.active {
+      background: #202436;
+    }
+
+    .historyText {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .deleteChat {
+      border: 0;
+      background: transparent;
+      color: #777d8e;
+      padding: 5px;
+      font-size: 16px;
+    }
+
+    .deleteChat:hover {
+      color: #ff6b6b;
+    }
+
+    .emptyHistory {
+      color: #666d7d;
+      text-align: center;
+      padding: 25px 10px;
+      font-size: 14px;
+    }
+
+    .profileArea {
+      padding: 14px;
+      border-top: 1px solid #242733;
+    }
+
+    .profileName {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #d9dce7;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .logoutBtn {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #343744;
+      border-radius: 10px;
+      background: transparent;
+      color: #aaa;
+    }
+
+    .logoutBtn:hover {
+      background: #1b1d26;
+      color: white;
+    }
+
+    /* MAIN */
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: #08090d;
+    }
+
+    .topbar {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      border-bottom: 1px solid #242733;
+      background: rgba(8,9,13,.92);
+    }
+
+    .menuBtn {
+      display: none;
+      border: 0;
+      background: transparent;
+      color: white;
+      font-size: 25px;
+    }
+
+    .topBrand {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    .status {
+      margin-left: auto;
+      font-size: 12px;
+      color: #8d95a8;
+    }
+
+    .statusDot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      background: #43d17a;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+
+    /* CHAT */
+
+    .chatArea {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .welcome {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: #8c93a5;
+    }
+
+    .welcomeBox {
+      max-width: 500px;
+    }
+
+    .welcomeLogo {
+      font-size: 38px;
+      font-weight: 900;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    .welcomeText {
+      line-height: 1.6;
+    }
+
+    .messageRow {
+      display: flex;
+      margin-bottom: 18px;
+    }
+
+    .messageRow.user {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: min(750px, 85%);
+      padding: 12px 15px;
+      border-radius: 17px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .user .bubble {
+      background: #5865f2;
+      color: white;
+      border-bottom-right-radius: 5px;
+    }
+
+    .assistant .bubble {
+      background: #171922;
+      border: 1px solid #292d3a;
+      color: #e8eaf0;
+      border-bottom-left-radius: 5px;
+    }
+
+    .typing {
+      display: none;
+      color: #8c93a5;
+      font-size: 14px;
+      padding: 5px 2px 15px;
+    }
+
+    /* INPUT */
+
+    .inputArea {
+      padding: 12px 16px 16px;
+      border-top: 1px solid #242733;
+      background: #08090d;
+    }
+
+    .inputBox {
+      max-width: 900px;
+      margin: auto;
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      background: #151720;
+      border: 1px solid #2c3040;
+      border-radius: 17px;
+      padding: 8px;
+    }
+
+    #messageInput {
+      flex: 1;
+      min-height: 42px;
+      max-height: 140px;
+      resize: none;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: white;
+      padding: 10px;
+      line-height: 1.4;
+    }
+
+    #messageInput::placeholder {
+      color: #6e7484;
+    }
+
+    .sendBtn {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 12px;
+      background: #5865f2;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .sendBtn:disabled {
+      opacity: .45;
+    }
+
+    /* MOBILE */
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 15;
+    }
+
+    @media (max-width: 700px) {
+      .sidebar {
+        position: fixed;
+        left: -300px;
+        top: 0;
+        bottom: 0;
+        transition: left .25s ease;
+        box-shadow: 15px 0 40px rgba(0,0,0,.4);
       }
+
+      .sidebar.open {
+        left: 0;
+      }
+
+      .menuBtn {
+        display: block;
+      }
+
+      .overlay.show {
+        display: block;
+      }
+
+      .chatArea {
+        padding: 15px 12px;
+      }
+
+      .bubble {
+        max-width: 88%;
+      }
+
+      .inputArea {
+        padding: 10px;
+      }
+
+      .status {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- LOGIN -->
+  <section id="loginScreen">
+    <div class="loginBox">
+      <div class="logo">EMORA AI</div>
+      <div class="subtitle">Your intelligent AI assistant</div>
+
+      <input
+        id="email"
+        class="input"
+        type="email"
+        placeholder="Email"
+        autocomplete="email"
+      />
+
+      <input
+        id="password"
+        class="input"
+        type="password"
+        placeholder="Password"
+        autocomplete="current-password"
+      />
+
+      <button id="loginBtn" class="primaryBtn">
+        Login
+      </button>
+
+      <div id="loginError"></div>
+    </div>
+  </section>
+
+
+  <!-- APP -->
+  <section id="app">
+
+    <div class="overlay" id="overlay"></div>
+
+    <div class="appLayout">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar" id="sidebar">
+
+        <div class="sideTop">
+          <div class="brandSmall">EMORA AI</div>
+
+          <button class="newChatBtn" id="newChatBtn">
+            ＋ New Chat
+          </button>
+        </div>
+
+        <div class="historyTitle">
+          Recent Chats
+        </div>
+
+        <div class="history" id="historyList">
+          <div class="emptyHistory">
+            No chats yet
+          </div>
+        </div>
+
+        <div class="profileArea">
+          <div class="profileName" id="profileName">
+            User
+          </div>
+
+          <button class="logoutBtn" id="logoutBtn">
+            Logout
+          </button>
+        </div>
+
+      </aside>
+
+
+      <!-- MAIN -->
+      <main class="main">
+
+        <header class="topbar">
+
+          <button class="menuBtn" id="menuBtn">
+            ☰
+          </button>
+
+          <div class="topBrand">
+            EMORA AI
+          </div>
+
+          <div class="status">
+            <span class="statusDot"></span>
+            AI Online
+          </div>
+
+        </header>
+
+
+        <!-- CHAT -->
+        <div class="chatArea" id="chatArea">
+
+          <div class="welcome" id="welcome">
+            <div class="welcomeBox">
+              <div class="welcomeLogo">
+                EMORA AI
+              </div>
+
+              <div class="welcomeText">
+                তোমার AI assistant।<br>
+                যেকোনো প্রশ্ন লিখে শুরু করো।
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="typing" id="typing">
+          EMORA AI is thinking...
+        </div>
+
+
+        <!-- INPUT -->
+        <div class="inputArea">
+
+          <div class="inputBox">
+
+            <textarea
+              id="messageInput"
+              placeholder="Message EMORA AI..."
+              rows="1"
+            ></textarea>
+
+            <button
+              class="sendBtn"
+              id="sendBtn"
+              title="Send"
+            >
+              ➤
+            </button>
+
+          </div>
+
+        </div>
+
+      </main>
+
+    </div>
+  </section>
+
+
+<script>
+  const API_URL = window.location.origin;
+  const TOKEN_KEY = "my_ai_token";
+
+  let token = localStorage.getItem(TOKEN_KEY);
+  let currentUser = null;
+  let currentChatId = null;
+  let sending = false;
+
+  const loginScreen = document.getElementById("loginScreen");
+  const app = document.getElementById("app");
+
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const loginBtn = document.getElementById("loginBtn");
+  const loginError = document.getElementById("loginError");
+
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("overlay");
+  const menuBtn = document.getElementById("menuBtn");
+
+  const historyList = document.getElementById("historyList");
+  const newChatBtn = document.getElementById("newChatBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  const profileName = document.getElementById("profileName");
+
+  const chatArea = document.getElementById("chatArea");
+  const welcome = document.getElementById("welcome");
+  const typing = document.getElementById("typing");
+
+  const messageInput = document.getElementById("messageInput");
+  const sendBtn = document.getElementById("sendBtn");
+
+
+  /* -------------------------
+     API HELPER
+  ------------------------- */
+
+  async function api(path, options = {}) {
+
+    const headers = {
+      ...(options.headers || {})
+    };
+
+    if (token) {
+      headers.Authorization = "Bearer " + token;
+    }
+
+    if (options.body && !headers["Content-Type"]) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    const response = await fetch(API_URL + path, {
+      ...options,
+      headers
     });
 
-    req.on("end", () => {
+    let data = {};
+
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
+
+    if (response.status === 401) {
+      logoutLocal();
+      throw new Error("Session expired");
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        data.message ||
+        "Something went wrong"
+      );
+    }
+
+    return data;
+  }
+
+
+  /* -------------------------
+     LOGIN
+  ------------------------- */
+
+  async function login() {
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    loginError.textContent = "";
+
+    if (!email || !password) {
+      loginError.textContent =
+        "Email and password required.";
+      return;
+    }
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Logging in...";
+
+    try {
+
+      const data = await api("/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          password
+        })
+      });
+
+      token = data.token;
+
+      localStorage.setItem(
+        TOKEN_KEY,
+        token
+      );
+
+      await loadUser();
+
+      showApp();
+
+    } catch (error) {
+
+      loginError.textContent =
+        error.message || "Login failed.";
+
+    } finally {
+
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Login";
+    }
+  }
+
+
+  loginBtn.addEventListener("click", login);
+
+  passwordInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      login();
+    }
+  });
+
+
+  /* -------------------------
+     USER
+  ------------------------- */
+
+  async function loadUser() {
+
+    const data = await api("/me");
+
+    currentUser = data.user || data;
+
+    profileName.textContent =
+      currentUser.name ||
+      currentUser.email ||
+      "User";
+  }
+
+
+  /* -------------------------
+     SHOW APP
+  ------------------------- */
+
+  function showApp() {
+
+    loginScreen.style.display = "none";
+    app.style.display = "block";
+
+    loadChats();
+    startNewChat();
+  }
+
+
+  /* -------------------------
+     CHAT HISTORY
+  ------------------------- */
+
+  async function loadChats() {
+
+    try {
+
+      const data = await api("/chats");
+
+      const chats =
+        Array.isArray(data)
+          ? data
+          : (data.chats || []);
+
+      renderHistory(chats);
+
+    } catch (error) {
+
+      console.error(
+        "Could not load chats:",
+        error
+      );
+    }
+  }
+
+
+  function renderHistory(chats) {
+
+    historyList.innerHTML = "";
+
+    if (!chats.length) {
+
+      historyList.innerHTML = `
+        <div class="emptyHistory">
+          No chats yet
+        </div>
+      `;
+
+      return;
+    }
+
+    chats.forEach(chat => {
+
+      const item =
+        document.createElement("div");
+
+      item.className =
+        "historyItem" +
+        (
+          Number(chat.id) === Number(currentChatId)
+            ? " active"
+            : ""
+        );
+
+      const text =
+        document.createElement("div");
+
+      text.className = "historyText";
+
+      text.textContent =
+        chat.title ||
+        "New Chat";
+
+      text.onclick = () => {
+        openChat(chat.id);
+      };
+
+      const deleteBtn =
+        document.createElement("button");
+
+      deleteBtn.className =
+        "deleteChat";
+
+      deleteBtn.textContent = "🗑";
+
+      deleteBtn.title = "Delete chat";
+
+      deleteBtn.onclick = event => {
+
+        event.stopPropagation();
+
+        deleteChat(chat.id);
+      };
+
+      item.appendChild(text);
+      item.appendChild(deleteBtn);
+
+      item.onclick = () => {
+        openChat(chat.id);
+      };
+
+      historyList.appendChild(item);
+    });
+  }
+
+
+  /* -------------------------
+     OPEN CHAT
+  ------------------------- */
+
+  async function openChat(chatId) {
+
+    try {
+
+      closeSidebar();
+
+      const data =
+        await api("/chats/" + encodeURIComponent(chatId));
+
+      currentChatId =
+        data.chat?.id ||
+        chatId;
+
+      const messages =
+        data.messages ||
+        data.chat?.messages ||
+        [];
+
+      renderMessages(messages);
+
+      await loadChats();
+
+      scrollBottom();
+
+    } catch (error) {
+
+      alert(
+        error.message ||
+        "Could not open chat."
+      );
+    }
+  }
+
+
+  /* -------------------------
+     RENDER MESSAGES
+  ------------------------- */
+
+  function renderMessages(messages) {
+
+    chatArea.innerHTML = "";
+
+    if (!messages.length) {
+
+      showWelcome();
+
+      return;
+    }
+
+    messages.forEach(message => {
+
+      addMessage(
+        message.role,
+        message.content
+      );
+    });
+  }
+
+
+  function showWelcome() {
+
+    chatArea.innerHTML = `
+      <div class="welcome" id="welcome">
+        <div class="welcomeBox">
+          <div class="welcomeLogo">
+            EMORA AI
+          </div>
+
+          <div class="welcomeText">
+            তোমার AI assistant।<br>
+            যেকোনো প্রশ্ন লিখে শুরু করো।
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+
+  /* -------------------------
+     NEW CHAT
+  ------------------------- */
+
+  function startNewChat() {
+
+    currentChatId = null;
+
+    showWelcome();
+
+    messageInput.value = "";
+
+    messageInput.focus();
+
+    closeSidebar();
+
+    loadChats();
+  }
+
+
+  newChatBtn.addEventListener(
+    "click",
+    startNewChat
+  );
+
+
+  /* -------------------------
+     ADD MESSAGE
+  ------------------------- */
+
+  function addMessage(role, content) {
+
+    if (welcome) {
+      welcome.remove();
+    }
+
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "messageRow " +
+      (
+        role === "user"
+          ? "user"
+          : "assistant"
+      );
+
+    const bubble =
+      document.createElement("div");
+
+    bubble.className = "bubble";
+
+    bubble.textContent =
+      content || "";
+
+    row.appendChild(bubble);
+
+    chatArea.appendChild(row);
+
+    scrollBottom();
+  }
+
+
+  /* -------------------------
+     SEND MESSAGE
+  ------------------------- */
+
+  async function sendMessage() {
+
+    if (sending) return;
+
+    const message =
+      messageInput.value.trim();
+
+    if (!message) return;
+
+    sending = true;
+
+    sendBtn.disabled = true;
+    messageInput.disabled = true;
+
+    addMessage(
+      "user",
+      message
+    );
+
+    messageInput.value = "";
+    autoResize();
+
+    typing.style.display = "block";
+
+    scrollBottom();
+
+    try {
+
+      const body = {
+        message
+      };
+
+      if (currentChatId) {
+        body.chatId =
+          Number(currentChatId);
+      }
+
+      const data =
+        await api("/chat", {
+          method: "POST",
+          body: JSON.stringify(body)
+        });
+
+      /*
+        Backend creates a new chat
+        automatically when chatId
+        is not supplied.
+      */
+
+      if (data.chat?.id) {
+
+        currentChatId =
+          data.chat.id;
+
+      } else if (data.chatId) {
+
+        currentChatId =
+          data.chatId;
+
+      }
+
+      const reply =
+        data.reply ||
+        data.response ||
+        data.message ||
+        "I couldn't generate a response.";
+
+      typing.style.display = "none";
+
+      addMessage(
+        "assistant",
+        reply
+      );
+
+      await loadChats();
+
+    } catch (error) {
+
+      typing.style.display = "none";
+
+      addMessage(
+        "assistant",
+        "Sorry, something went wrong. Please try again."
+      );
+
+      console.error(error);
+
+    } finally {
+
+      sending = false;
+
+      sendBtn.disabled = false;
+      messageInput.disabled = false;
+
+      messageInput.focus();
+
+      scrollBottom();
+    }
+  }
+
+
+  sendBtn.addEventListener(
+    "click",
+    sendMessage
+  );
+
+
+  /* -------------------------
+     ENTER TO SEND
+  ------------------------- */
+
+  messageInput.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey
+      ) {
+
+        event.preventDefault();
+
+        sendMessage();
+      }
+    }
+  );
+
+
+  /* -------------------------
+     AUTO RESIZE
+  ------------------------- */
+
+  messageInput.addEventListener(
+    "input",
+    autoResize
+  );
+
+  function autoResize() {
+
+    messageInput.style.height =
+      "auto";
+
+    messageInput.style.height =
+      Math.min(
+        messageInput.scrollHeight,
+        140
+      ) + "px";
+  }
+
+
+  /* -------------------------
+     DELETE CHAT
+  ------------------------- */
+
+  async function deleteChat(chatId) {
+
+    const confirmed =
+      confirm(
+        "Delete this chat?"
+      );
+
+    if (!confirmed) return;
+
+    try {
+
+      await api(
+        "/chats/" +
+        encodeURIComponent(chatId),
+        {
+          method: "DELETE"
+        }
+      );
+
+      if (
+        Number(chatId) ===
+        Number(currentChatId)
+      ) {
+
+        startNewChat();
+
+      } else {
+
+        await loadChats();
+      }
+
+    } catch (error) {
+
+      alert(
+        error.message ||
+        "Could not delete chat."
+      );
+    }
+  }
+
+
+  /* -------------------------
+     LOGOUT
+  ------------------------- */
+
+  logoutBtn.addEventListener(
+    "click",
+    async () => {
 
       try {
 
-        const data =
-          JSON.parse(body || "{}");
+        if (token) {
 
-        resolve(data);
-
-      } catch {
-
-        reject(
-          new Error("Invalid JSON")
-        );
-      }
-    });
-
-    req.on("error", reject);
-  });
-}
-
-
-// ========================================
-// SEND JSON
-// ========================================
-
-function sendJSON(res, statusCode, data) {
-
-  res.writeHead(
-    statusCode,
-    {
-      "Content-Type":
-        "application/json; charset=utf-8",
-
-      "Access-Control-Allow-Origin":
-        "*",
-
-      "Access-Control-Allow-Methods":
-        "GET, POST, DELETE, OPTIONS",
-
-      "Access-Control-Allow-Headers":
-        "Content-Type, Authorization"
-    }
-  );
-
-  res.end(JSON.stringify(data));
-}
-
-
-// ========================================
-// SEND WEBSITE
-// ========================================
-
-function sendWebsite(res) {
-
-  const filePath =
-    path.join(
-      __dirname,
-      "public",
-      "index.html"
-    );
-
-  fs.readFile(
-    filePath,
-    "utf8",
-    (error, html) => {
-
-      if (error) {
-
-        console.error(
-          "Website file error:",
-          error
-        );
-
-        sendJSON(
-          res,
-          500,
-          {
-            success: false,
-            error:
-              "Website file not found."
-          }
-        );
-
-        return;
-      }
-
-      res.writeHead(
-        200,
-        {
-          "Content-Type":
-            "text/html; charset=utf-8",
-
-          "Cache-Control":
-            "no-cache"
-        }
-      );
-
-      res.end(html);
-    }
-  );
-}
-
-
-// ========================================
-// CREATE LOGIN SESSION
-// ========================================
-
-async function createSession(userId) {
-
-  const token =
-    crypto
-      .randomBytes(48)
-      .toString("hex");
-
-  const tokenHash =
-    crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
-
-  const expiresAt =
-    new Date(
-      Date.now() +
-      7 * 24 * 60 * 60 * 1000
-    );
-
-  await pool.query(
-    `
-    INSERT INTO sessions
-    (
-      user_id,
-      token_hash,
-      expires_at
-    )
-    VALUES
-    (
-      $1,
-      $2,
-      $3
-    )
-    `,
-    [
-      userId,
-      tokenHash,
-      expiresAt
-    ]
-  );
-
-  return token;
-}
-
-
-// ========================================
-// GET AUTH TOKEN
-// ========================================
-
-function getToken(req) {
-
-  const header =
-    req.headers.authorization || "";
-
-  if (
-    !header.startsWith("Bearer ")
-  ) {
-    return null;
-  }
-
-  return header
-    .substring(7)
-    .trim();
-}
-
-
-// ========================================
-// GET CURRENT USER
-// ========================================
-
-async function getCurrentUser(req) {
-
-  const token =
-    getToken(req);
-
-  if (!token) {
-    return null;
-  }
-
-  const tokenHash =
-    crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
-
-  const result =
-    await pool.query(
-      `
-      SELECT
-        u.id,
-        u.name,
-        u.email,
-        u.plan,
-        u.role,
-        u.created_at
-      FROM sessions s
-      JOIN users u
-        ON u.id = s.user_id
-      WHERE
-        s.token_hash = $1
-        AND s.expires_at > NOW()
-      LIMIT 1
-      `,
-      [tokenHash]
-    );
-
-  if (
-    result.rows.length === 0
-  ) {
-    return null;
-  }
-
-  return result.rows[0];
-}
-
-
-// ========================================
-// REAL OPENAI AI
-// ========================================
-
-async function askAI(message) {
-
-  const apiKey =
-    process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
-
-    throw new Error(
-      "OPENAI_API_KEY is not configured."
-    );
-  }
-
-  const model =
-    process.env.OPENAI_MODEL ||
-    "gpt-6-luna";
-
-  const response =
-    await fetch(
-      "https://api.openai.com/v1/responses",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-
-          "Authorization":
-            `Bearer ${apiKey}`
-        },
-
-        body: JSON.stringify({
-
-          model: model,
-
-          instructions:
-            "You are EMORA AI, a helpful AI assistant. Reply naturally and clearly. If the user writes in Bengali, reply in Bengali. If the user writes in English, reply in English.",
-
-          input: message
-        })
-      }
-    );
-
-  const data =
-    await response.json();
-
-  if (!response.ok) {
-
-    console.error(
-      "OpenAI API error:",
-      data
-    );
-
-    throw new Error(
-      "OpenAI API request failed."
-    );
-  }
-
-  let reply = "";
-
-  if (
-    typeof data.output_text ===
-    "string"
-  ) {
-
-    reply =
-      data.output_text.trim();
-
-  } else if (
-    Array.isArray(data.output)
-  ) {
-
-    for (
-      const item of data.output
-    ) {
-
-      if (
-        Array.isArray(item.content)
-      ) {
-
-        for (
-          const content
-          of item.content
-        ) {
-
-          if (
-            typeof content.text ===
-            "string"
-          ) {
-
-            reply +=
-              content.text;
-          }
-        }
-      }
-    }
-
-    reply =
-      reply.trim();
-  }
-
-  if (!reply) {
-
-    throw new Error(
-      "AI returned an empty response."
-    );
-  }
-
-  return {
-    reply,
-    model
-  };
-}
-
-
-// ========================================
-// SERVER
-// ========================================
-
-const server =
-  http.createServer(
-    async (req, res) => {
-
-      res.setHeader(
-        "Access-Control-Allow-Origin",
-        "*"
-      );
-
-      res.setHeader(
-        "Access-Control-Allow-Methods",
-        "GET, POST, DELETE, OPTIONS"
-      );
-
-      res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Content-Type, Authorization"
-      );
-
-
-      // ==================================
-      // OPTIONS
-      // ==================================
-
-      if (
-        req.method === "OPTIONS"
-      ) {
-
-        res.writeHead(204);
-        res.end();
-
-        return;
-      }
-
-
-      // ==================================
-      // WEBSITE
-      // ==================================
-
-      if (
-        req.method === "GET" &&
-        (
-          req.url === "/" ||
-          req.url === "/index.html"
-        )
-      ) {
-
-        sendWebsite(res);
-
-        return;
-      }
-
-
-      // ==================================
-      // DATABASE TEST
-      // ==================================
-
-      if (
-        req.method === "GET" &&
-        req.url === "/database-test"
-      ) {
-
-        try {
-
-          const result =
-            await pool.query(
-              "SELECT NOW() AS time"
-            );
-
-          sendJSON(
-            res,
-            200,
+          await api(
+            "/logout",
             {
-              success: true,
-              database: "connected",
-              time:
-                result.rows[0].time
-            }
-          );
-
-        } catch (error) {
-
-          console.error(error);
-
-          sendJSON(
-            res,
-            500,
-            {
-              success: false,
-              database:
-                "connection_failed"
+              method: "POST"
             }
           );
         }
 
-        return;
-      }
+      } catch {}
 
-
-      // ==================================
-      // REGISTER
-      // ==================================
-
-      if (
-        req.method === "POST" &&
-        req.url === "/register"
-      ) {
-
-        try {
-
-          const data =
-            await readBody(req);
-
-          const name =
-            String(
-              data.name || ""
-            ).trim();
-
-          const email =
-            String(
-              data.email || ""
-            )
-            .trim()
-            .toLowerCase();
-
-          const password =
-            String(
-              data.password || ""
-            );
-
-          if (
-            name.length < 2 ||
-            name.length > 100
-          ) {
-
-            sendJSON(
-              res,
-              400,
-              {
-                success: false,
-                error:
-                  "Invalid name."
-              }
-            );
-
-            return;
-          }
-
-          const emailRegex =
-            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-          if (
-            !emailRegex.test(email) ||
-            email.length > 255
-          ) {
-
-            sendJSON(
-              res,
-              400,
-              {
-                success: false,
-                error:
-                  "Invalid email."
-              }
-            );
-
-            return;
-          }
-
-          if (
-            password.length < 8 ||
-            password.length > 128
-          ) {
-
-            sendJSON(
-              res,
-              400,
-              {
-                success: false,
-                error:
-                  "Password must be 8 to 128 characters."
-              }
-            );
-
-            return;
-          }
-
-          const existing =
-            await pool.query(
-              `
-              SELECT id
-              FROM users
-              WHERE email = $1
-              LIMIT 1
-              `,
-              [email]
-            );
-
-          if (
-            existing.rows.length > 0
-          ) {
-
-            sendJSON(
-              res,
-              409,
-              {
-                success: false,
-                error:
-                  "An account with this email already exists."
-              }
-            );
-
-            return;
-          }
-
-          const passwordHash =
-            await hashPassword(
-              password
-            );
-
-          const result =
-            await pool.query(
-              `
-              INSERT INTO users
-              (
-                name,
-                email,
-                password_hash,
-                plan,
-                role
-              )
-              VALUES
-              (
-                $1,
-                $2,
-                $3,
-                'free',
-                'user'
-              )
-              RETURNING
-                id,
-                name,
-                email,
-                plan,
-                role,
-                created_at
-              `,
-              [
-                name,
-                email,
-                passwordHash
-              ]
-            );
-
-          sendJSON(
-            res,
-            201,
-            {
-              success: true,
-              message:
-                "Account created successfully.",
-              user:
-                result.rows[0]
-            }
-          );
-
-        } catch (error) {
-
-          console.error(
-            "Register error:",
-            error
-          );
-
-          sendJSON(
-            res,
-            500,
-            {
-              success: false,
-              error:
-                "Unable to create account."
-            }
-          );
-        }
-
-        return;
-      }
-
-
-      // ==================================
-      // LOGIN
-      // ==================================
-
-      if (
-        req.method === "POST" &&
-        req.url === "/login"
-      ) {
-
-        try {
-
-          const data =
-            await readBody(req);
-
-          const email =
-            String(
-              data.email || ""
-            )
-            .trim()
-            .toLowerCase();
-
-          const password =
-            String(
-              data.password || ""
-            );
-
-          if (
-            !email ||
-            !password
-          ) {
-
-            sendJSON(
-              res,
-              400,
-              {
-                success: false,
-                error:
-                  "Email and password are required."
-              }
-            );
-
-            return;
-          }
-
-          const result =
-            await pool.query(
-              `
-              SELECT
-                id,
-                name,
-                email,
-                password_hash,
-                plan,
-                role,
-                created_at
-              FROM users
-              WHERE email = $1
-              LIMIT 1
-              `,
-              [email]
-            );
-
-          if (
-            result.rows.length === 0
-          ) {
-
-            sendJSON(
-              res,
-              401,
-              {
-                success: false,
-                error:
-                  "Invalid email or password."
-              }
-            );
-
-            return;
-          }
-
-          const user =
-            result.rows[0];
-
-          const passwordCorrect =
-            await verifyPassword(
-              password,
-              user.password_hash
-            );
-
-          if (!passwordCorrect) {
-
-            sendJSON(
-              res,
-              401,
-              {
-                success: false,
-                error:
-                  "Invalid email or password."
-              }
-            );
-
-            return;
-          }
-
-          const token =
-            await createSession(
-              user.id
-            );
-
-          sendJSON(
-            res,
-            200,
-            {
-              success: true,
-              message:
-                "Login successful.",
-
-              token: token,
-
-              user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                plan: user.plan,
-                role: user.role,
-                created_at:
-                  user.created_at
-              }
-            }
-          );
-
-        } catch (error) {
-
-          console.error(
-            "Login error:",
-            error
-          );
-
-          sendJSON(
-            res,
-            500,
-            {
-              success: false,
-              error:
-                "Unable to login."
-            }
-          );
-        }
-
-        return;
-      }
-
-
-      // ==================================
-      // PROFILE
-      // ==================================
-
-      if (
-        req.method === "GET" &&
-        req.url === "/me"
-      ) {
-
-        try {
-
-          const user =
-            await getCurrentUser(req);
-
-          if (!user) {
-
-            sendJSON(
-              res,
-              401,
-              {
-                success: false,
-                error:
-                  "Not authenticated."
-              }
-            );
-
-            return;
-          }
-
-          sendJSON(
-            res,
-            200,
-            {
-              success: true,
-              user: user
-            }
-          );
-
-        } catch (error) {
-
-          console.error(
-            "Profile error:",
-            error
-          );
-
-          sendJSON(
-            res,
-            500,
-            {
-              success: false,
-              error:
-                "Unable to load profile."
-            }
-          );
-        }
-
-        return;
-      }
-
-
-      // ==================================
-      // GET CHAT HISTORY
-      // ==================================
-
-      if (
-        req.method === "GET" &&
-        req.url === "/chats"
-      ) {
-
-        try {
-
-          const user =
-            await getCurrentUser(req);
-
-          if (!user) {
-
-            sendJSON(
-              res,
-              401,
-              {
-                success: false,
-                error:
-                  "Please login first."
-              }
-            );
-
-            return;
-          }
-
-          const result =
-            await pool.query(
-              `
-              SELECT
-                id,
-                title,
-                created_at
-              FROM chats
-              WHERE user_id = $1
-              ORDER BY created_at DESC
-              `,
-              [user.id]
-            );
-
-          sendJSON(
-            res,
-            200,
-            {
-              success: true,
-              chats: result.rows
-            }
-          );
-
-        } catch (error) {
-
-          console.error(
-            "Chat history error:",
-            error
-          );
-
-          sendJSON(
-            res,
-            500,
-            {
-              success: false,
-              error:
-                "Unable to load chat history."
-            }
-          );
-        }
-
-        return;
-      }
-
-
-      // ==================================
-      // GET SINGLE CHAT + MESSAGES
-      // ==================================
-
-      if (
-        req.method === "GET" &&
-        req.url.startsWith("/chats/")
-      ) {
-
-        try {
-
-          const user =
-            await getCurrentUser(req);
-
-          if (!user) {
-
-            sendJSON(
-              res,
-              401,
-              {
-                success: false,
-                error:
-                  "Please login first."
-              }
-            );
-
-            return;
-          }
-
-          const chatId =
-            req.url
-              .substring("/chats/".length)
-              .split("?")[0];
-
-          if (!/^\d+$/.test(chatId)) {
-
-            sendJSON(
-              res,
-              400,
-              {
-                success: false,
-                error:
-                  "Invalid chat ID."
-              }
-            );
-
-            return;
-          }
-
-          const chatResult =
-            await pool.query(
-              `
-              SELECT
-                id,
-                title,
-                created_at
-              FROM chats
-              WHERE
-                id = $1
-                AND user_id = $2
-              LIMIT 1
-              `,
-              [
-                chatId,
-                user.id
-              ]
-            );
-
-          if (
-            chatResult.rows.length === 0
-          ) {
-
-            sendJSON(
-              res,
-              404,
-              {
-                success: false,
-                error:
-                  "Chat not found."
-              }
-            );
-
-            return;
-          }
-
-          const messageResult =
-            await pool.query(
-              `
-              SELECT
-                id,
-                role,
-                content,
-                created_at
-              FROM messages
-              WHERE chat_id = $1
-              ORDER BY id ASC
-              `,
-              [chatId]
-            );
-
-          sendJSON(
-            res,
-            200,
-            {
-              success: true,
-
-              chat:
-                chatResult.rows[0],
-
-              messages:
-                messageResult.rows
-            }
-          );
-
-        } catch (error) {
-
-          console.error(
-            "Single chat error:",
-            error
-          );
-
-          sendJSON(
-            res,
-            500,
-            {
-              success: false,
-              error:
-                "Unable to load chat."
-            }
-          );
-        }
-
-        return;
-      }
-
-
-      // ==================================
-      // DELETE CHAT
-      // ==================================
-
-      if (
-        req.method === "DELETE" &&
-        req.url.startsWith("/chats/")
-      ) {
-
-        try {
-
-          const user =
-            await getCurrentUser(req);
-
-          if (!user) {
-
-            sendJSON(
-              res,
-              401,
-              {
-                success: false,
-                error:
-                  "Please login first."
-              }
-            );
-
-            return;
-          }
-
-          const chatId =
-            req.url
-              .substring("/chats/".length)
-              .split("?")[0];
-
-          if (!/^\d+$/.test(chatId)) {
-
-            sendJSON(
-              res,
-              400,
-              {
-                success: false,
-                error:
-                  "Invalid chat ID."
-              }
-            );
-
-            return;
-          }
-
-          const result =
-            await pool.query(
-              `
-              DELETE FROM chats
-              WHERE
-                id = $1
-                AND user_id = $2
-              RETURNING id
-              `,
-              [
-                chatId,
-                user.id
-              ]
-            );
-
-          if (
-            result.rows.length === 0
-          ) {
-
-            sendJSON(
-              res,
-              404,
-              {
-                success: false,
-                error:
-                  "Chat not found."
-              }
-            );
-
-            return;
-          }
-
-          sendJSON(
-            res,
-            200,
-            {
-              success: true,
-              message:
-                "Chat deleted successfully."
-            }
-          );
-
-        } catch (error) {
-
-          console.error(
-            "Delete chat error:",
-            error
-          );
-
-          sendJSON(
-            res,
-            500,
-            {
-              success: false,
-              error:
-                "Unable to delete chat."
-            }
-          );
-        }
-
-        return;
-      }
-
-
-      // ==================================
-      // LOGOUT
-      // ==================================
-
-      if (
-        req.method === "POST" &&
-        req.url === "/logout"
-      ) {
-
-        try {
-
-          const token =
-            getToken(req);
-
-          if (token) {
-
-            const tokenHash =
-              crypto
-                .createHash("sha256")
-                .update(token)
-                .digest("hex");
-
-            await pool.query(
-              `
-              DELETE FROM sessions
-              WHERE token_hash = $1
-              `,
-              [tokenHash]
-            );
-          }
-
-          sendJSON(
-            res,
-            200,
-            {
-              success: true,
-              message:
-                "Logged out successfully."
-            }
-          );
-
-        } catch (error) {
-
-          console.error(
-            "Logout error:",
-            error
-          );
-
-          sendJSON(
-            res,
-            500,
-            {
-              success: false,
-              error:
-                "Unable to logout."
-            }
-          );
-        }
-
-        return;
-      }
-
-
-      // ==================================
-      // REAL AI CHAT
-      // ==================================
-
-      if (
-        req.method === "POST" &&
-        req.url === "/chat"
-      ) {
-
-        try {
-
-          const user =
-            await getCurrentUser(req);
-
-          if (!user) {
-
-            sendJSON(
-              res,
-              401,
-              {
-                success: false,
-                error:
-                  "Please login first."
-              }
-            );
-
-            return;
-          }
-
-          const data =
-            await readBody(req);
-
-          const message =
-            String(
-              data.message || ""
-            ).trim();
-
-          const requestedChatId =
-            data.chatId;
-
-          if (!message) {
-
-            sendJSON(
-              res,
-              400,
-              {
-                success: false,
-                error:
-                  "Message is required."
-              }
-            );
-
-            return;
-          }
-
-          if (
-            message.length > 4000
-          ) {
-
-            sendJSON(
-              res,
-              400,
-              {
-                success: false,
-                error:
-                  "Message is too long."
-              }
-            );
-
-            return;
-          }
-
-
-          // ==================================
-          // FIND OR CREATE CHAT
-          // ==================================
-
-          let chat;
-
-          if (
-            requestedChatId !== undefined &&
-            requestedChatId !== null &&
-            /^\d+$/.test(
-              String(requestedChatId)
-            )
-          ) {
-
-            const existingChat =
-              await pool.query(
-                `
-                SELECT
-                  id,
-                  title,
-                  created_at
-                FROM chats
-                WHERE
-                  id = $1
-                  AND user_id = $2
-                LIMIT 1
-                `,
-                [
-                  String(requestedChatId),
-                  user.id
-                ]
-              );
-
-            if (
-              existingChat.rows.length === 0
-            ) {
-
-              sendJSON(
-                res,
-                404,
-                {
-                  success: false,
-                  error:
-                    "Chat not found."
-                }
-              );
-
-              return;
-            }
-
-            chat =
-              existingChat.rows[0];
-
-          } else {
-
-            const chatResult =
-              await pool.query(
-                `
-                INSERT INTO chats
-                (
-                  user_id,
-                  title
-                )
-                VALUES
-                (
-                  $1,
-                  $2
-                )
-                RETURNING
-                  id,
-                  title,
-                  created_at
-                `,
-                [
-                  user.id,
-                  message.substring(0, 80)
-                ]
-              );
-
-            chat =
-              chatResult.rows[0];
-          }
-
-
-          // ==================================
-          // ASK AI
-          // ==================================
-
-          const ai =
-            await askAI(message);
-
-
-          // ==================================
-          // SAVE USER MESSAGE
-          // ==================================
-
-          await pool.query(
-            `
-            INSERT INTO messages
-            (
-              chat_id,
-              role,
-              content
-            )
-            VALUES
-            (
-              $1,
-              'user',
-              $2
-            )
-            `,
-            [
-              chat.id,
-              message
-            ]
-          );
-
-
-          // ==================================
-          // SAVE AI MESSAGE
-          // ==================================
-
-          await pool.query(
-            `
-            INSERT INTO messages
-            (
-              chat_id,
-              role,
-              content
-            )
-            VALUES
-            (
-              $1,
-              'assistant',
-              $2
-            )
-            `,
-            [
-              chat.id,
-              ai.reply
-            ]
-          );
-
-
-          // ==================================
-          // RESPONSE
-          // ==================================
-
-          sendJSON(
-            res,
-            200,
-            {
-              success: true,
-
-              reply:
-                ai.reply,
-
-              model:
-                ai.model,
-
-              chat: {
-                id:
-                  chat.id,
-
-                title:
-                  chat.title,
-
-                created_at:
-                  chat.created_at
-              }
-            }
-          );
-
-        } catch (error) {
-
-          console.error(
-            "AI Chat error:",
-            error
-          );
-
-          sendJSON(
-            res,
-            500,
-            {
-              success: false,
-              error:
-                error.message ||
-                "Unable to process AI chat."
-            }
-          );
-        }
-
-        return;
-      }
-
-
-      // ==================================
-      // CHAT API TEST
-      // ==================================
-
-      if (
-        req.method === "GET" &&
-        req.url === "/chat"
-      ) {
-
-        sendJSON(
-          res,
-          200,
-          {
-            success: true,
-            message:
-              "Real AI Chat API is ready."
-          }
-        );
-
-        return;
-      }
-
-
-      // ==================================
-      // 404
-      // ==================================
-
-      sendJSON(
-        res,
-        404,
-        {
-          success: false,
-          error:
-            "Not Found"
-        }
-      );
-
+      logoutLocal();
     }
   );
 
 
-// ========================================
-// START SERVER
-// ========================================
+  function logoutLocal() {
 
-const PORT =
-  process.env.PORT || 3000;
-
-
-async function startServer() {
-
-  try {
-
-    await initDatabase();
-
-    console.log(
-      "Database initialization completed."
+    localStorage.removeItem(
+      TOKEN_KEY
     );
 
-  } catch (error) {
+    token = null;
+    currentUser = null;
+    currentChatId = null;
 
-    console.error(
-      "Database initialization failed:",
-      error
-    );
+    app.style.display = "none";
+    loginScreen.style.display = "flex";
+
+    emailInput.value = "";
+    passwordInput.value = "";
+    loginError.textContent = "";
   }
 
-  server.listen(
-    PORT,
+
+  /* -------------------------
+     MOBILE SIDEBAR
+  ------------------------- */
+
+  menuBtn.addEventListener(
+    "click",
     () => {
 
-      console.log(
-        `EMORA AI Server running on port ${PORT}`
+      sidebar.classList.add(
+        "open"
       );
 
+      overlay.classList.add(
+        "show"
+      );
     }
   );
-}
 
 
-startServer();
+  overlay.addEventListener(
+    "click",
+    closeSidebar
+  );
+
+
+  function closeSidebar() {
+
+    sidebar.classList.remove(
+      "open"
+    );
+
+    overlay.classList.remove(
+      "show"
+    );
+  }
+
+
+  /* -------------------------
+     SCROLL
+  ------------------------- */
+
+  function scrollBottom() {
+
+    requestAnimationFrame(() => {
+
+      chatArea.scrollTop =
+        chatArea.scrollHeight;
+
+    });
+  }
+
+
+  /* -------------------------
+     AUTO LOGIN
+  ------------------------- */
+
+  async function checkSession() {
+
+    if (!token) {
+
+      loginScreen.style.display =
+        "flex";
+
+      app.style.display =
+        "none";
+
+      return;
+    }
+
+    try {
+
+      await loadUser();
+
+      showApp();
+
+    } catch {
+
+      logoutLocal();
+    }
+  }
+
+
+  checkSession();
+
+</script>
+
+</body>
+</html>
