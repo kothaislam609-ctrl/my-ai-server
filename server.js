@@ -191,7 +191,7 @@ function sendJSON(res, statusCode, data) {
         "*",
 
       "Access-Control-Allow-Methods":
-        "GET, POST, OPTIONS",
+        "GET, POST, DELETE, OPTIONS",
 
       "Access-Control-Allow-Headers":
         "Content-Type, Authorization"
@@ -393,11 +393,9 @@ async function askAI(message) {
     );
   }
 
-
   const model =
     process.env.OPENAI_MODEL ||
     "gpt-6-luna";
-
 
   const response =
     await fetch(
@@ -418,17 +416,15 @@ async function askAI(message) {
           model: model,
 
           instructions:
-            "You are a helpful AI assistant. Reply naturally and clearly. If the user writes in Bengali, reply in Bengali. If the user writes in English, reply in English.",
+            "You are EMORA AI, a helpful AI assistant. Reply naturally and clearly. If the user writes in Bengali, reply in Bengali. If the user writes in English, reply in English.",
 
           input: message
         })
       }
     );
 
-
   const data =
     await response.json();
-
 
   if (!response.ok) {
 
@@ -442,9 +438,7 @@ async function askAI(message) {
     );
   }
 
-
   let reply = "";
-
 
   if (
     typeof data.output_text ===
@@ -487,14 +481,12 @@ async function askAI(message) {
       reply.trim();
   }
 
-
   if (!reply) {
 
     throw new Error(
       "AI returned an empty response."
     );
   }
-
 
   return {
     reply,
@@ -518,7 +510,7 @@ const server =
 
       res.setHeader(
         "Access-Control-Allow-Methods",
-        "GET, POST, OPTIONS"
+        "GET, POST, DELETE, OPTIONS"
       );
 
       res.setHeader(
@@ -637,7 +629,6 @@ const server =
               data.password || ""
             );
 
-
           if (
             name.length < 2 ||
             name.length > 100
@@ -656,10 +647,8 @@ const server =
             return;
           }
 
-
           const emailRegex =
             /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 
           if (
             !emailRegex.test(email) ||
@@ -679,7 +668,6 @@ const server =
             return;
           }
 
-
           if (
             password.length < 8 ||
             password.length > 128
@@ -698,7 +686,6 @@ const server =
             return;
           }
 
-
           const existing =
             await pool.query(
               `
@@ -709,7 +696,6 @@ const server =
               `,
               [email]
             );
-
 
           if (
             existing.rows.length > 0
@@ -728,12 +714,10 @@ const server =
             return;
           }
 
-
           const passwordHash =
             await hashPassword(
               password
             );
-
 
           const result =
             await pool.query(
@@ -768,7 +752,6 @@ const server =
                 passwordHash
               ]
             );
-
 
           sendJSON(
             res,
@@ -830,7 +813,6 @@ const server =
               data.password || ""
             );
 
-
           if (
             !email ||
             !password
@@ -848,7 +830,6 @@ const server =
 
             return;
           }
-
 
           const result =
             await pool.query(
@@ -868,7 +849,6 @@ const server =
               [email]
             );
 
-
           if (
             result.rows.length === 0
           ) {
@@ -886,17 +866,14 @@ const server =
             return;
           }
 
-
           const user =
             result.rows[0];
-
 
           const passwordCorrect =
             await verifyPassword(
               password,
               user.password_hash
             );
-
 
           if (!passwordCorrect) {
 
@@ -913,12 +890,10 @@ const server =
             return;
           }
 
-
           const token =
             await createSession(
               user.id
             );
-
 
           sendJSON(
             res,
@@ -941,7 +916,6 @@ const server =
               }
             }
           );
-
 
         } catch (error) {
 
@@ -979,7 +953,6 @@ const server =
           const user =
             await getCurrentUser(req);
 
-
           if (!user) {
 
             sendJSON(
@@ -995,7 +968,6 @@ const server =
             return;
           }
 
-
           sendJSON(
             res,
             200,
@@ -1004,7 +976,6 @@ const server =
               user: user
             }
           );
-
 
         } catch (error) {
 
@@ -1029,6 +1000,329 @@ const server =
 
 
       // ==================================
+      // GET CHAT HISTORY
+      // ==================================
+
+      if (
+        req.method === "GET" &&
+        req.url === "/chats"
+      ) {
+
+        try {
+
+          const user =
+            await getCurrentUser(req);
+
+          if (!user) {
+
+            sendJSON(
+              res,
+              401,
+              {
+                success: false,
+                error:
+                  "Please login first."
+              }
+            );
+
+            return;
+          }
+
+          const result =
+            await pool.query(
+              `
+              SELECT
+                id,
+                title,
+                created_at
+              FROM chats
+              WHERE user_id = $1
+              ORDER BY created_at DESC
+              `,
+              [user.id]
+            );
+
+          sendJSON(
+            res,
+            200,
+            {
+              success: true,
+              chats: result.rows
+            }
+          );
+
+        } catch (error) {
+
+          console.error(
+            "Chat history error:",
+            error
+          );
+
+          sendJSON(
+            res,
+            500,
+            {
+              success: false,
+              error:
+                "Unable to load chat history."
+            }
+          );
+        }
+
+        return;
+      }
+
+
+      // ==================================
+      // GET SINGLE CHAT + MESSAGES
+      // ==================================
+
+      if (
+        req.method === "GET" &&
+        req.url.startsWith("/chats/")
+      ) {
+
+        try {
+
+          const user =
+            await getCurrentUser(req);
+
+          if (!user) {
+
+            sendJSON(
+              res,
+              401,
+              {
+                success: false,
+                error:
+                  "Please login first."
+              }
+            );
+
+            return;
+          }
+
+          const chatId =
+            req.url
+              .substring("/chats/".length)
+              .split("?")[0];
+
+          if (!/^\d+$/.test(chatId)) {
+
+            sendJSON(
+              res,
+              400,
+              {
+                success: false,
+                error:
+                  "Invalid chat ID."
+              }
+            );
+
+            return;
+          }
+
+          const chatResult =
+            await pool.query(
+              `
+              SELECT
+                id,
+                title,
+                created_at
+              FROM chats
+              WHERE
+                id = $1
+                AND user_id = $2
+              LIMIT 1
+              `,
+              [
+                chatId,
+                user.id
+              ]
+            );
+
+          if (
+            chatResult.rows.length === 0
+          ) {
+
+            sendJSON(
+              res,
+              404,
+              {
+                success: false,
+                error:
+                  "Chat not found."
+              }
+            );
+
+            return;
+          }
+
+          const messageResult =
+            await pool.query(
+              `
+              SELECT
+                id,
+                role,
+                content,
+                created_at
+              FROM messages
+              WHERE chat_id = $1
+              ORDER BY id ASC
+              `,
+              [chatId]
+            );
+
+          sendJSON(
+            res,
+            200,
+            {
+              success: true,
+
+              chat:
+                chatResult.rows[0],
+
+              messages:
+                messageResult.rows
+            }
+          );
+
+        } catch (error) {
+
+          console.error(
+            "Single chat error:",
+            error
+          );
+
+          sendJSON(
+            res,
+            500,
+            {
+              success: false,
+              error:
+                "Unable to load chat."
+            }
+          );
+        }
+
+        return;
+      }
+
+
+      // ==================================
+      // DELETE CHAT
+      // ==================================
+
+      if (
+        req.method === "DELETE" &&
+        req.url.startsWith("/chats/")
+      ) {
+
+        try {
+
+          const user =
+            await getCurrentUser(req);
+
+          if (!user) {
+
+            sendJSON(
+              res,
+              401,
+              {
+                success: false,
+                error:
+                  "Please login first."
+              }
+            );
+
+            return;
+          }
+
+          const chatId =
+            req.url
+              .substring("/chats/".length)
+              .split("?")[0];
+
+          if (!/^\d+$/.test(chatId)) {
+
+            sendJSON(
+              res,
+              400,
+              {
+                success: false,
+                error:
+                  "Invalid chat ID."
+              }
+            );
+
+            return;
+          }
+
+          const result =
+            await pool.query(
+              `
+              DELETE FROM chats
+              WHERE
+                id = $1
+                AND user_id = $2
+              RETURNING id
+              `,
+              [
+                chatId,
+                user.id
+              ]
+            );
+
+          if (
+            result.rows.length === 0
+          ) {
+
+            sendJSON(
+              res,
+              404,
+              {
+                success: false,
+                error:
+                  "Chat not found."
+              }
+            );
+
+            return;
+          }
+
+          sendJSON(
+            res,
+            200,
+            {
+              success: true,
+              message:
+                "Chat deleted successfully."
+            }
+          );
+
+        } catch (error) {
+
+          console.error(
+            "Delete chat error:",
+            error
+          );
+
+          sendJSON(
+            res,
+            500,
+            {
+              success: false,
+              error:
+                "Unable to delete chat."
+            }
+          );
+        }
+
+        return;
+      }
+
+
+      // ==================================
       // LOGOUT
       // ==================================
 
@@ -1042,7 +1336,6 @@ const server =
           const token =
             getToken(req);
 
-
           if (token) {
 
             const tokenHash =
@@ -1050,7 +1343,6 @@ const server =
                 .createHash("sha256")
                 .update(token)
                 .digest("hex");
-
 
             await pool.query(
               `
@@ -1061,7 +1353,6 @@ const server =
             );
           }
 
-
           sendJSON(
             res,
             200,
@@ -1071,7 +1362,6 @@ const server =
                 "Logged out successfully."
             }
           );
-
 
         } catch (error) {
 
@@ -1106,10 +1396,8 @@ const server =
 
         try {
 
-          // User must be logged in
           const user =
             await getCurrentUser(req);
-
 
           if (!user) {
 
@@ -1126,7 +1414,6 @@ const server =
             return;
           }
 
-
           const data =
             await readBody(req);
 
@@ -1135,6 +1422,8 @@ const server =
               data.message || ""
             ).trim();
 
+          const requestedChatId =
+            data.chatId;
 
           if (!message) {
 
@@ -1150,7 +1439,6 @@ const server =
 
             return;
           }
-
 
           if (
             message.length > 4000
@@ -1170,42 +1458,102 @@ const server =
           }
 
 
-          // Ask OpenAI
+          // ==================================
+          // FIND OR CREATE CHAT
+          // ==================================
+
+          let chat;
+
+          if (
+            requestedChatId !== undefined &&
+            requestedChatId !== null &&
+            /^\d+$/.test(
+              String(requestedChatId)
+            )
+          ) {
+
+            const existingChat =
+              await pool.query(
+                `
+                SELECT
+                  id,
+                  title,
+                  created_at
+                FROM chats
+                WHERE
+                  id = $1
+                  AND user_id = $2
+                LIMIT 1
+                `,
+                [
+                  String(requestedChatId),
+                  user.id
+                ]
+              );
+
+            if (
+              existingChat.rows.length === 0
+            ) {
+
+              sendJSON(
+                res,
+                404,
+                {
+                  success: false,
+                  error:
+                    "Chat not found."
+                }
+              );
+
+              return;
+            }
+
+            chat =
+              existingChat.rows[0];
+
+          } else {
+
+            const chatResult =
+              await pool.query(
+                `
+                INSERT INTO chats
+                (
+                  user_id,
+                  title
+                )
+                VALUES
+                (
+                  $1,
+                  $2
+                )
+                RETURNING
+                  id,
+                  title,
+                  created_at
+                `,
+                [
+                  user.id,
+                  message.substring(0, 80)
+                ]
+              );
+
+            chat =
+              chatResult.rows[0];
+          }
+
+
+          // ==================================
+          // ASK AI
+          // ==================================
+
           const ai =
             await askAI(message);
 
 
-          // Create chat
-          const chatResult =
-            await pool.query(
-              `
-              INSERT INTO chats
-              (
-                user_id,
-                title
-              )
-              VALUES
-              (
-                $1,
-                $2
-              )
-              RETURNING
-                id,
-                title,
-                created_at
-              `,
-              [
-                user.id,
-                message.substring(0, 80)
-              ]
-            );
+          // ==================================
+          // SAVE USER MESSAGE
+          // ==================================
 
-
-          const chat =
-            chatResult.rows[0];
-
-
-          // Save user message
           await pool.query(
             `
             INSERT INTO messages
@@ -1228,7 +1576,10 @@ const server =
           );
 
 
-          // Save AI message
+          // ==================================
+          // SAVE AI MESSAGE
+          // ==================================
+
           await pool.query(
             `
             INSERT INTO messages
@@ -1251,7 +1602,10 @@ const server =
           );
 
 
-          // Send response
+          // ==================================
+          // RESPONSE
+          // ==================================
+
           sendJSON(
             res,
             200,
@@ -1277,7 +1631,6 @@ const server =
             }
           );
 
-
         } catch (error) {
 
           console.error(
@@ -1302,7 +1655,7 @@ const server =
 
 
       // ==================================
-      // CHAT TEST
+      // CHAT API TEST
       // ==================================
 
       if (
@@ -1368,13 +1721,12 @@ async function startServer() {
     );
   }
 
-
   server.listen(
     PORT,
     () => {
 
       console.log(
-        `My AI Server running on port ${PORT}`
+        `EMORA AI Server running on port ${PORT}`
       );
 
     }
