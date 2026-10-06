@@ -1,1278 +1,1885 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EMORA AI</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background: #0b0b10;
-      color: #fff;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    button,
-    textarea,
-    input {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    /* LOGIN */
-    #loginPage {
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background:
-        radial-gradient(circle at top, #302050 0, transparent 45%),
-        #08080d;
-    }
-
-    .login-box {
-      width: 100%;
-      max-width: 400px;
-      padding: 30px 24px;
-      border: 1px solid #292936;
-      border-radius: 24px;
-      background: rgba(20, 20, 29, .94);
-      box-shadow: 0 20px 60px rgba(0,0,0,.5);
-    }
-
-    .logo {
-      text-align: center;
-      font-size: 34px;
-      font-weight: 800;
-      letter-spacing: 3px;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #9b9ba8;
-      margin-bottom: 28px;
-      font-size: 14px;
-    }
-
-    .input {
-      width: 100%;
-      padding: 14px 15px;
-      margin-bottom: 13px;
-      border: 1px solid #30303d;
-      border-radius: 13px;
-      outline: none;
-      background: #111118;
-      color: white;
-    }
-
-    .input:focus {
-      border-color: #8b5cf6;
-    }
-
-    .main-btn {
-      width: 100%;
-      border: 0;
-      border-radius: 13px;
-      padding: 14px;
-      background: linear-gradient(135deg,#8b5cf6,#6366f1);
-      color: white;
-      font-weight: bold;
-      margin-top: 5px;
-    }
-
-    .switch {
-      text-align: center;
-      color: #9999a5;
-      margin-top: 18px;
-      font-size: 14px;
-    }
-
-    .switch span {
-      color: #a78bfa;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    #authMessage {
-      text-align: center;
-      color: #ff7373;
-      margin-top: 12px;
-      font-size: 13px;
-      min-height: 18px;
-    }
-
-    /* APP */
-    #app {
-      display: none;
-      height: 100vh;
-    }
-
-    .app {
-      display: flex;
-      height: 100%;
-    }
-
-    /* SIDEBAR */
-    .sidebar {
-      width: 280px;
-      background: #101017;
-      border-right: 1px solid #252530;
-      display: flex;
-      flex-direction: column;
-      padding: 15px;
-      flex-shrink: 0;
-    }
-
-    .brand {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      padding: 10px 8px 18px;
-    }
-
-    .new-chat {
-      border: 1px solid #343442;
-      background: #191922;
-      color: white;
-      border-radius: 13px;
-      padding: 12px;
-      margin-bottom: 18px;
-      text-align: left;
-    }
-
-    .new-chat:hover {
-      background: #22222e;
-    }
-
-    .history-title {
-      color: #777784;
-      font-size: 12px;
-      margin: 0 8px 10px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    #chatList {
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    .chat-item {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 11px 9px;
-      border-radius: 11px;
-      margin-bottom: 4px;
-      color: #c9c9d3;
-    }
-
-    .chat-item:hover,
-    .chat-item.active {
-      background: #1e1e29;
-      color: white;
-    }
-
-    .chat-title {
-      flex: 1;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      font-size: 14px;
-    }
-
-    .delete-chat {
-      border: 0;
-      background: transparent;
-      color: #777784;
-      padding: 4px;
-    }
-
-    .delete-chat:hover {
-      color: #ff6262;
-    }
-
-    .profile {
-      border-top: 1px solid #292934;
-      padding-top: 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: linear-gradient(135deg,#8b5cf6,#ec4899);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-
-    .profile-info {
-      flex: 1;
-      overflow: hidden;
-    }
-
-    .profile-name {
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .profile-email {
-      color: #777784;
-      font-size: 11px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .logout {
-      border: 0;
-      background: transparent;
-      color: #aaa;
-      font-size: 12px;
-      padding: 5px;
-    }
-
-    /* MAIN */
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .topbar {
-      height: 60px;
-      border-bottom: 1px solid #252530;
-      display: flex;
-      align-items: center;
-      padding: 0 16px;
-      gap: 12px;
-      background: #0e0e14;
-    }
-
-    .menu-btn {
-      display: none;
-      border: 0;
-      background: transparent;
-      color: white;
-      font-size: 24px;
-    }
-
-    .top-title {
-      font-weight: bold;
-    }
-
-    .status {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: #8f8f9d;
-      font-size: 12px;
-    }
-
-    .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #4ade80;
-    }
-
-    /* CHAT */
-    #chatArea {
-      flex: 1;
-      overflow-y: auto;
-      padding: 25px 15px 130px;
-    }
-
-    .welcome {
-      max-width: 700px;
-      margin: 10vh auto 0;
-      text-align: center;
-    }
-
-    .welcome-logo {
-      font-size: 48px;
-      margin-bottom: 12px;
-    }
-
-    .welcome h1 {
-      font-size: 30px;
-      margin-bottom: 10px;
-    }
-
-    .welcome p {
-      color: #92929e;
-      line-height: 1.6;
-    }
-
-    .messages {
-      width: 100%;
-      max-width: 850px;
-      margin: auto;
-    }
-
-    .message {
-      display: flex;
-      gap: 12px;
-      margin: 18px 0;
-    }
-
-    .message.user {
-      justify-content: flex-end;
-    }
-
-    .message-avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #242431;
-      font-size: 14px;
-    }
-
-    .user .message-avatar {
-      order: 2;
-      background: #4f46e5;
-    }
-
-    .bubble {
-      max-width: min(760px, 82%);
-      padding: 12px 15px;
-      border-radius: 16px;
-      background: #171720;
-      border: 1px solid #282834;
-      line-height: 1.55;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .user .bubble {
-      background: #29234a;
-      border-color: #41376d;
-    }
-
-    /* TYPING */
-    .typing {
-      display: none;
-      width: 100%;
-      max-width: 850px;
-      margin: 10px auto;
-      color: #8e8e9c;
-      font-size: 13px;
-    }
-
-    .typing span {
-      display: inline-block;
-      animation: blink 1.2s infinite;
-    }
-
-    .typing span:nth-child(2) {
-      animation-delay: .2s;
-    }
-
-    .typing span:nth-child(3) {
-      animation-delay: .4s;
-    }
-
-    @keyframes blink {
-      0%,100% { opacity: .2; }
-      50% { opacity: 1; }
-    }
-
-    /* INPUT */
-    .composer-wrap {
-      position: fixed;
-      bottom: 0;
-      left: 280px;
-      right: 0;
-      padding: 12px 15px 18px;
-      background: linear-gradient(transparent,#0b0b10 30%);
-    }
-
-    .composer {
-      max-width: 850px;
-      margin: auto;
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-      padding: 9px;
-      border: 1px solid #343440;
-      border-radius: 17px;
-      background: #14141c;
-    }
-
-    #messageInput {
-      flex: 1;
-      min-height: 42px;
-      max-height: 140px;
-      resize: none;
-      border: 0;
-      outline: none;
-      background: transparent;
-      color: white;
-      padding: 10px;
-    }
-
-    #messageInput::placeholder {
-      color: #70707d;
-    }
-
-    #sendBtn {
-      width: 42px;
-      height: 42px;
-      border: 0;
-      border-radius: 12px;
-      background: #7654e8;
-      color: white;
-      font-size: 18px;
-    }
-
-    #sendBtn:disabled {
-      opacity: .45;
-      cursor: not-allowed;
-    }
-
-    .small-note {
-      max-width: 850px;
-      margin: 6px auto 0;
-      text-align: center;
-      color: #5f5f6b;
-      font-size: 10px;
-    }
-
-    /* MOBILE */
-    @media (max-width: 700px) {
-      .sidebar {
-        position: fixed;
-        z-index: 20;
-        top: 0;
-        bottom: 0;
-        left: -290px;
-        transition: .25s;
-        box-shadow: 10px 0 40px rgba(0,0,0,.5);
-      }
-
-      .sidebar.open {
-        left: 0;
-      }
-
-      .menu-btn {
-        display: block;
-      }
-
-      .composer-wrap {
-        left: 0;
-      }
-
-      .bubble {
-        max-width: 86%;
-      }
-
-      .welcome h1 {
-        font-size: 25px;
-      }
-    }
-
-    .loading {
-      opacity: .6;
-      pointer-events: none;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMORA AI</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #09090b;
+  color: #fff;
+  height: 100vh;
+  overflow: hidden;
+}
+
+button,
+textarea,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
+}
+
+
+/* =========================================================
+   AUTH
+========================================================= */
+
+.auth-screen {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background:
+    radial-gradient(circle at top, #24243a 0%, #09090b 55%);
+}
+
+.auth-box {
+  width: 100%;
+  max-width: 390px;
+  background: rgba(25, 25, 30, 0.95);
+  border: 1px solid #303038;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.45);
+}
+
+.logo {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.logo-sub {
+  text-align: center;
+  color: #999;
+  margin-bottom: 25px;
+}
+
+.auth-box input {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  border: 1px solid #3b3b44;
+  background: #111116;
+  color: white;
+  outline: none;
+}
+
+.auth-box input:focus {
+  border-color: #7777ff;
+}
+
+.primary-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 14px;
+  background: #ffffff;
+  color: #080808;
+  font-weight: 700;
+}
+
+.switch-auth {
+  margin-top: 18px;
+  text-align: center;
+  color: #aaa;
+}
+
+.switch-auth button {
+  background: none;
+  border: 0;
+  color: #fff;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   APP
+========================================================= */
+
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar {
+  width: 270px;
+  background: #101014;
+  border-right: 1px solid #292930;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  flex-shrink: 0;
+}
+
+.sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.sidebar-logo {
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.new-chat {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #36363e;
+  border-radius: 12px;
+  background: #19191f;
+  color: white;
+  margin-bottom: 15px;
+}
+
+.new-chat:hover {
+  background: #222229;
+}
+
+.recent-title {
+  color: #777;
+  font-size: 12px;
+  margin: 5px 4px 8px;
+}
+
+.chat-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.chat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.chat-open {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: #ccc;
+  text-align: left;
+  padding: 11px;
+  border-radius: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.chat-open:hover {
+  background: #1c1c22;
+  color: white;
+}
+
+.chat-delete {
+  border: 0;
+  background: transparent;
+  color: #777;
+  padding: 8px;
+}
+
+.chat-delete:hover {
+  color: #ff6b6b;
+}
+
+.profile {
+  border-top: 1px solid #292930;
+  padding-top: 14px;
+}
+
+.profile-name {
+  font-weight: 700;
+}
+
+.profile-email {
+  color: #777;
+  font-size: 12px;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logout {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #33333b;
+  background: transparent;
+  color: #ccc;
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  height: 60px;
+  border-bottom: 1px solid #292930;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.menu-btn {
+  display: none;
+  border: 0;
+  background: transparent;
+  color: white;
+  font-size: 22px;
+}
+
+.status {
+  font-size: 12px;
+  color: #64e291;
+}
+
+.chat-title {
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   CHAT
+========================================================= */
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px 15px 120px;
+}
+
+.message {
+  max-width: 850px;
+  margin: 0 auto 18px;
+}
+
+.message-label {
+  font-size: 12px;
+  color: #777;
+  margin-bottom: 6px;
+}
+
+.bubble {
+  display: inline-block;
+  max-width: 90%;
+  padding: 12px 15px;
+  border-radius: 16px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.user .bubble {
+  background: #25252d;
+}
+
+.assistant .bubble {
+  background: #15151a;
+  border: 1px solid #292930;
+}
+
+
+/* =========================================================
+   THINKING
+========================================================= */
+
+.ai-thinking {
+  max-width: 850px;
+  margin: 0 auto 18px;
+}
+
+.thinking-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border: 1px solid #292930;
+  background: #15151a;
+  border-radius: 16px;
+  color: #aaa;
+  font-size: 13px;
+}
+
+.thinking-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.thinking-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #aaa;
+  animation: thinking 1.2s infinite;
+}
+
+.thinking-dots span:nth-child(2) {
+  animation-delay: .2s;
+}
+
+.thinking-dots span:nth-child(3) {
+  animation-delay: .4s;
+}
+
+@keyframes thinking {
+  0%, 60%, 100% {
+    opacity: .25;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+
+/* =========================================================
+   IMAGE
+========================================================= */
+
+.generated-image {
+  display: block;
+  width: 100%;
+  max-width: 650px;
+  margin-top: 10px;
+  border-radius: 16px;
+  border: 1px solid #33333b;
+}
+
+
+/* =========================================================
+   INPUT AREA
+========================================================= */
+
+.input-area {
+  position: fixed;
+  left: 270px;
+  right: 0;
+  bottom: 0;
+  padding: 12px 15px 15px;
+  background: linear-gradient(
+    transparent,
+    #09090b 25%
+  );
+}
+
+.composer {
+  max-width: 850px;
+  margin: 0 auto;
+  background: #15151a;
+  border: 1px solid #303038;
+  border-radius: 18px;
+  padding: 10px;
+}
+
+.tool-row {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 8px;
+  overflow-x: auto;
+}
+
+.tool-btn {
+  white-space: nowrap;
+  border: 1px solid #36363e;
+  background: #1c1c22;
+  color: #ddd;
+  padding: 7px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.tool-btn:hover {
+  background: #27272f;
+}
+
+.composer-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+#messageInput {
+  flex: 1;
+  min-height: 44px;
+  max-height: 150px;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: white;
+  padding: 11px;
+}
+
+.send-btn {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: white;
+  color: black;
+  font-size: 18px;
+}
+
+.image-preview-box {
+  display: none;
+  margin-bottom: 8px;
+  position: relative;
+  width: fit-content;
+}
+
+.image-preview-box img {
+  max-width: 130px;
+  max-height: 100px;
+  border-radius: 12px;
+  border: 1px solid #444;
+}
+
+.clear-image {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  border: 0;
+  background: #ff4d4d;
+  color: white;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .sidebar {
+    position: fixed;
+    z-index: 20;
+    left: -280px;
+    top: 0;
+    bottom: 0;
+    transition: .25s;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .menu-btn {
+    display: block;
+  }
+
+  .input-area {
+    left: 0;
+  }
+
+  .messages {
+    padding-bottom: 145px;
+  }
+}
+</style>
 </head>
 
 <body>
 
-  <!-- LOGIN -->
-  <section id="loginPage">
-    <div class="login-box">
 
-      <div class="logo">EMORA</div>
-      <div class="subtitle">Your intelligent AI assistant</div>
+<!-- =======================================================
+     AUTH SCREEN
+======================================================= -->
 
-      <div id="registerFields" style="display:none;">
-        <input id="nameInput" class="input" type="text" placeholder="Your name">
-      </div>
+<div id="authScreen" class="auth-screen">
 
-      <input id="emailInput" class="input" type="email" placeholder="Email">
-      <input id="passwordInput" class="input" type="password" placeholder="Password">
+  <div class="auth-box">
 
-      <button id="authBtn" class="main-btn" onclick="handleAuth()">
+    <div class="logo">
+      EMORA AI
+    </div>
+
+    <div class="logo-sub">
+      Your intelligent AI assistant
+    </div>
+
+
+    <!-- LOGIN -->
+
+    <div id="loginForm">
+
+      <input
+        id="loginEmail"
+        type="email"
+        placeholder="Email"
+        autocomplete="email"
+      >
+
+      <input
+        id="loginPassword"
+        type="password"
+        placeholder="Password"
+        autocomplete="current-password"
+      >
+
+      <button
+        class="primary-btn"
+        onclick="login()"
+      >
         Login
       </button>
 
-      <div id="authMessage"></div>
-
-      <div class="switch">
-        <span id="switchText">Don't have an account?</span>
-        <span id="switchBtn" onclick="toggleAuth()"> Create account</span>
+      <div class="switch-auth">
+        Don't have an account?
+        <button onclick="showRegister()">
+          Create account
+        </button>
       </div>
 
     </div>
-  </section>
 
 
-  <!-- APP -->
-  <section id="app">
+    <!-- REGISTER -->
 
-    <div class="app">
+    <div id="registerForm" class="hidden">
 
-      <!-- SIDEBAR -->
-      <aside id="sidebar" class="sidebar">
+      <input
+        id="registerName"
+        type="text"
+        placeholder="Name"
+        autocomplete="name"
+      >
 
-        <div class="brand">EMORA AI</div>
+      <input
+        id="registerEmail"
+        type="email"
+        placeholder="Email"
+        autocomplete="email"
+      >
 
-        <button class="new-chat" onclick="startNewChat()">
-          ＋ New Chat
+      <input
+        id="registerPassword"
+        type="password"
+        placeholder="Password"
+        autocomplete="new-password"
+      >
+
+      <button
+        class="primary-btn"
+        onclick="register()"
+      >
+        Create account
+      </button>
+
+      <div class="switch-auth">
+        Already have an account?
+        <button onclick="showLogin()">
+          Login
         </button>
-
-        <div class="history-title">Recent Chats</div>
-
-        <div id="chatList"></div>
-
-        <div class="profile">
-
-          <div id="avatar" class="avatar">E</div>
-
-          <div class="profile-info">
-            <div id="profileName" class="profile-name">User</div>
-            <div id="profileEmail" class="profile-email"></div>
-          </div>
-
-          <button class="logout" onclick="logout()">
-            Logout
-          </button>
-
-        </div>
-
-      </aside>
-
-
-      <!-- MAIN -->
-      <main class="main">
-
-        <header class="topbar">
-
-          <button class="menu-btn" onclick="toggleSidebar()">
-            ☰
-          </button>
-
-          <div id="topTitle" class="top-title">
-            EMORA AI
-          </div>
-
-          <div class="status">
-            <span class="dot"></span>
-            Online
-          </div>
-
-        </header>
-
-
-        <div id="chatArea">
-
-          <div id="welcome" class="welcome">
-
-            <div class="welcome-logo">✦</div>
-
-            <h1>How can I help you?</h1>
-
-            <p>
-              Welcome to EMORA AI.<br>
-              Ask anything and start a conversation.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div id="typing" class="typing">
-          EMORA is thinking
-          <span>.</span><span>.</span><span>.</span>
-        </div>
-
-
-        <div class="composer-wrap">
-
-          <div class="composer">
-
-            <textarea
-              id="messageInput"
-              placeholder="Message EMORA..."
-              rows="1"
-              onkeydown="handleKey(event)"
-            ></textarea>
-
-            <button id="sendBtn" onclick="sendMessage()">
-              ➤
-            </button>
-
-          </div>
-
-          <div class="small-note">
-            EMORA AI can make mistakes. Check important information.
-          </div>
-
-        </div>
-
-      </main>
+      </div>
 
     </div>
 
-  </section>
+  </div>
+</div>
+
+
+<!-- =======================================================
+     APP
+======================================================= -->
+
+<div id="app" class="app hidden">
+
+
+  <!-- SIDEBAR -->
+
+  <aside id="sidebar" class="sidebar">
+
+    <div class="sidebar-top">
+
+      <div class="sidebar-logo">
+        EMORA
+      </div>
+
+    </div>
+
+
+    <button
+      class="new-chat"
+      onclick="newChat()"
+    >
+      ＋ New Chat
+    </button>
+
+
+    <div class="recent-title">
+      RECENT CHATS
+    </div>
+
+
+    <div
+      id="chatList"
+      class="chat-list"
+    ></div>
+
+
+    <div class="profile">
+
+      <div
+        id="profileName"
+        class="profile-name"
+      >
+        User
+      </div>
+
+      <div
+        id="profileEmail"
+        class="profile-email"
+      >
+        -
+      </div>
+
+      <button
+        class="logout"
+        onclick="logout()"
+      >
+        Logout
+      </button>
+
+    </div>
+
+  </aside>
+
+
+  <!-- MAIN -->
+
+  <main class="main">
+
+
+    <!-- TOPBAR -->
+
+    <div class="topbar">
+
+      <button
+        class="menu-btn"
+        onclick="toggleSidebar()"
+      >
+        ☰
+      </button>
+
+      <div
+        id="chatTitle"
+        class="chat-title"
+      >
+        New Chat
+      </div>
+
+      <div class="status">
+        ● Online
+      </div>
+
+    </div>
+
+
+    <!-- MESSAGES -->
+
+    <div
+      id="messages"
+      class="messages"
+    ></div>
+
+
+    <!-- INPUT -->
+
+    <div class="input-area">
+
+      <div class="composer">
+
+
+        <!-- IMAGE PREVIEW -->
+
+        <div
+          id="imagePreviewBox"
+          class="image-preview-box"
+        >
+
+          <img
+            id="imagePreview"
+            src=""
+            alt="Selected image"
+          >
+
+          <button
+            class="clear-image"
+            onclick="clearImage()"
+          >
+            ×
+          </button>
+
+        </div>
+
+
+        <!-- TOOLS -->
+
+        <div class="tool-row">
+
+          <button
+            class="tool-btn"
+            onclick="document.getElementById('imageUpload').click()"
+          >
+            🖼️ Image
+          </button>
+
+          <button
+            class="tool-btn"
+            onclick="generateImage()"
+          >
+            🎨 Create Image
+          </button>
+
+          <button
+            class="tool-btn"
+            onclick="speakLastReply()"
+          >
+            🔊 Voice
+          </button>
+
+        </div>
+
+
+        <input
+          id="imageUpload"
+          type="file"
+          accept="image/*"
+          hidden
+          onchange="handleImageUpload(event)"
+        >
+
+
+        <div class="composer-row">
+
+          <textarea
+            id="messageInput"
+            placeholder="Message EMORA..."
+            rows="1"
+          ></textarea>
+
+          <button
+            class="send-btn"
+            onclick="sendMessage()"
+          >
+            ➤
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
 
 
 <script>
 
-  /* =========================
-     CONFIG
-  ========================= */
+/* =========================================================
+   CONFIG
+========================================================= */
 
-  const API_BASE = window.location.origin;
-
-  let token = localStorage.getItem("my_ai_token") || "";
-  let currentUser = null;
-  let currentChatId = null;
-  let registerMode = false;
+const API_BASE =
+  window.location.origin;
 
 
-  /* =========================
-     API
-  ========================= */
+/* =========================================================
+   STATE
+========================================================= */
 
-  async function api(path, options = {}) {
+let token =
+  localStorage.getItem("emora_token") || null;
 
-    const headers = {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    };
+let currentUser =
+  null;
 
-    if (token) {
-      headers.Authorization = "Bearer " + token;
-    }
+let currentChatId =
+  null;
 
-    const response = await fetch(API_BASE + path, {
-      ...options,
-      headers
-    });
+let selectedImageFile =
+  null;
 
-    let data = {};
+let lastAssistantReply =
+  "";
 
-    try {
-      data = await response.json();
-    } catch {
-      data = {};
-    }
 
-    if (!response.ok) {
-      throw new Error(data.error || "Request failed");
-    }
+/* =========================================================
+   API
+========================================================= */
 
-    return data;
+async function api(
+  endpoint,
+  options = {}
+) {
+
+  const headers =
+    options.headers || {};
+
+  headers["Content-Type"] =
+    "application/json";
+
+  if (token) {
+    headers["Authorization"] =
+      "Bearer " + token;
   }
 
+  const response =
+    await fetch(
+      API_BASE + endpoint,
+      {
+        ...options,
+        headers
+      }
+    );
 
-  /* =========================
-     AUTH MODE
-  ========================= */
+  let data = {};
 
-  function toggleAuth() {
-
-    registerMode = !registerMode;
-
-    document.getElementById("registerFields").style.display =
-      registerMode ? "block" : "none";
-
-    document.getElementById("authBtn").textContent =
-      registerMode ? "Create account" : "Login";
-
-    document.getElementById("switchText").textContent =
-      registerMode
-        ? "Already have an account?"
-        : "Don't have an account?";
-
-    document.getElementById("switchBtn").textContent =
-      registerMode
-        ? " Login"
-        : " Create account";
-
-    document.getElementById("authMessage").textContent = "";
+  try {
+    data =
+      await response.json();
+  } catch {
+    data = {};
   }
 
+  if (!response.ok) {
 
-  /* =========================
-     AUTH
-  ========================= */
+    throw new Error(
+      data.error ||
+      "Request failed."
+    );
+  }
 
-  async function handleAuth() {
+  return data;
+}
 
-    const email =
-      document.getElementById("emailInput").value.trim();
 
-    const password =
-      document.getElementById("passwordInput").value;
+/* =========================================================
+   AUTH UI
+========================================================= */
 
-    const name =
-      document.getElementById("nameInput").value.trim();
+function showLogin() {
 
-    const message =
-      document.getElementById("authMessage");
+  document
+    .getElementById("loginForm")
+    .classList.remove("hidden");
 
-    message.textContent = "";
+  document
+    .getElementById("registerForm")
+    .classList.add("hidden");
+}
 
-    if (!email || !password) {
-      message.textContent = "Email and password are required.";
-      return;
-    }
 
-    if (registerMode && !name) {
-      message.textContent = "Please enter your name.";
-      return;
-    }
+function showRegister() {
 
-    const btn = document.getElementById("authBtn");
+  document
+    .getElementById("loginForm")
+    .classList.add("hidden");
 
-    btn.disabled = true;
-    btn.textContent = registerMode ? "Creating..." : "Logging in...";
+  document
+    .getElementById("registerForm")
+    .classList.remove("hidden");
+}
 
-    try {
 
-      const data = await api(
-        registerMode ? "/register" : "/login",
+/* =========================================================
+   REGISTER
+========================================================= */
+
+async function register() {
+
+  const name =
+    document
+      .getElementById("registerName")
+      .value
+      .trim();
+
+  const email =
+    document
+      .getElementById("registerEmail")
+      .value
+      .trim();
+
+  const password =
+    document
+      .getElementById("registerPassword")
+      .value;
+
+  if (!name || !email || !password) {
+    alert("Please fill all fields.");
+    return;
+  }
+
+  try {
+
+    const data =
+      await api(
+        "/register",
         {
           method: "POST",
-          body: JSON.stringify(
-            registerMode
-              ? { name, email, password }
-              : { email, password }
-          )
+
+          body: JSON.stringify({
+            name,
+            email,
+            password
+          })
         }
       );
 
-      token = data.token;
+    token =
+      data.token;
 
-      localStorage.setItem("my_ai_token", token);
+    localStorage.setItem(
+      "emora_token",
+      token
+    );
 
-      await loadCurrentUser();
+    currentUser =
+      data.user;
 
-      showApp();
+    showApp();
 
-    } catch (error) {
+  } catch (error) {
 
-      message.textContent = error.message;
+    alert(error.message);
+  }
+}
 
-    } finally {
 
-      btn.disabled = false;
-      btn.textContent =
-        registerMode ? "Create account" : "Login";
-    }
+/* =========================================================
+   LOGIN
+========================================================= */
+
+async function login() {
+
+  const email =
+    document
+      .getElementById("loginEmail")
+      .value
+      .trim();
+
+  const password =
+    document
+      .getElementById("loginPassword")
+      .value;
+
+  if (!email || !password) {
+    alert("Please enter email and password.");
+    return;
   }
 
+  try {
 
-  async function loadCurrentUser() {
+    const data =
+      await api(
+        "/login",
+        {
+          method: "POST",
 
-    const data = await api("/me");
+          body: JSON.stringify({
+            email,
+            password
+          })
+        }
+      );
 
-    currentUser = data.user || data;
+    token =
+      data.token;
 
-    document.getElementById("profileName").textContent =
-      currentUser.name || "User";
+    localStorage.setItem(
+      "emora_token",
+      token
+    );
 
-    document.getElementById("profileEmail").textContent =
-      currentUser.email || "";
+    currentUser =
+      data.user;
 
-    document.getElementById("avatar").textContent =
-      (currentUser.name || "U").charAt(0).toUpperCase();
+    showApp();
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+}
+
+
+/* =========================================================
+   AUTO LOGIN
+========================================================= */
+
+async function checkSession() {
+
+  if (!token) {
+    return;
   }
 
+  try {
 
-  function showApp() {
+    const data =
+      await api("/me");
 
-    document.getElementById("loginPage").style.display = "none";
-    document.getElementById("app").style.display = "block";
+    currentUser =
+      data.user;
 
-    loadChats();
-    startNewChat();
+    showApp();
+
+  } catch {
+
+    token = null;
+
+    localStorage.removeItem(
+      "emora_token"
+    );
   }
+}
 
 
-  function logout() {
+/* =========================================================
+   SHOW APP
+========================================================= */
 
-    api("/logout", {
-      method: "POST"
-    }).catch(() => {});
+async function showApp() {
 
-    token = "";
-    currentUser = null;
-    currentChatId = null;
+  document
+    .getElementById("authScreen")
+    .classList.add("hidden");
 
-    localStorage.removeItem("my_ai_token");
+  document
+    .getElementById("app")
+    .classList.remove("hidden");
 
-    document.getElementById("app").style.display = "none";
-    document.getElementById("loginPage").style.display = "flex";
+  document
+    .getElementById("profileName")
+    .textContent =
+      currentUser?.name || "User";
 
-    document.getElementById("emailInput").value = "";
-    document.getElementById("passwordInput").value = "";
+  document
+    .getElementById("profileEmail")
+    .textContent =
+      currentUser?.email || "";
+
+  await loadChats();
+
+  if (!currentChatId) {
+    newChat();
   }
+}
 
 
-  /* =========================
-     CHAT LIST
-  ========================= */
+/* =========================================================
+   LOGOUT
+========================================================= */
 
-  async function loadChats() {
+async function logout() {
 
-    if (!token) return;
+  try {
 
-    const list = document.getElementById("chatList");
-
-    try {
-
-      const data = await api("/chats");
-
-      const chats = data.chats || [];
-
-      list.innerHTML = "";
-
-      if (!chats.length) {
-
-        list.innerHTML = `
-          <div style="
-            color:#666674;
-            font-size:12px;
-            padding:10px;
-          ">
-            No chats yet
-          </div>
-        `;
-
-        return;
+    await api(
+      "/logout",
+      {
+        method: "POST"
       }
+    );
 
-      chats.forEach(chat => {
+  } catch {}
 
-        const item = document.createElement("div");
+  token = null;
+  currentUser = null;
+  currentChatId = null;
 
-        item.className =
-          "chat-item" +
-          (Number(chat.id) === Number(currentChatId)
-            ? " active"
-            : "");
+  localStorage.removeItem(
+    "emora_token"
+  );
 
-        const title = document.createElement("div");
+  location.reload();
+}
 
-        title.className = "chat-title";
 
-        title.textContent =
-          chat.title || "New Chat";
+/* =========================================================
+   SIDEBAR
+========================================================= */
 
-        title.onclick = () => openChat(chat.id);
+function toggleSidebar() {
 
-        const del = document.createElement("button");
+  document
+    .getElementById("sidebar")
+    .classList.toggle("open");
+}
 
-        del.className = "delete-chat";
-        del.textContent = "×";
 
-        del.onclick = event => {
+/* =========================================================
+   NEW CHAT
+========================================================= */
+
+function newChat() {
+
+  currentChatId = null;
+
+  document
+    .getElementById("chatTitle")
+    .textContent =
+      "New Chat";
+
+  document
+    .getElementById("messages")
+    .innerHTML = "";
+
+  document
+    .getElementById("messageInput")
+    .focus();
+
+  clearImage();
+
+  document
+    .getElementById("sidebar")
+    .classList.remove("open");
+}
+
+
+/* =========================================================
+   LOAD CHATS
+========================================================= */
+
+async function loadChats() {
+
+  try {
+
+    const data =
+      await api("/chats");
+
+    const list =
+      document.getElementById("chatList");
+
+    list.innerHTML = "";
+
+    data.chats.forEach(chat => {
+
+      const item =
+        document.createElement("div");
+
+      item.className =
+        "chat-item";
+
+
+      const openButton =
+        document.createElement("button");
+
+      openButton.className =
+        "chat-open";
+
+      openButton.textContent =
+        chat.title || "New Chat";
+
+      openButton.onclick =
+        () => loadChat(chat.id);
+
+
+      const deleteButton =
+        document.createElement("button");
+
+      deleteButton.className =
+        "chat-delete";
+
+      deleteButton.textContent =
+        "×";
+
+      deleteButton.onclick =
+        event => {
+
           event.stopPropagation();
+
           deleteChat(chat.id);
         };
 
-        item.appendChild(title);
-        item.appendChild(del);
 
-        list.appendChild(item);
-      });
-
-    } catch (error) {
-
-      console.error(error);
-
-    }
-  }
-
-
-  /* =========================
-     NEW CHAT
-  ========================= */
-
-  function startNewChat() {
-
-    currentChatId = null;
-
-    document.getElementById("topTitle").textContent =
-      "EMORA AI";
-
-    const area = document.getElementById("chatArea");
-
-    area.innerHTML = `
-      <div id="welcome" class="welcome">
-
-        <div class="welcome-logo">✦</div>
-
-        <h1>How can I help you?</h1>
-
-        <p>
-          Welcome to EMORA AI.<br>
-          Ask anything and start a conversation.
-        </p>
-
-      </div>
-    `;
-
-    document.getElementById("messageInput").focus();
-
-    loadChats();
-
-    closeSidebar();
-  }
-
-
-  /* =========================
-     OPEN CHAT
-  ========================= */
-
-  async function openChat(id) {
-
-    try {
-
-      const data = await api("/chats/" + id);
-
-      currentChatId = data.chat.id;
-
-      document.getElementById("topTitle").textContent =
-        data.chat.title || "EMORA AI";
-
-      renderMessages(data.messages || []);
-
-      loadChats();
-
-      closeSidebar();
-
-    } catch (error) {
-
-      alert(error.message);
-
-    }
-  }
-
-
-  /* =========================
-     RENDER MESSAGES
-  ========================= */
-
-  function renderMessages(messages) {
-
-    const area = document.getElementById("chatArea");
-
-    area.innerHTML = "";
-
-    const container = document.createElement("div");
-
-    container.className = "messages";
-
-    messages.forEach(message => {
-
-      addMessage(
-        message.role === "user"
-          ? "user"
-          : "assistant",
-        message.content,
-        container
+      item.appendChild(
+        openButton
       );
 
+      item.appendChild(
+        deleteButton
+      );
+
+      list.appendChild(
+        item
+      );
     });
 
-    area.appendChild(container);
+  } catch (error) {
 
-    scrollBottom();
+    console.error(error);
   }
+}
 
 
-  function addMessage(role, content, container = null) {
+/* =========================================================
+   LOAD CHAT
+========================================================= */
 
-    const area = document.getElementById("chatArea");
+async function loadChat(chatId) {
 
-    if (!container) {
+  try {
 
-      let messages =
-        area.querySelector(".messages");
-
-      if (!messages) {
-
-        messages = document.createElement("div");
-
-        messages.className = "messages";
-
-        area.innerHTML = "";
-
-        area.appendChild(messages);
-      }
-
-      container = messages;
-    }
-
-    const welcome =
-      document.getElementById("welcome");
-
-    if (welcome) {
-      welcome.remove();
-    }
-
-    const row =
-      document.createElement("div");
-
-    row.className =
-      "message " + role;
-
-    const avatar =
-      document.createElement("div");
-
-    avatar.className =
-      "message-avatar";
-
-    avatar.textContent =
-      role === "user" ? "You" : "✦";
-
-    const bubble =
-      document.createElement("div");
-
-    bubble.className = "bubble";
-
-    bubble.textContent = content;
-
-    row.appendChild(avatar);
-    row.appendChild(bubble);
-
-    container.appendChild(row);
-
-    scrollBottom();
-  }
-
-
-  /* =========================
-     SEND MESSAGE
-  ========================= */
-
-  async function sendMessage() {
-
-    const input =
-      document.getElementById("messageInput");
-
-    const text =
-      input.value.trim();
-
-    if (!text) return;
-
-    const sendBtn =
-      document.getElementById("sendBtn");
-
-    input.value = "";
-
-    addMessage("user", text);
-
-    sendBtn.disabled = true;
-
-    showTyping(true);
-
-    try {
-
-      const data = await api("/chat", {
-        method: "POST",
-        body: JSON.stringify({
-          chatId: currentChatId,
-          message: text
-        })
-      });
-
-      currentChatId =
-        data.chatId ||
-        data.chat?.id ||
-        currentChatId;
-
-      if (data.reply) {
-        addMessage("assistant", data.reply);
-      }
-
-      if (data.chat?.title) {
-        document.getElementById("topTitle").textContent =
-          data.chat.title;
-      }
-
-      loadChats();
-
-    } catch (error) {
-
-      addMessage(
-        "assistant",
-        "Sorry, something went wrong: " +
-        error.message
+    const data =
+      await api(
+        "/chats/" + chatId
       );
 
-    } finally {
-
-      sendBtn.disabled = false;
-
-      showTyping(false);
-
-      input.focus();
-    }
-  }
-
-
-  /* =========================
-     DELETE CHAT
-  ========================= */
-
-  async function deleteChat(id) {
-
-    const ok =
-      confirm("Delete this chat?");
-
-    if (!ok) return;
-
-    try {
-
-      await api("/chats/" + id, {
-        method: "DELETE"
-      });
-
-      if (Number(currentChatId) === Number(id)) {
-        startNewChat();
-      }
-
-      loadChats();
-
-    } catch (error) {
-
-      alert(error.message);
-
-    }
-  }
-
-
-  /* =========================
-     TYPING
-  ========================= */
-
-  function showTyping(show) {
-
-    document.getElementById("typing").style.display =
-      show ? "block" : "none";
-
-    if (show) {
-      scrollBottom();
-    }
-  }
-
-
-  /* =========================
-     KEYBOARD
-  ========================= */
-
-  function handleKey(event) {
-
-    if (
-      event.key === "Enter" &&
-      !event.shiftKey
-    ) {
-
-      event.preventDefault();
-
-      sendMessage();
-    }
-  }
-
-
-  /* =========================
-     SCROLL
-  ========================= */
-
-  function scrollBottom() {
-
-    const area =
-      document.getElementById("chatArea");
-
-    setTimeout(() => {
-
-      area.scrollTop =
-        area.scrollHeight;
-
-    }, 50);
-  }
-
-
-  /* =========================
-     MOBILE SIDEBAR
-  ========================= */
-
-  function toggleSidebar() {
+    currentChatId =
+      chatId;
 
     document
-      .getElementById("sidebar")
-      .classList.toggle("open");
-  }
+      .getElementById("chatTitle")
+      .textContent =
+        data.chat.title ||
+        "Chat";
 
+    const messages =
+      document.getElementById("messages");
 
-  function closeSidebar() {
+    messages.innerHTML = "";
+
+    data.messages.forEach(message => {
+
+      addMessage(
+        message.role,
+        message.content
+      );
+
+      if (
+        message.role === "assistant"
+      ) {
+
+        lastAssistantReply =
+          message.content;
+      }
+    });
+
+    messages.scrollTop =
+      messages.scrollHeight;
 
     document
       .getElementById("sidebar")
       .classList.remove("open");
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+}
+
+
+/* =========================================================
+   DELETE CHAT
+========================================================= */
+
+async function deleteChat(chatId) {
+
+  if (
+    !confirm(
+      "Delete this chat?"
+    )
+  ) {
+    return;
   }
 
+  try {
 
-  /* =========================
-     AUTO LOGIN
-  ========================= */
+    await api(
+      "/chats/" + chatId,
+      {
+        method: "DELETE"
+      }
+    );
 
-  async function init() {
+    if (
+      Number(currentChatId) ===
+      Number(chatId)
+    ) {
 
-    if (!token) return;
+      newChat();
+    }
 
-    try {
+    await loadChats();
 
-      await loadCurrentUser();
+  } catch (error) {
 
-      showApp();
+    alert(error.message);
+  }
+}
 
-    } catch (error) {
 
-      token = "";
+/* =========================================================
+   ADD MESSAGE
+========================================================= */
 
-      localStorage.removeItem("my_ai_token");
+function addMessage(
+  role,
+  content
+) {
 
+  const messages =
+    document.getElementById(
+      "messages"
+    );
+
+  const wrapper =
+    document.createElement("div");
+
+  wrapper.className =
+    "message " +
+    (
+      role === "assistant"
+        ? "assistant"
+        : "user"
+    );
+
+
+  const label =
+    document.createElement("div");
+
+  label.className =
+    "message-label";
+
+  label.textContent =
+    role === "assistant"
+      ? "EMORA"
+      : "You";
+
+
+  const bubble =
+    document.createElement("div");
+
+  bubble.className =
+    "bubble";
+
+  bubble.textContent =
+    content;
+
+
+  wrapper.appendChild(
+    label
+  );
+
+  wrapper.appendChild(
+    bubble
+  );
+
+  messages.appendChild(
+    wrapper
+  );
+
+  messages.scrollTop =
+    messages.scrollHeight;
+}
+
+
+/* =========================================================
+   THINKING
+========================================================= */
+
+function showTyping(show) {
+
+  const existing =
+    document.getElementById(
+      "aiThinking"
+    );
+
+  if (show) {
+
+    if (existing) {
+      return;
+    }
+
+    const messages =
+      document.getElementById(
+        "messages"
+      );
+
+    const box =
+      document.createElement("div");
+
+    box.id =
+      "aiThinking";
+
+    box.className =
+      "ai-thinking";
+
+    box.innerHTML = `
+      <div class="thinking-box">
+        <span>EMORA is thinking</span>
+        <div class="thinking-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    `;
+
+    messages.appendChild(box);
+
+    messages.scrollTop =
+      messages.scrollHeight;
+
+  } else {
+
+    if (existing) {
+      existing.remove();
     }
   }
+}
 
 
-  /* =========================
-     START
-  ========================= */
+/* =========================================================
+   SEND MESSAGE
+========================================================= */
 
-  init();
+async function sendMessage() {
+
+  const input =
+    document.getElementById(
+      "messageInput"
+    );
+
+  const message =
+    input.value.trim();
+
+  if (!message) {
+    return;
+  }
+
+  input.value = "";
+
+  addMessage(
+    "user",
+    message
+  );
+
+  showTyping(true);
+
+  try {
+
+    const data =
+      await api(
+        "/chat",
+        {
+          method: "POST",
+
+          body: JSON.stringify({
+            message,
+            chatId:
+              currentChatId
+          })
+        }
+      );
+
+    showTyping(false);
+
+    currentChatId =
+      data.chatId;
+
+    document
+      .getElementById("chatTitle")
+      .textContent =
+        data.chat?.title ||
+        "Chat";
+
+    lastAssistantReply =
+      data.reply;
+
+    addMessage(
+      "assistant",
+      data.reply
+    );
+
+    await loadChats();
+
+  } catch (error) {
+
+    showTyping(false);
+
+    addMessage(
+      "assistant",
+      "Sorry, something went wrong: " +
+      error.message
+    );
+  }
+}
+
+
+/* =========================================================
+   ENTER TO SEND
+========================================================= */
+
+document
+  .getElementById("messageInput")
+  .addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey
+      ) {
+
+        event.preventDefault();
+
+        sendMessage();
+      }
+    }
+  );
+
+
+/* =========================================================
+   IMAGE UPLOAD PREVIEW
+========================================================= */
+
+function handleImageUpload(event) {
+
+  const file =
+    event.target.files[0];
+
+  if (!file) {
+    return;
+  }
+
+  if (
+    !file.type.startsWith("image/")
+  ) {
+
+    alert(
+      "Please select an image."
+    );
+
+    return;
+  }
+
+  selectedImageFile =
+    file;
+
+  const reader =
+    new FileReader();
+
+  reader.onload =
+    function(e) {
+
+      document
+        .getElementById(
+          "imagePreview"
+        )
+        .src =
+          e.target.result;
+
+      document
+        .getElementById(
+          "imagePreviewBox"
+        )
+        .style.display =
+          "block";
+    };
+
+  reader.readAsDataURL(file);
+}
+
+
+function clearImage() {
+
+  selectedImageFile =
+    null;
+
+  document
+    .getElementById(
+      "imageUpload"
+    )
+    .value = "";
+
+  document
+    .getElementById(
+      "imagePreview"
+    )
+    .src = "";
+
+  document
+    .getElementById(
+      "imagePreviewBox"
+    )
+    .style.display =
+      "none";
+}
+
+
+/* =========================================================
+   AI IMAGE GENERATION
+========================================================= */
+
+async function generateImage() {
+
+  const prompt =
+    window.prompt(
+      "What image should EMORA create?"
+    );
+
+  if (!prompt || !prompt.trim()) {
+    return;
+  }
+
+  const messages =
+    document.getElementById(
+      "messages"
+    );
+
+  const loading =
+    document.createElement("div");
+
+  loading.className =
+    "ai-thinking";
+
+  loading.id =
+    "imageGenerating";
+
+  loading.innerHTML = `
+    <div class="thinking-box">
+      <span>EMORA is creating your image</span>
+      <div class="thinking-dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  `;
+
+  messages.appendChild(
+    loading
+  );
+
+  messages.scrollTop =
+    messages.scrollHeight;
+
+
+  try {
+
+    const data =
+      await api(
+        "/generate-image",
+        {
+          method: "POST",
+
+          body: JSON.stringify({
+            prompt
+          })
+        }
+      );
+
+    loading.remove();
+
+
+    const wrapper =
+      document.createElement("div");
+
+    wrapper.className =
+      "message assistant";
+
+
+    const label =
+      document.createElement("div");
+
+    label.className =
+      "message-label";
+
+    label.textContent =
+      "EMORA";
+
+
+    const bubble =
+      document.createElement("div");
+
+    bubble.className =
+      "bubble";
+
+    bubble.textContent =
+      "Image created";
+
+
+    wrapper.appendChild(
+      label
+    );
+
+    wrapper.appendChild(
+      bubble
+    );
+
+
+    if (
+      data.image &&
+      data.image.type === "base64"
+    ) {
+
+      const img =
+        document.createElement("img");
+
+      img.className =
+        "generated-image";
+
+      img.src =
+        "data:image/png;base64," +
+        data.image.data;
+
+      img.alt =
+        prompt;
+
+      bubble.appendChild(
+        document.createElement("br")
+      );
+
+      bubble.appendChild(
+        img
+      );
+
+    } else if (
+      data.image &&
+      data.image.type === "url"
+    ) {
+
+      const img =
+        document.createElement("img");
+
+      img.className =
+        "generated-image";
+
+      img.src =
+        data.image.url;
+
+      img.alt =
+        prompt;
+
+      bubble.appendChild(
+        document.createElement("br")
+      );
+
+      bubble.appendChild(
+        img
+      );
+    }
+
+
+    messages.appendChild(
+      wrapper
+    );
+
+    messages.scrollTop =
+      messages.scrollHeight;
+
+  } catch (error) {
+
+    loading.remove();
+
+    addMessage(
+      "assistant",
+      "Image generation failed: " +
+      error.message
+    );
+  }
+}
+
+
+/* =========================================================
+   VOICE REPLY
+========================================================= */
+
+function speakLastReply() {
+
+  if (!lastAssistantReply) {
+
+    alert(
+      "There is no AI reply to read yet."
+    );
+
+    return;
+  }
+
+  if (
+    !("speechSynthesis" in window)
+  ) {
+
+    alert(
+      "Voice playback is not supported on this browser."
+    );
+
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const speech =
+    new SpeechSynthesisUtterance(
+      lastAssistantReply
+    );
+
+  speech.lang =
+    /[\u0980-\u09FF]/.test(
+      lastAssistantReply
+    )
+      ? "bn-BD"
+      : "en-US";
+
+  speech.rate = 1;
+  speech.pitch = 1;
+
+  window.speechSynthesis.speak(
+    speech
+  );
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+checkSession();
 
 </script>
 
