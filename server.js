@@ -89,6 +89,10 @@ async function initDatabase() {
 ========================================================= */
 
 function sendJSON(res, status, data) {
+  if (res.headersSent) {
+    return;
+  }
+
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Access-Control-Allow-Origin": "*",
@@ -133,7 +137,9 @@ function readBody(req, maxSize = 12000000) {
     });
 
     req.on("error", error => {
-      if (!finished) reject(error);
+      if (!finished) {
+        reject(error);
+      }
     });
   });
 }
@@ -154,19 +160,22 @@ function createRandomToken() {
 ========================================================= */
 
 async function hashPassword(password) {
-  const salt =
-    crypto.randomBytes(16).toString("hex");
+  const salt = crypto
+    .randomBytes(16)
+    .toString("hex");
 
-  const derivedKey =
-    await scrypt(password, salt, 64);
+  const derivedKey = await scrypt(
+    password,
+    salt,
+    64
+  );
 
   return `${salt}:${derivedKey.toString("hex")}`;
 }
 
 async function verifyPassword(password, storedHash) {
   try {
-    const parts =
-      storedHash.split(":");
+    const parts = storedHash.split(":");
 
     if (parts.length !== 2) {
       return false;
@@ -174,16 +183,18 @@ async function verifyPassword(password, storedHash) {
 
     const salt = parts[0];
 
-    const storedKey =
-      Buffer.from(parts[1], "hex");
+    const storedKey = Buffer.from(
+      parts[1],
+      "hex"
+    );
 
-    const derivedKey =
-      await scrypt(password, salt, 64);
+    const derivedKey = await scrypt(
+      password,
+      salt,
+      64
+    );
 
-    if (
-      storedKey.length !==
-      derivedKey.length
-    ) {
+    if (storedKey.length !== derivedKey.length) {
       return false;
     }
 
@@ -202,17 +213,14 @@ async function verifyPassword(password, storedHash) {
 ========================================================= */
 
 async function createSession(userId) {
-  const token =
-    createRandomToken();
+  const token = createRandomToken();
 
-  const tokenHash =
-    hashToken(token);
+  const tokenHash = hashToken(token);
 
-  const expiresAt =
-    new Date(
-      Date.now() +
-      7 * 24 * 60 * 60 * 1000
-    );
+  const expiresAt = new Date(
+    Date.now() +
+    7 * 24 * 60 * 60 * 1000
+  );
 
   await pool.query(
     `
@@ -238,41 +246,36 @@ function getBearerToken(req) {
     return null;
   }
 
-  return header
-    .slice(7)
-    .trim();
+  return header.slice(7).trim();
 }
 
 async function getCurrentUser(req) {
-  const token =
-    getBearerToken(req);
+  const token = getBearerToken(req);
 
   if (!token) {
     return null;
   }
 
-  const tokenHash =
-    hashToken(token);
+  const tokenHash = hashToken(token);
 
-  const result =
-    await pool.query(
-      `
-        SELECT
-          u.id,
-          u.name,
-          u.email,
-          u.plan,
-          u.role,
-          u.created_at
-        FROM sessions s
-        JOIN users u
-          ON u.id = s.user_id
-        WHERE s.token_hash = $1
-          AND s.expires_at > NOW()
-        LIMIT 1
-      `,
-      [tokenHash]
-    );
+  const result = await pool.query(
+    `
+      SELECT
+        u.id,
+        u.name,
+        u.email,
+        u.plan,
+        u.role,
+        u.created_at
+      FROM sessions s
+      JOIN users u
+        ON u.id = s.user_id
+      WHERE s.token_hash = $1
+        AND s.expires_at > NOW()
+      LIMIT 1
+    `,
+    [tokenHash]
+  );
 
   return result.rows.length
     ? result.rows[0]
@@ -334,49 +337,46 @@ async function askAI(messages) {
     process.env.OPENAI_MODEL ||
     "gpt-6-luna";
 
-  const input =
-    messages.map(message => ({
-      role:
-        message.role === "assistant"
-          ? "assistant"
-          : "user",
+  const input = messages.map(message => ({
+    role:
+      message.role === "assistant"
+        ? "assistant"
+        : "user",
 
-      content:
-        message.content
-    }));
+    content:
+      message.content
+  }));
 
-  const response =
-    await fetch(
-      "https://api.openai.com/v1/responses",
-      {
-        method: "POST",
+  const response = await fetch(
+    "https://api.openai.com/v1/responses",
+    {
+      method: "POST",
 
-        headers: {
-          "Content-Type":
-            "application/json",
+      headers: {
+        "Content-Type":
+          "application/json",
 
-          "Authorization":
-            `Bearer ${apiKey}`
-        },
+        "Authorization":
+          `Bearer ${apiKey}`
+      },
 
-        body: JSON.stringify({
-          model,
+      body: JSON.stringify({
+        model,
 
-          instructions:
-            "You are EMORA AI, a helpful and intelligent AI assistant. " +
-            "If the user writes Bengali, reply in natural Bengali. " +
-            "If the user writes English, reply in English. " +
-            "Do not unnecessarily repeat your name. " +
-            "Do not use emojis unless the user specifically asks for them. " +
-            "Keep normal answers clean and natural.",
+        instructions:
+          "You are EMORA AI, a helpful and intelligent AI assistant. " +
+          "If the user writes Bengali, reply in natural Bengali. " +
+          "If the user writes English, reply in English. " +
+          "Do not unnecessarily repeat your name. " +
+          "Do not use emojis unless the user specifically asks for them. " +
+          "Keep normal answers clean and natural.",
 
-          input
-        })
-      }
-    );
+        input
+      })
+    }
+  );
 
-  const data =
-    await response.json();
+  const data = await response.json();
 
   if (!response.ok) {
     console.error(
@@ -404,8 +404,7 @@ async function askAI(messages) {
 
       for (const content of item.content) {
         if (
-          content.type ===
-            "output_text" &&
+          content.type === "output_text" &&
           content.text
         ) {
           text += content.text;
@@ -426,116 +425,116 @@ async function askAI(messages) {
 }
 
 /* =========================================================
-   FEMALE BANGLA TTS
+   EMORA AI VOICE / TTS
+   DIRECT MP3 RESPONSE
 ========================================================= */
 
 async function generateSpeech(req, res) {
-  const user =
-    await getCurrentUser(req);
-
-  if (!user) {
-    sendJSON(res, 401, {
-      error:
-        "Unauthorized."
-    });
-
-    return;
-  }
-
-  const body =
-    await readBody(req, 50000);
-
-  const rawText =
-    String(
-      body.text || ""
-    ).trim();
-
-  if (!rawText) {
-    sendJSON(res, 400, {
-      error:
-        "Text is required."
-    });
-
-    return;
-  }
-
-  const text =
-    cleanTextForVoice(rawText);
-
-  if (!text) {
-    sendJSON(res, 400, {
-      error:
-        "No speakable text."
-    });
-
-    return;
-  }
-
-  if (text.length > 4000) {
-    sendJSON(res, 400, {
-      error:
-        "Text is too long."
-    });
-
-    return;
-  }
-
-  const apiKey =
-    process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
-    sendJSON(res, 500, {
-      error:
-        "OPENAI_API_KEY is not configured."
-    });
-
-    return;
-  }
-
   try {
-    const response =
-      await fetch(
-        "https://api.openai.com/v1/audio/speech",
-        {
-          method: "POST",
+    const user =
+      await getCurrentUser(req);
 
-          headers: {
-            "Content-Type":
-              "application/json",
+    if (!user) {
+      sendJSON(res, 401, {
+        success: false,
+        error: "Unauthorized."
+      });
 
-            "Authorization":
-              `Bearer ${apiKey}`
-          },
+      return;
+    }
 
-          body: JSON.stringify({
-            model:
-              process.env.OPENAI_TTS_MODEL ||
-              "gpt-4o-mini-tts",
+    const body =
+      await readBody(req, 50000);
 
-            voice:
-              process.env.OPENAI_TTS_VOICE ||
-              "coral",
+    const rawText =
+      String(body.text || "").trim();
 
-            input: text,
+    if (!rawText) {
+      sendJSON(res, 400, {
+        success: false,
+        error: "Text is required."
+      });
 
-            instructions:
-              "Speak naturally in Bengali when the input is Bengali. " +
-              "Use a warm, friendly female-style voice. " +
-              "Speak clearly and naturally. " +
-              "Never say emojis, markdown symbols, URLs, or formatting characters aloud.",
+      return;
+    }
 
-            response_format:
-              "mp3"
-          })
-        }
-      );
+    const text =
+      cleanTextForVoice(rawText);
+
+    if (!text) {
+      sendJSON(res, 400, {
+        success: false,
+        error: "No speakable text."
+      });
+
+      return;
+    }
+
+    if (text.length > 4000) {
+      sendJSON(res, 400, {
+        success: false,
+        error: "Text is too long."
+      });
+
+      return;
+    }
+
+    const apiKey =
+      process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      sendJSON(res, 500, {
+        success: false,
+        error:
+          "OPENAI_API_KEY is not configured."
+      });
+
+      return;
+    }
+
+    const response = await fetch(
+      "https://api.openai.com/v1/audio/speech",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          "Authorization":
+            `Bearer ${apiKey}`
+        },
+
+        body: JSON.stringify({
+          model:
+            process.env.OPENAI_TTS_MODEL ||
+            "gpt-4o-mini-tts",
+
+          voice:
+            process.env.OPENAI_TTS_VOICE ||
+            "coral",
+
+          input: text,
+
+          instructions:
+            "Speak naturally in Bengali when the input is Bengali. " +
+            "Use a warm, friendly female-style voice. " +
+            "Speak clearly and naturally. " +
+            "Never say emojis, markdown symbols, URLs, or formatting characters aloud.",
+
+          response_format:
+            "mp3"
+        })
+      }
+    );
 
     if (!response.ok) {
       const errorText =
         await response.text();
 
       console.error(
-        "TTS API error:",
+        "OpenAI TTS API error:",
+        response.status,
         errorText
       );
 
@@ -553,6 +552,7 @@ async function generateSpeech(req, res) {
       } catch (_) {}
 
       sendJSON(res, 500, {
+        success: false,
         error: message
       });
 
@@ -564,15 +564,42 @@ async function generateSpeech(req, res) {
         await response.arrayBuffer()
       );
 
-    sendJSON(res, 200, {
-      success: true,
+    if (!audioBuffer.length) {
+      sendJSON(res, 500, {
+        success: false,
+        error:
+          "TTS returned empty audio."
+      });
 
-      audio:
-        audioBuffer.toString("base64"),
+      return;
+    }
 
-      mimeType:
-        "audio/mpeg"
+    /*
+      IMPORTANT:
+      এখানে আর JSON/Base64 পাঠানো হচ্ছে না।
+      সরাসরি MP3 পাঠানো হচ্ছে।
+    */
+
+    res.writeHead(200, {
+      "Content-Type": "audio/mpeg",
+
+      "Content-Length":
+        audioBuffer.length,
+
+      "Cache-Control":
+        "no-store, no-cache, must-revalidate",
+
+      "Access-Control-Allow-Origin":
+        "*",
+
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization",
+
+      "Access-Control-Allow-Methods":
+        "GET, POST, OPTIONS"
     });
+
+    res.end(audioBuffer);
 
   } catch (error) {
     console.error(
@@ -580,11 +607,14 @@ async function generateSpeech(req, res) {
       error
     );
 
-    sendJSON(res, 500, {
-      error:
-        error.message ||
-        "Voice generation failed."
-    });
+    if (!res.headersSent) {
+      sendJSON(res, 500, {
+        success: false,
+        error:
+          error.message ||
+          "Voice generation failed."
+      });
+    }
   }
 }
 
@@ -1872,8 +1902,7 @@ const server =
           }
 
           if (
-            req.method ===
-            "DELETE"
+            req.method === "DELETE"
           ) {
 
             await deleteChat(
@@ -1928,11 +1957,13 @@ const server =
           error
         );
 
-        sendJSON(res, 500, {
-          error:
-            error.message ||
-            "Internal server error."
-        });
+        if (!res.headersSent) {
+          sendJSON(res, 500, {
+            error:
+              error.message ||
+              "Internal server error."
+          });
+        }
       }
     }
   );
