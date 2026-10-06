@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My AI Assistant</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #0b0f19;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 430px;
+    }
+
+    .card {
+      background: #151b29;
+      border: 1px solid #283247;
+      border-radius: 22px;
+      padding: 28px 22px;
+      box-shadow: 0 15px 50px rgba(0,0,0,.35);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #9aa5b5;
+      margin-bottom: 25px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .tabs button {
+      flex: 1;
+      padding: 12px;
+      border: 0;
+      border-radius: 12px;
+      background: #222b3d;
+      color: white;
+      cursor: pointer;
+    }
+
+    .tabs button.active {
+      background: #5865f2;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      border: 1px solid #303b51;
+      background: #0e1420;
+      color: white;
+      outline: none;
+    }
+
+    .main-btn {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 12px;
+      background: #5865f2;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .main-btn:disabled {
+      opacity: .6;
+    }
+
+    .message {
+      margin-top: 15px;
+      text-align: center;
+      min-height: 22px;
+      color: #aeb8c8;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .dashboard {
+      text-align: center;
+    }
+
+    .ai-circle {
+      width: 110px;
+      height: 110px;
+      margin: 20px auto;
+      border-radius: 50%;
+      background: #5865f2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+    }
+
+    .logout {
+      margin-top: 20px;
+      background: #2b3446;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- AUTH -->
+  <div class="card" id="authCard">
+
+    <h1>My AI Assistant</h1>
+    <p class="subtitle">Your personal AI workspace</p>
+
+    <div class="tabs">
+      <button id="registerTab" class="active">Register</button>
+      <button id="loginTab">Login</button>
+    </div>
+
+    <!-- REGISTER -->
+    <form id="registerForm">
+
+      <input
+        id="registerName"
+        type="text"
+        placeholder="Your name"
+        required
+      >
+
+      <input
+        id="registerEmail"
+        type="email"
+        placeholder="Email address"
+        required
+      >
+
+      <input
+        id="registerPassword"
+        type="password"
+        placeholder="Password"
+        minlength="8"
+        required
+      >
+
+      <button class="main-btn" type="submit">
+        Create Account
+      </button>
+
+    </form>
+
+    <!-- LOGIN -->
+    <form id="loginForm" class="hidden">
+
+      <input
+        id="loginEmail"
+        type="email"
+        placeholder="Email address"
+        required
+      >
+
+      <input
+        id="loginPassword"
+        type="password"
+        placeholder="Password"
+        required
+      >
+
+      <button class="main-btn" type="submit">
+        Login
+      </button>
+
+    </form>
+
+    <div class="message" id="message"></div>
+
+  </div>
+
+
+  <!-- DASHBOARD -->
+  <div class="card dashboard hidden" id="dashboard">
+
+    <h1>Welcome 👋</h1>
+
+    <div class="ai-circle">
+      AI
+    </div>
+
+    <h2 id="userName">User</h2>
+
+    <p class="subtitle">
+      Your AI Assistant is ready.
+    </p>
+
+    <button
+      class="main-btn logout"
+      id="logoutBtn"
+    >
+      Logout
+    </button>
+
+  </div>
+
+</div>
+
+
+<script>
+
+  const API_URL =
+    "https://my-ai-server-hncp.onrender.com";
+
+  const registerTab =
+    document.getElementById("registerTab");
+
+  const loginTab =
+    document.getElementById("loginTab");
+
+  const registerForm =
+    document.getElementById("registerForm");
+
+  const loginForm =
+    document.getElementById("loginForm");
+
+  const message =
+    document.getElementById("message");
+
+  const authCard =
+    document.getElementById("authCard");
+
+  const dashboard =
+    document.getElementById("dashboard");
+
+  const userName =
+    document.getElementById("userName");
+
+
+  // ==========================
+  // SWITCH TO REGISTER
+  // ==========================
+
+  registerTab.onclick = () => {
+
+    registerTab.classList.add("active");
+    loginTab.classList.remove("active");
+
+    registerForm.classList.remove("hidden");
+    loginForm.classList.add("hidden");
+
+    message.textContent = "";
+  };
+
+
+  // ==========================
+  // SWITCH TO LOGIN
+  // ==========================
+
+  loginTab.onclick = () => {
+
+    loginTab.classList.add("active");
+    registerTab.classList.remove("active");
+
+    loginForm.classList.remove("hidden");
+    registerForm.classList.add("hidden");
+
+    message.textContent = "";
+  };
+
+
+  // ==========================
+  // REGISTER
+  // ==========================
+
+  registerForm.addEventListener(
+    "submit",
+    async (event) => {
+
+      event.preventDefault();
+
+      const name =
+        document.getElementById(
+          "registerName"
+        ).value.trim();
+
+      const email =
+        document.getElementById(
+          "registerEmail"
+        ).value.trim();
+
+      const password =
+        document.getElementById(
+          "registerPassword"
+        ).value;
+
+      message.textContent =
+        "Creating account...";
+
+      try {
+
+        const response =
+          await fetch(
+            API_URL + "/register",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body: JSON.stringify({
+                name,
+                email,
+                password
+              })
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (data.success) {
+
+          message.textContent =
+            "Account created successfully!";
+
+          registerForm.reset();
+
+          setTimeout(() => {
+
+            loginTab.click();
+
+          }, 1000);
+
+        } else {
+
+          message.textContent =
+            data.error ||
+            "Registration failed.";
+
+        }
+
+      } catch (error) {
+
+        message.textContent =
+          "Server connection failed.";
+
+      }
+
+    }
+  );
+
+
+  // ==========================
+  // LOGIN
+  // ==========================
+
+  loginForm.addEventListener(
+    "submit",
+    async (event) => {
+
+      event.preventDefault();
+
+      message.textContent =
+        "Login system will be connected next.";
+
+    }
+  );
+
+
+  // ==========================
+  // LOGOUT
+  // ==========================
+
+  document
+    .getElementById("logoutBtn")
+    .onclick = () => {
+
+      dashboard.classList.add("hidden");
+      authCard.classList.remove("hidden");
+
+    };
+
+</script>
+
+</body>
+</html>
