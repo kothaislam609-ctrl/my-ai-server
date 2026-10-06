@@ -1,5 +1,7 @@
 const http = require("http");
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 const { promisify } = require("util");
 const { Pool } = require("pg");
 
@@ -12,9 +14,10 @@ const pool = new Pool({
   }
 });
 
-// ==============================
+
+// ========================================
 // DATABASE SETUP
-// ==============================
+// ========================================
 
 async function initDatabase() {
   await pool.query(`
@@ -53,9 +56,10 @@ async function initDatabase() {
   console.log("Database tables ready.");
 }
 
-// ==============================
+
+// ========================================
 // PASSWORD HASH
-// ==============================
+// ========================================
 
 async function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("hex");
@@ -69,369 +73,493 @@ async function hashPassword(password) {
   return `${salt}:${key.toString("hex")}`;
 }
 
-// ==============================
+
+// ========================================
 // READ JSON BODY
-// ==============================
+// ========================================
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
+
     let body = "";
 
     req.on("data", chunk => {
+
       body += chunk;
 
       if (body.length > 10000) {
         reject(new Error("Request body too large"));
         req.destroy();
       }
+
     });
 
     req.on("end", () => {
+
       try {
+
         const data = JSON.parse(body || "{}");
+
         resolve(data);
+
       } catch {
+
         reject(new Error("Invalid JSON"));
+
       }
+
     });
 
     req.on("error", reject);
+
   });
 }
 
-// ==============================
+
+// ========================================
+// SEND JSON
+// ========================================
+
+function sendJSON(res, statusCode, data) {
+
+  res.writeHead(statusCode, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type"
+  });
+
+  res.end(JSON.stringify(data));
+
+}
+
+
+// ========================================
+// SEND WEBSITE
+// ========================================
+
+function sendWebsite(res) {
+
+  const filePath = path.join(
+    __dirname,
+    "public",
+    "index.html"
+  );
+
+  fs.readFile(
+    filePath,
+    "utf8",
+    (error, html) => {
+
+      if (error) {
+
+        console.error(
+          "Website file error:",
+          error
+        );
+
+        sendJSON(res, 500, {
+          success: false,
+          error: "Website file not found."
+        });
+
+        return;
+      }
+
+      res.writeHead(200, {
+        "Content-Type":
+          "text/html; charset=utf-8",
+        "Cache-Control":
+          "no-cache"
+      });
+
+      res.end(html);
+
+    }
+  );
+
+}
+
+
+// ========================================
 // SERVER
-// ==============================
+// ========================================
 
-const server = http.createServer(async (req, res) => {
+const server = http.createServer(
+  async (req, res) => {
 
-  res.setHeader("Content-Type", "application/json");
+    // ====================================
+    // CORS
+    // ====================================
 
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "*"
-  );
+    res.setHeader(
+      "Access-Control-Allow-Origin",
+      "*"
+    );
 
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS"
-  );
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, OPTIONS"
+    );
 
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type"
-  );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type"
+    );
 
-  // OPTIONS
-  if (req.method === "OPTIONS") {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
 
-  // ============================
-  // HOME
-  // ============================
+    // ====================================
+    // OPTIONS
+    // ====================================
 
-  if (
-    req.method === "GET" &&
-    req.url === "/"
-  ) {
-    res.writeHead(200);
+    if (req.method === "OPTIONS") {
 
-    res.end(JSON.stringify({
-      status: "online",
-      api: "My AI Server",
-      database: "connected",
-      register: "available"
-    }));
+      res.writeHead(204);
+      res.end();
 
-    return;
-  }
-
-  // ============================
-  // DATABASE TEST
-  // ============================
-
-  if (
-    req.method === "GET" &&
-    req.url === "/database-test"
-  ) {
-    try {
-
-      const result = await pool.query(
-        "SELECT NOW() AS time"
-      );
-
-      res.writeHead(200);
-
-      res.end(JSON.stringify({
-        success: true,
-        database: "connected",
-        time: result.rows[0].time
-      }));
-
-    } catch (error) {
-
-      res.writeHead(500);
-
-      res.end(JSON.stringify({
-        success: false,
-        database: "connection_failed"
-      }));
+      return;
     }
 
-    return;
-  }
 
-  // ============================
-  // REGISTER
-  // ============================
+    // ====================================
+    // WEBSITE
+    // ====================================
 
-  if (
-    req.method === "POST" &&
-    req.url === "/register"
-  ) {
+    if (
+      req.method === "GET" &&
+      (
+        req.url === "/" ||
+        req.url === "/index.html"
+      )
+    ) {
 
-    try {
+      sendWebsite(res);
 
-      const data = await readBody(req);
+      return;
+    }
 
-      const name =
-        String(data.name || "").trim();
 
-      const email =
-        String(data.email || "")
+    // ====================================
+    // DATABASE TEST
+    // ====================================
+
+    if (
+      req.method === "GET" &&
+      req.url === "/database-test"
+    ) {
+
+      try {
+
+        const result =
+          await pool.query(
+            "SELECT NOW() AS time"
+          );
+
+        sendJSON(res, 200, {
+          success: true,
+          database: "connected",
+          time: result.rows[0].time
+        });
+
+      } catch (error) {
+
+        console.error(
+          "Database test error:",
+          error
+        );
+
+        sendJSON(res, 500, {
+          success: false,
+          database: "connection_failed"
+        });
+
+      }
+
+      return;
+    }
+
+
+    // ====================================
+    // REGISTER
+    // ====================================
+
+    if (
+      req.method === "POST" &&
+      req.url === "/register"
+    ) {
+
+      try {
+
+        const data =
+          await readBody(req);
+
+
+        const name =
+          String(
+            data.name || ""
+          ).trim();
+
+
+        const email =
+          String(
+            data.email || ""
+          )
           .trim()
           .toLowerCase();
 
-      const password =
-        String(data.password || "");
 
-      // NAME CHECK
+        const password =
+          String(
+            data.password || ""
+          );
 
-      if (
-        name.length < 2 ||
-        name.length > 100
-      ) {
 
-        res.writeHead(400);
+        // NAME CHECK
 
-        res.end(JSON.stringify({
-          success: false,
-          error: "Invalid name."
-        }));
+        if (
+          name.length < 2 ||
+          name.length > 100
+        ) {
 
-        return;
-      }
+          sendJSON(res, 400, {
+            success: false,
+            error: "Invalid name."
+          });
 
-      // EMAIL CHECK
+          return;
+        }
 
-      const emailRegex =
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-      if (
-        !emailRegex.test(email) ||
-        email.length > 255
-      ) {
+        // EMAIL CHECK
 
-        res.writeHead(400);
+        const emailRegex =
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        res.end(JSON.stringify({
-          success: false,
-          error: "Invalid email."
-        }));
 
-        return;
-      }
+        if (
+          !emailRegex.test(email) ||
+          email.length > 255
+        ) {
 
-      // PASSWORD CHECK
+          sendJSON(res, 400, {
+            success: false,
+            error: "Invalid email."
+          });
 
-      if (
-        password.length < 8 ||
-        password.length > 128
-      ) {
+          return;
+        }
 
-        res.writeHead(400);
 
-        res.end(JSON.stringify({
-          success: false,
-          error:
-            "Password must be 8 to 128 characters."
-        }));
+        // PASSWORD CHECK
 
-        return;
-      }
+        if (
+          password.length < 8 ||
+          password.length > 128
+        ) {
 
-      // CHECK EXISTING USER
+          sendJSON(res, 400, {
+            success: false,
+            error:
+              "Password must be 8 to 128 characters."
+          });
 
-      const existing =
-        await pool.query(
-          "SELECT id FROM users WHERE email = $1 LIMIT 1",
-          [email]
+          return;
+        }
+
+
+        // CHECK EXISTING USER
+
+        const existing =
+          await pool.query(
+            `
+            SELECT id
+            FROM users
+            WHERE email = $1
+            LIMIT 1
+            `,
+            [email]
+          );
+
+
+        if (existing.rows.length > 0) {
+
+          sendJSON(res, 409, {
+            success: false,
+            error:
+              "An account with this email already exists."
+          });
+
+          return;
+        }
+
+
+        // HASH PASSWORD
+
+        const passwordHash =
+          await hashPassword(password);
+
+
+        // CREATE USER
+
+        const result =
+          await pool.query(
+            `
+            INSERT INTO users
+            (
+              name,
+              email,
+              password_hash,
+              plan,
+              role
+            )
+            VALUES
+            (
+              $1,
+              $2,
+              $3,
+              'free',
+              'user'
+            )
+            RETURNING
+              id,
+              name,
+              email,
+              plan,
+              role,
+              created_at
+            `,
+            [
+              name,
+              email,
+              passwordHash
+            ]
+          );
+
+
+        const user =
+          result.rows[0];
+
+
+        sendJSON(res, 201, {
+          success: true,
+          message:
+            "Account created successfully.",
+          user: user
+        });
+
+
+      } catch (error) {
+
+        console.error(
+          "Register error:",
+          error
         );
 
-      if (existing.rows.length > 0) {
 
-        res.writeHead(409);
-
-        res.end(JSON.stringify({
+        sendJSON(res, 500, {
           success: false,
           error:
-            "An account with this email already exists."
-        }));
+            "Unable to create account."
+        });
 
-        return;
       }
 
-      // HASH PASSWORD
-
-      const passwordHash =
-        await hashPassword(password);
-
-      // CREATE USER
-
-      const result =
-        await pool.query(
-          `
-          INSERT INTO users
-          (
-            name,
-            email,
-            password_hash,
-            plan,
-            role
-          )
-          VALUES
-          (
-            $1,
-            $2,
-            $3,
-            'free',
-            'user'
-          )
-          RETURNING
-            id,
-            name,
-            email,
-            plan,
-            role,
-            created_at
-          `,
-          [
-            name,
-            email,
-            passwordHash
-          ]
-        );
-
-      const user =
-        result.rows[0];
-
-      res.writeHead(201);
-
-      res.end(JSON.stringify({
-        success: true,
-        message:
-          "Account created successfully.",
-        user: user
-      }));
-
-    } catch (error) {
-
-      console.error(
-        "Register error:",
-        error
-      );
-
-      res.writeHead(500);
-
-      res.end(JSON.stringify({
-        success: false,
-        error:
-          "Unable to create account."
-      }));
+      return;
     }
 
-    return;
-  }
 
-  // ============================
-  // GET CHAT TEST
-  // ============================
+    // ====================================
+    // CHAT GET TEST
+    // ====================================
 
-  if (
-    req.method === "GET" &&
-    req.url === "/chat"
-  ) {
+    if (
+      req.method === "GET" &&
+      req.url === "/chat"
+    ) {
 
-    res.writeHead(200);
-
-    res.end(JSON.stringify({
-      success: true,
-      reply:
-        "🎉 Chat API ঠিকমতো কাজ করছে!"
-    }));
-
-    return;
-  }
-
-  // ============================
-  // POST CHAT TEST
-  // ============================
-
-  if (
-    req.method === "POST" &&
-    req.url === "/chat"
-  ) {
-
-    try {
-
-      const data =
-        await readBody(req);
-
-      res.writeHead(200);
-
-      res.end(JSON.stringify({
+      sendJSON(res, 200, {
         success: true,
         reply:
-          `তুমি বলেছো: ${
-            data.message ||
-            "কোনো message পাওয়া যায়নি"
-          }`
-      }));
+          "🎉 Chat API ঠিকমতো কাজ করছে!"
+      });
 
-    } catch {
-
-      res.writeHead(400);
-
-      res.end(JSON.stringify({
-        success: false,
-        error: "Invalid JSON"
-      }));
+      return;
     }
 
-    return;
+
+    // ====================================
+    // CHAT POST TEST
+    // ====================================
+
+    if (
+      req.method === "POST" &&
+      req.url === "/chat"
+    ) {
+
+      try {
+
+        const data =
+          await readBody(req);
+
+
+        const message =
+          String(
+            data.message || ""
+          ).trim();
+
+
+        if (!message) {
+
+          sendJSON(res, 400, {
+            success: false,
+            error:
+              "Message is required."
+          });
+
+          return;
+        }
+
+
+        sendJSON(res, 200, {
+          success: true,
+          reply:
+            `তুমি বলেছো: ${message}`
+        });
+
+
+      } catch (error) {
+
+        sendJSON(res, 400, {
+          success: false,
+          error: "Invalid JSON"
+        });
+
+      }
+
+      return;
+    }
+
+
+    // ====================================
+    // 404
+    // ====================================
+
+    sendJSON(res, 404, {
+      success: false,
+      error: "Not Found"
+    });
+
   }
+);
 
-  // ============================
-  // NOT FOUND
-  // ============================
 
-  res.writeHead(404);
-
-  res.end(JSON.stringify({
-    success: false,
-    error: "Not Found"
-  }));
-});
-
-// ==============================
+// ========================================
 // START SERVER
-// ==============================
+// ========================================
 
 const PORT =
   process.env.PORT || 3000;
+
 
 async function startServer() {
 
@@ -439,13 +567,8 @@ async function startServer() {
 
     await initDatabase();
 
-    server.listen(
-      PORT,
-      () => {
-        console.log(
-          `Server running on port ${PORT}`
-        );
-      }
+    console.log(
+      "Database initialization completed."
     );
 
   } catch (error) {
@@ -455,15 +578,21 @@ async function startServer() {
       error
     );
 
-    server.listen(
-      PORT,
-      () => {
-        console.log(
-          `Server running on port ${PORT}`
-        );
-      }
-    );
   }
+
+
+  server.listen(
+    PORT,
+    () => {
+
+      console.log(
+        `My AI Server running on port ${PORT}`
+      );
+
+    }
+  );
+
 }
+
 
 startServer();
