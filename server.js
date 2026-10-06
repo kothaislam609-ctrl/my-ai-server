@@ -82,11 +82,7 @@ async function hashPassword(password) {
     crypto.randomBytes(16).toString("hex");
 
   const key =
-    await scrypt(
-      password,
-      salt,
-      64
-    );
+    await scrypt(password, salt, 64);
 
   return `${salt}:${key.toString("hex")}`;
 }
@@ -96,30 +92,23 @@ async function hashPassword(password) {
 // VERIFY PASSWORD
 // ========================================
 
-async function verifyPassword(
-  password,
-  storedHash
-) {
+async function verifyPassword(password, storedHash) {
 
   try {
 
-    const parts =
-      storedHash.split(":");
+    const parts = storedHash.split(":");
 
     if (parts.length !== 2) {
       return false;
     }
 
     const salt = parts[0];
+
     const storedKey =
       Buffer.from(parts[1], "hex");
 
     const derivedKey =
-      await scrypt(
-        password,
-        salt,
-        64
-      );
+      await scrypt(password, salt, 64);
 
     if (
       storedKey.length !==
@@ -146,64 +135,43 @@ async function verifyPassword(
 
 function readBody(req) {
 
-  return new Promise(
-    (resolve, reject) => {
+  return new Promise((resolve, reject) => {
 
-      let body = "";
+    let body = "";
 
-      req.on(
-        "data",
-        chunk => {
+    req.on("data", chunk => {
 
-          body += chunk;
+      body += chunk;
 
-          if (body.length > 10000) {
+      if (body.length > 10000) {
 
-            reject(
-              new Error(
-                "Request body too large"
-              )
-            );
+        reject(
+          new Error("Request body too large")
+        );
 
-            req.destroy();
-          }
+        req.destroy();
+      }
+    });
 
-        }
-      );
+    req.on("end", () => {
 
-      req.on(
-        "end",
-        () => {
+      try {
 
-          try {
+        const data =
+          JSON.parse(body || "{}");
 
-            const data =
-              JSON.parse(
-                body || "{}"
-              );
+        resolve(data);
 
-            resolve(data);
+      } catch {
 
-          } catch {
+        reject(
+          new Error("Invalid JSON")
+        );
+      }
+    });
 
-            reject(
-              new Error(
-                "Invalid JSON"
-              )
-            );
-
-          }
-
-        }
-      );
-
-      req.on(
-        "error",
-        reject
-      );
-
-    }
-  );
+    req.on("error", reject);
+  });
 }
 
 
@@ -211,11 +179,7 @@ function readBody(req) {
 // SEND JSON
 // ========================================
 
-function sendJSON(
-  res,
-  statusCode,
-  data
-) {
+function sendJSON(res, statusCode, data) {
 
   res.writeHead(
     statusCode,
@@ -234,9 +198,7 @@ function sendJSON(
     }
   );
 
-  res.end(
-    JSON.stringify(data)
-  );
+  res.end(JSON.stringify(data));
 }
 
 
@@ -354,9 +316,7 @@ function getToken(req) {
     req.headers.authorization || "";
 
   if (
-    !header.startsWith(
-      "Bearer "
-    )
+    !header.startsWith("Bearer ")
   ) {
     return null;
   }
@@ -418,16 +378,138 @@ async function getCurrentUser(req) {
 
 
 // ========================================
+// REAL OPENAI AI
+// ========================================
+
+async function askAI(message) {
+
+  const apiKey =
+    process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+
+    throw new Error(
+      "OPENAI_API_KEY is not configured."
+    );
+  }
+
+
+  const model =
+    process.env.OPENAI_MODEL ||
+    "gpt-6-luna";
+
+
+  const response =
+    await fetch(
+      "https://api.openai.com/v1/responses",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          "Authorization":
+            `Bearer ${apiKey}`
+        },
+
+        body: JSON.stringify({
+
+          model: model,
+
+          instructions:
+            "You are a helpful AI assistant. Reply naturally and clearly. If the user writes in Bengali, reply in Bengali. If the user writes in English, reply in English.",
+
+          input: message
+        })
+      }
+    );
+
+
+  const data =
+    await response.json();
+
+
+  if (!response.ok) {
+
+    console.error(
+      "OpenAI API error:",
+      data
+    );
+
+    throw new Error(
+      "OpenAI API request failed."
+    );
+  }
+
+
+  let reply = "";
+
+
+  if (
+    typeof data.output_text ===
+    "string"
+  ) {
+
+    reply =
+      data.output_text.trim();
+
+  } else if (
+    Array.isArray(data.output)
+  ) {
+
+    for (
+      const item of data.output
+    ) {
+
+      if (
+        Array.isArray(item.content)
+      ) {
+
+        for (
+          const content
+          of item.content
+        ) {
+
+          if (
+            typeof content.text ===
+            "string"
+          ) {
+
+            reply +=
+              content.text;
+          }
+        }
+      }
+    }
+
+    reply =
+      reply.trim();
+  }
+
+
+  if (!reply) {
+
+    throw new Error(
+      "AI returned an empty response."
+    );
+  }
+
+
+  return {
+    reply,
+    model
+  };
+}
+
+
+// ========================================
 // SERVER
 // ========================================
 
 const server =
   http.createServer(
     async (req, res) => {
-
-      // ==================================
-      // CORS
-      // ==================================
 
       res.setHeader(
         "Access-Control-Allow-Origin",
@@ -507,9 +589,7 @@ const server =
 
         } catch (error) {
 
-          console.error(
-            error
-          );
+          console.error(error);
 
           sendJSON(
             res,
@@ -847,7 +927,9 @@ const server =
               success: true,
               message:
                 "Login successful.",
+
               token: token,
+
               user: {
                 id: user.id,
                 name: user.name,
@@ -1014,30 +1096,7 @@ const server =
 
 
       // ==================================
-      // CHAT TEST
-      // ==================================
-
-      if (
-        req.method === "GET" &&
-        req.url === "/chat"
-      ) {
-
-        sendJSON(
-          res,
-          200,
-          {
-            success: true,
-            reply:
-              "🎉 Chat API ঠিকমতো কাজ করছে!"
-          }
-        );
-
-        return;
-      }
-
-
-      // ==================================
-      // CHAT POST
+      // REAL AI CHAT
       // ==================================
 
       if (
@@ -1046,6 +1105,27 @@ const server =
       ) {
 
         try {
+
+          // User must be logged in
+          const user =
+            await getCurrentUser(req);
+
+
+          if (!user) {
+
+            sendJSON(
+              res,
+              401,
+              {
+                success: false,
+                error:
+                  "Please login first."
+              }
+            );
+
+            return;
+          }
+
 
           const data =
             await readBody(req);
@@ -1072,29 +1152,173 @@ const server =
           }
 
 
+          if (
+            message.length > 4000
+          ) {
+
+            sendJSON(
+              res,
+              400,
+              {
+                success: false,
+                error:
+                  "Message is too long."
+              }
+            );
+
+            return;
+          }
+
+
+          // Ask OpenAI
+          const ai =
+            await askAI(message);
+
+
+          // Create chat
+          const chatResult =
+            await pool.query(
+              `
+              INSERT INTO chats
+              (
+                user_id,
+                title
+              )
+              VALUES
+              (
+                $1,
+                $2
+              )
+              RETURNING
+                id,
+                title,
+                created_at
+              `,
+              [
+                user.id,
+                message.substring(0, 80)
+              ]
+            );
+
+
+          const chat =
+            chatResult.rows[0];
+
+
+          // Save user message
+          await pool.query(
+            `
+            INSERT INTO messages
+            (
+              chat_id,
+              role,
+              content
+            )
+            VALUES
+            (
+              $1,
+              'user',
+              $2
+            )
+            `,
+            [
+              chat.id,
+              message
+            ]
+          );
+
+
+          // Save AI message
+          await pool.query(
+            `
+            INSERT INTO messages
+            (
+              chat_id,
+              role,
+              content
+            )
+            VALUES
+            (
+              $1,
+              'assistant',
+              $2
+            )
+            `,
+            [
+              chat.id,
+              ai.reply
+            ]
+          );
+
+
+          // Send response
           sendJSON(
             res,
             200,
             {
               success: true,
+
               reply:
-                `তুমি বলেছো: ${message}`
+                ai.reply,
+
+              model:
+                ai.model,
+
+              chat: {
+                id:
+                  chat.id,
+
+                title:
+                  chat.title,
+
+                created_at:
+                  chat.created_at
+              }
             }
           );
 
 
-        } catch {
+        } catch (error) {
+
+          console.error(
+            "AI Chat error:",
+            error
+          );
 
           sendJSON(
             res,
-            400,
+            500,
             {
               success: false,
               error:
-                "Invalid JSON"
+                error.message ||
+                "Unable to process AI chat."
             }
           );
         }
+
+        return;
+      }
+
+
+      // ==================================
+      // CHAT TEST
+      // ==================================
+
+      if (
+        req.method === "GET" &&
+        req.url === "/chat"
+      ) {
+
+        sendJSON(
+          res,
+          200,
+          {
+            success: true,
+            message:
+              "Real AI Chat API is ready."
+          }
+        );
 
         return;
       }
