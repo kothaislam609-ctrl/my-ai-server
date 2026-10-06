@@ -2,519 +2,588 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>EMORA AI</title>
 
 <style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
 }
 
-body {
-  font-family: Arial, sans-serif;
-  background: #09090b;
-  color: #fff;
-  height: 100vh;
-  overflow: hidden;
+html,
+body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+}
+
+body{
+  font-family:Arial,sans-serif;
+  background:#09090b;
+  color:#fff;
 }
 
 button,
 textarea,
-input {
-  font: inherit;
+input{
+  font:inherit;
 }
 
-button {
-  cursor: pointer;
+button{
+  cursor:pointer;
 }
 
-.hidden {
-  display: none !important;
+.hidden{
+  display:none!important;
 }
 
+/* ================= AUTH ================= */
 
-/* =========================================================
-   AUTH
-========================================================= */
-
-.auth-screen {
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+.auth-screen{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
   background:
-    radial-gradient(circle at top, #24243a 0%, #09090b 55%);
+    radial-gradient(circle at top,#24243a 0%,#09090b 55%);
+  overflow:auto;
 }
 
-.auth-box {
-  width: 100%;
-  max-width: 390px;
-  background: rgba(25, 25, 30, 0.95);
-  border: 1px solid #303038;
-  border-radius: 24px;
-  padding: 28px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.45);
+.auth-box{
+  width:100%;
+  max-width:390px;
+  background:rgba(25,25,30,.96);
+  border:1px solid #303038;
+  border-radius:24px;
+  padding:28px;
+  box-shadow:0 20px 60px rgba(0,0,0,.45);
 }
 
-.logo {
-  text-align: center;
-  font-size: 32px;
-  font-weight: 800;
-  margin-bottom: 8px;
+.logo{
+  text-align:center;
+  font-size:32px;
+  font-weight:800;
+  margin-bottom:8px;
 }
 
-.logo-sub {
-  text-align: center;
-  color: #999;
-  margin-bottom: 25px;
+.logo-sub{
+  text-align:center;
+  color:#999;
+  margin-bottom:25px;
 }
 
-.auth-box input {
-  width: 100%;
-  padding: 14px;
-  margin-bottom: 12px;
-  border-radius: 12px;
-  border: 1px solid #3b3b44;
-  background: #111116;
-  color: white;
-  outline: none;
+.auth-box input{
+  width:100%;
+  padding:14px;
+  margin-bottom:12px;
+  border-radius:12px;
+  border:1px solid #3b3b44;
+  background:#111116;
+  color:white;
+  outline:none;
 }
 
-.auth-box input:focus {
-  border-color: #7777ff;
+.auth-box input:focus{
+  border-color:#7777ff;
 }
 
-.primary-btn {
-  width: 100%;
-  border: 0;
-  border-radius: 12px;
-  padding: 14px;
-  background: #ffffff;
-  color: #080808;
-  font-weight: 700;
+.primary-btn{
+  width:100%;
+  border:0;
+  border-radius:12px;
+  padding:14px;
+  background:#fff;
+  color:#080808;
+  font-weight:700;
 }
 
-.switch-auth {
-  margin-top: 18px;
-  text-align: center;
-  color: #aaa;
+.switch-auth{
+  margin-top:18px;
+  text-align:center;
+  color:#aaa;
 }
 
-.switch-auth button {
-  background: none;
-  border: 0;
-  color: #fff;
-  font-weight: 700;
+.switch-auth button{
+  background:none;
+  border:0;
+  color:#fff;
+  font-weight:700;
 }
 
+/* ================= APP ================= */
 
-/* =========================================================
-   APP
-========================================================= */
-
-.app {
-  display: flex;
-  height: 100vh;
+.app{
+  width:100%;
+  height:100dvh;
+  display:flex;
+  overflow:hidden;
 }
 
+/* ================= SIDEBAR ================= */
 
-/* =========================================================
-   SIDEBAR
-========================================================= */
-
-.sidebar {
-  width: 270px;
-  background: #101014;
-  border-right: 1px solid #292930;
-  display: flex;
-  flex-direction: column;
-  padding: 15px;
-  flex-shrink: 0;
+.sidebar{
+  width:270px;
+  height:100%;
+  background:#101014;
+  border-right:1px solid #292930;
+  display:flex;
+  flex-direction:column;
+  padding:15px;
+  flex-shrink:0;
+  z-index:30;
 }
 
-.sidebar-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 15px;
+.sidebar-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:15px;
 }
 
-.sidebar-logo {
-  font-size: 21px;
-  font-weight: 800;
+.sidebar-logo{
+  font-size:21px;
+  font-weight:800;
 }
 
-.new-chat {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #36363e;
-  border-radius: 12px;
-  background: #19191f;
-  color: white;
-  margin-bottom: 15px;
+.new-chat{
+  width:100%;
+  padding:12px;
+  border:1px solid #36363e;
+  border-radius:12px;
+  background:#19191f;
+  color:white;
+  margin-bottom:15px;
 }
 
-.new-chat:hover {
-  background: #222229;
+.new-chat:hover{
+  background:#222229;
 }
 
-.recent-title {
-  color: #777;
-  font-size: 12px;
-  margin: 5px 4px 8px;
+.recent-title{
+  color:#777;
+  font-size:12px;
+  margin:5px 4px 8px;
 }
 
-.chat-list {
-  flex: 1;
-  overflow-y: auto;
+.chat-list{
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
 }
 
-.chat-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 5px;
+.chat-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:5px;
 }
 
-.chat-open {
-  flex: 1;
-  border: 0;
-  background: transparent;
-  color: #ccc;
-  text-align: left;
-  padding: 11px;
-  border-radius: 10px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+.chat-open{
+  flex:1;
+  min-width:0;
+  border:0;
+  background:transparent;
+  color:#ccc;
+  text-align:left;
+  padding:11px;
+  border-radius:10px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
 }
 
-.chat-open:hover {
-  background: #1c1c22;
-  color: white;
+.chat-open:hover{
+  background:#1c1c22;
+  color:#fff;
 }
 
-.chat-delete {
-  border: 0;
-  background: transparent;
-  color: #777;
-  padding: 8px;
+.chat-delete{
+  border:0;
+  background:transparent;
+  color:#777;
+  padding:8px;
 }
 
-.chat-delete:hover {
-  color: #ff6b6b;
+.profile{
+  border-top:1px solid #292930;
+  padding-top:14px;
+  flex-shrink:0;
 }
 
-.profile {
-  border-top: 1px solid #292930;
-  padding-top: 14px;
+.profile-name{
+  font-weight:700;
 }
 
-.profile-name {
-  font-weight: 700;
+.profile-email{
+  color:#777;
+  font-size:12px;
+  margin-top:3px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
-.profile-email {
-  color: #777;
-  font-size: 12px;
-  margin-top: 3px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.logout{
+  width:100%;
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #33333b;
+  background:transparent;
+  color:#ccc;
 }
 
-.logout {
-  width: 100%;
-  margin-top: 10px;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #33333b;
-  background: transparent;
-  color: #ccc;
+/* ================= MAIN ================= */
+
+.main{
+  flex:1;
+  min-width:0;
+  min-height:0;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  position:relative;
 }
 
-
-/* =========================================================
-   MAIN
-========================================================= */
-
-.main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
+.topbar{
+  height:60px;
+  min-height:60px;
+  border-bottom:1px solid #292930;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:0 16px;
+  flex-shrink:0;
 }
 
-.topbar {
-  height: 60px;
-  border-bottom: 1px solid #292930;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 16px;
-  flex-shrink: 0;
+.menu-btn{
+  display:none;
+  border:0;
+  background:transparent;
+  color:#fff;
+  font-size:22px;
 }
 
-.menu-btn {
-  display: none;
-  border: 0;
-  background: transparent;
-  color: white;
-  font-size: 22px;
+.chat-title{
+  font-weight:700;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
-.status {
-  font-size: 12px;
-  color: #64e291;
+.status{
+  margin-left:auto;
+  font-size:12px;
+  color:#64e291;
 }
 
-.chat-title {
-  font-weight: 700;
+/* ================= MESSAGES ================= */
+
+.messages{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:22px 15px 180px;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  scroll-behavior:smooth;
 }
 
-
-/* =========================================================
-   CHAT
-========================================================= */
-
-.messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 22px 15px 120px;
+.message{
+  width:100%;
+  max-width:850px;
+  margin:0 auto 18px;
+  display:flex;
+  flex-direction:column;
 }
 
-.message {
-  max-width: 850px;
-  margin: 0 auto 18px;
+.message.user{
+  align-items:flex-end;
 }
 
-.message-label {
-  font-size: 12px;
-  color: #777;
-  margin-bottom: 6px;
+.message.assistant{
+  align-items:flex-start;
 }
 
-.bubble {
-  display: inline-block;
-  max-width: 90%;
-  padding: 12px 15px;
-  border-radius: 16px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  word-break: break-word;
+.message-label{
+  font-size:12px;
+  color:#777;
+  margin-bottom:6px;
 }
 
-.user .bubble {
-  background: #25252d;
+.user .message-label{
+  text-align:right;
 }
 
-.assistant .bubble {
-  background: #15151a;
-  border: 1px solid #292930;
+.assistant .message-label{
+  text-align:left;
 }
 
-
-/* =========================================================
-   THINKING
-========================================================= */
-
-.ai-thinking {
-  max-width: 850px;
-  margin: 0 auto 18px;
+.bubble{
+  padding:12px 15px;
+  border-radius:17px;
+  line-height:1.55;
+  white-space:pre-wrap;
+  word-break:break-word;
+  max-width:min(75%,700px);
 }
 
-.thinking-box {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 14px;
-  border: 1px solid #292930;
-  background: #15151a;
-  border-radius: 16px;
-  color: #aaa;
-  font-size: 13px;
+.user .bubble{
+  background:#25252d;
+  color:#fff;
+  border-radius:18px 18px 5px 18px;
 }
 
-.thinking-dots {
-  display: flex;
-  gap: 4px;
+.assistant .bubble{
+  background:#15151a;
+  color:#fff;
+  border:1px solid #292930;
+  border-radius:18px 18px 18px 5px;
 }
 
-.thinking-dots span {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #aaa;
-  animation: thinking 1.2s infinite;
+.message-image{
+  display:block;
+  width:100%;
+  max-width:420px;
+  max-height:420px;
+  object-fit:contain;
+  margin-top:8px;
+  border-radius:14px;
+  border:1px solid #38383f;
 }
 
-.thinking-dots span:nth-child(2) {
-  animation-delay: .2s;
+/* ================= THINKING ================= */
+
+.ai-thinking{
+  width:100%;
+  max-width:850px;
+  margin:0 auto 18px;
+  display:flex;
+  justify-content:flex-start;
 }
 
-.thinking-dots span:nth-child(3) {
-  animation-delay: .4s;
+.thinking-box{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:11px 14px;
+  border:1px solid #292930;
+  background:#15151a;
+  border-radius:16px;
+  color:#aaa;
+  font-size:13px;
 }
 
-@keyframes thinking {
-  0%, 60%, 100% {
-    opacity: .25;
-    transform: translateY(0);
+.thinking-dots{
+  display:flex;
+  gap:4px;
+}
+
+.thinking-dots span{
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:#aaa;
+  animation:thinking 1.2s infinite;
+}
+
+.thinking-dots span:nth-child(2){
+  animation-delay:.2s;
+}
+
+.thinking-dots span:nth-child(3){
+  animation-delay:.4s;
+}
+
+@keyframes thinking{
+  0%,60%,100%{
+    opacity:.25;
+    transform:translateY(0);
   }
-
-  30% {
-    opacity: 1;
-    transform: translateY(-3px);
+  30%{
+    opacity:1;
+    transform:translateY(-3px);
   }
 }
 
+/* ================= GENERATED IMAGE ================= */
 
-/* =========================================================
-   IMAGE
-========================================================= */
-
-.generated-image {
-  display: block;
-  width: 100%;
-  max-width: 650px;
-  margin-top: 10px;
-  border-radius: 16px;
-  border: 1px solid #33333b;
+.generated-image{
+  display:block;
+  width:100%;
+  max-width:650px;
+  max-height:650px;
+  object-fit:contain;
+  margin-top:10px;
+  border-radius:16px;
+  border:1px solid #33333b;
 }
 
+/* ================= INPUT ================= */
 
-/* =========================================================
-   INPUT AREA
-========================================================= */
-
-.input-area {
-  position: fixed;
-  left: 270px;
-  right: 0;
-  bottom: 0;
-  padding: 12px 15px 15px;
-  background: linear-gradient(
+.input-area{
+  position:absolute;
+  z-index:10;
+  left:0;
+  right:0;
+  bottom:0;
+  padding:12px 15px calc(15px + env(safe-area-inset-bottom));
+  background:linear-gradient(
     transparent,
-    #09090b 25%
+    #09090b 28%
   );
+  pointer-events:none;
 }
 
-.composer {
-  max-width: 850px;
-  margin: 0 auto;
-  background: #15151a;
-  border: 1px solid #303038;
-  border-radius: 18px;
-  padding: 10px;
+.composer{
+  max-width:850px;
+  margin:0 auto;
+  background:#15151a;
+  border:1px solid #303038;
+  border-radius:18px;
+  padding:10px;
+  pointer-events:auto;
+  box-shadow:0 8px 30px rgba(0,0,0,.25);
 }
 
-.tool-row {
-  display: flex;
-  gap: 7px;
-  margin-bottom: 8px;
-  overflow-x: auto;
+.tool-row{
+  display:flex;
+  gap:7px;
+  margin-bottom:8px;
+  overflow-x:auto;
+  scrollbar-width:none;
 }
 
-.tool-btn {
-  white-space: nowrap;
-  border: 1px solid #36363e;
-  background: #1c1c22;
-  color: #ddd;
-  padding: 7px 10px;
-  border-radius: 10px;
-  font-size: 12px;
+.tool-row::-webkit-scrollbar{
+  display:none;
 }
 
-.tool-btn:hover {
-  background: #27272f;
+.tool-btn{
+  white-space:nowrap;
+  border:1px solid #36363e;
+  background:#1c1c22;
+  color:#ddd;
+  padding:7px 10px;
+  border-radius:10px;
+  font-size:12px;
 }
 
-.composer-row {
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
+.tool-btn.active{
+  background:#fff;
+  color:#000;
 }
 
-#messageInput {
-  flex: 1;
-  min-height: 44px;
-  max-height: 150px;
-  resize: none;
-  border: 0;
-  outline: none;
-  background: transparent;
-  color: white;
-  padding: 11px;
+.composer-row{
+  display:flex;
+  gap:8px;
+  align-items:flex-end;
 }
 
-.send-btn {
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 12px;
-  background: white;
-  color: black;
-  font-size: 18px;
+#messageInput{
+  flex:1;
+  min-width:0;
+  min-height:44px;
+  max-height:150px;
+  resize:none;
+  border:0;
+  outline:none;
+  background:transparent;
+  color:white;
+  padding:11px;
+  line-height:1.45;
 }
 
-.image-preview-box {
-  display: none;
-  margin-bottom: 8px;
-  position: relative;
-  width: fit-content;
+.send-btn{
+  width:44px;
+  height:44px;
+  flex-shrink:0;
+  border:0;
+  border-radius:12px;
+  background:#fff;
+  color:#000;
+  font-size:18px;
 }
 
-.image-preview-box img {
-  max-width: 130px;
-  max-height: 100px;
-  border-radius: 12px;
-  border: 1px solid #444;
+.send-btn:disabled{
+  opacity:.5;
 }
 
-.clear-image {
-  position: absolute;
-  top: -7px;
-  right: -7px;
-  width: 23px;
-  height: 23px;
-  border-radius: 50%;
-  border: 0;
-  background: #ff4d4d;
-  color: white;
+.image-preview-box{
+  display:none;
+  margin-bottom:8px;
+  position:relative;
+  width:fit-content;
 }
 
+.image-preview-box img{
+  max-width:130px;
+  max-height:100px;
+  border-radius:12px;
+  border:1px solid #444;
+}
 
-/* =========================================================
-   MOBILE
-========================================================= */
+.clear-image{
+  position:absolute;
+  top:-7px;
+  right:-7px;
+  width:23px;
+  height:23px;
+  border-radius:50%;
+  border:0;
+  background:#ff4d4d;
+  color:white;
+}
 
-@media (max-width: 700px) {
+/* ================= MOBILE ================= */
 
-  .sidebar {
-    position: fixed;
-    z-index: 20;
-    left: -280px;
-    top: 0;
-    bottom: 0;
-    transition: .25s;
+@media(max-width:700px){
+
+  .sidebar{
+    position:fixed;
+    left:-280px;
+    top:0;
+    bottom:0;
+    transition:left .25s ease;
+    box-shadow:10px 0 30px rgba(0,0,0,.35);
   }
 
-  .sidebar.open {
-    left: 0;
+  .sidebar.open{
+    left:0;
   }
 
-  .menu-btn {
-    display: block;
+  .menu-btn{
+    display:block;
   }
 
-  .input-area {
-    left: 0;
+  .bubble{
+    max-width:82%;
   }
 
-  .messages {
-    padding-bottom: 145px;
+  .messages{
+    padding-left:10px;
+    padding-right:10px;
+    padding-bottom:190px;
+  }
+
+  .input-area{
+    padding-left:8px;
+    padding-right:8px;
+  }
+
+  .composer{
+    border-radius:16px;
+  }
+
+  .status{
+    font-size:11px;
   }
 }
 </style>
@@ -522,25 +591,17 @@ button {
 
 <body>
 
-
-<!-- =======================================================
-     AUTH SCREEN
-======================================================= -->
+<!-- ================= AUTH ================= -->
 
 <div id="authScreen" class="auth-screen">
 
   <div class="auth-box">
 
-    <div class="logo">
-      EMORA AI
-    </div>
+    <div class="logo">EMORA AI</div>
 
     <div class="logo-sub">
       Your intelligent AI assistant
     </div>
-
-
-    <!-- LOGIN -->
 
     <div id="loginForm">
 
@@ -558,10 +619,7 @@ button {
         autocomplete="current-password"
       >
 
-      <button
-        class="primary-btn"
-        onclick="login()"
-      >
+      <button class="primary-btn" onclick="login()">
         Login
       </button>
 
@@ -573,9 +631,6 @@ button {
       </div>
 
     </div>
-
-
-    <!-- REGISTER -->
 
     <div id="registerForm" class="hidden">
 
@@ -600,10 +655,7 @@ button {
         autocomplete="new-password"
       >
 
-      <button
-        class="primary-btn"
-        onclick="register()"
-      >
+      <button class="primary-btn" onclick="register()">
         Create account
       </button>
 
@@ -619,66 +671,39 @@ button {
   </div>
 </div>
 
-
-<!-- =======================================================
-     APP
-======================================================= -->
+<!-- ================= APP ================= -->
 
 <div id="app" class="app hidden">
-
-
-  <!-- SIDEBAR -->
 
   <aside id="sidebar" class="sidebar">
 
     <div class="sidebar-top">
-
       <div class="sidebar-logo">
         EMORA
       </div>
-
     </div>
 
-
-    <button
-      class="new-chat"
-      onclick="newChat()"
-    >
+    <button class="new-chat" onclick="newChat()">
       ＋ New Chat
     </button>
-
 
     <div class="recent-title">
       RECENT CHATS
     </div>
 
-
-    <div
-      id="chatList"
-      class="chat-list"
-    ></div>
-
+    <div id="chatList" class="chat-list"></div>
 
     <div class="profile">
 
-      <div
-        id="profileName"
-        class="profile-name"
-      >
+      <div id="profileName" class="profile-name">
         User
       </div>
 
-      <div
-        id="profileEmail"
-        class="profile-email"
-      >
+      <div id="profileEmail" class="profile-email">
         -
       </div>
 
-      <button
-        class="logout"
-        onclick="logout()"
-      >
+      <button class="logout" onclick="logout()">
         Logout
       </button>
 
@@ -686,27 +711,15 @@ button {
 
   </aside>
 
-
-  <!-- MAIN -->
-
   <main class="main">
-
-
-    <!-- TOPBAR -->
 
     <div class="topbar">
 
-      <button
-        class="menu-btn"
-        onclick="toggleSidebar()"
-      >
+      <button class="menu-btn" onclick="toggleSidebar()">
         ☰
       </button>
 
-      <div
-        id="chatTitle"
-        class="chat-title"
-      >
+      <div id="chatTitle" class="chat-title">
         New Chat
       </div>
 
@@ -716,34 +729,17 @@ button {
 
     </div>
 
-
-    <!-- MESSAGES -->
-
-    <div
-      id="messages"
-      class="messages"
-    ></div>
-
-
-    <!-- INPUT -->
+    <div id="messages" class="messages"></div>
 
     <div class="input-area">
 
       <div class="composer">
 
-
-        <!-- IMAGE PREVIEW -->
-
         <div
           id="imagePreviewBox"
           class="image-preview-box"
         >
-
-          <img
-            id="imagePreview"
-            src=""
-            alt="Selected image"
-          >
+          <img id="imagePreview" src="" alt="Selected image">
 
           <button
             class="clear-image"
@@ -751,11 +747,7 @@ button {
           >
             ×
           </button>
-
         </div>
-
-
-        <!-- TOOLS -->
 
         <div class="tool-row">
 
@@ -767,21 +759,36 @@ button {
           </button>
 
           <button
+            id="micButton"
             class="tool-btn"
-            onclick="generateImage()"
+            onclick="toggleMic()"
           >
-            🎨 Create Image
+            🎙️ Mic
+          </button>
+
+          <button
+            id="voiceButton"
+            class="tool-btn active"
+            onclick="toggleAutoVoice()"
+          >
+            🔊 Auto Voice ON
           </button>
 
           <button
             class="tool-btn"
             onclick="speakLastReply()"
           >
-            🔊 Voice
+            ▶️ Replay
+          </button>
+
+          <button
+            class="tool-btn"
+            onclick="generateImage()"
+          >
+            🎨 Create Image
           </button>
 
         </div>
-
 
         <input
           id="imageUpload"
@@ -790,7 +797,6 @@ button {
           hidden
           onchange="handleImageUpload(event)"
         >
-
 
         <div class="composer-row">
 
@@ -801,6 +807,7 @@ button {
           ></textarea>
 
           <button
+            id="sendButton"
             class="send-btn"
             onclick="sendMessage()"
           >
@@ -817,7 +824,6 @@ button {
 
 </div>
 
-
 <script>
 
 /* =========================================================
@@ -827,7 +833,6 @@ button {
 const API_BASE =
   window.location.origin;
 
-
 /* =========================================================
    STATE
 ========================================================= */
@@ -835,30 +840,30 @@ const API_BASE =
 let token =
   localStorage.getItem("emora_token") || null;
 
-let currentUser =
-  null;
+let currentUser = null;
+let currentChatId = null;
 
-let currentChatId =
-  null;
+let selectedImageData = null;
+let selectedImageName = "";
 
-let selectedImageFile =
-  null;
+let lastAssistantReply = "";
 
-let lastAssistantReply =
-  "";
+let autoVoice =
+  localStorage.getItem("emora_auto_voice") !== "off";
 
+let recognition = null;
+let isListening = false;
+let isSending = false;
 
 /* =========================================================
    API
 ========================================================= */
 
-async function api(
-  endpoint,
-  options = {}
-) {
+async function api(endpoint, options = {}) {
 
-  const headers =
-    options.headers || {};
+  const headers = {
+    ...(options.headers || {})
+  };
 
   headers["Content-Type"] =
     "application/json";
@@ -880,14 +885,12 @@ async function api(
   let data = {};
 
   try {
-    data =
-      await response.json();
+    data = await response.json();
   } catch {
     data = {};
   }
 
   if (!response.ok) {
-
     throw new Error(
       data.error ||
       "Request failed."
@@ -897,13 +900,11 @@ async function api(
   return data;
 }
 
-
 /* =========================================================
    AUTH UI
 ========================================================= */
 
 function showLogin() {
-
   document
     .getElementById("loginForm")
     .classList.remove("hidden");
@@ -912,10 +913,8 @@ function showLogin() {
     .getElementById("registerForm")
     .classList.add("hidden");
 }
-
 
 function showRegister() {
-
   document
     .getElementById("loginForm")
     .classList.add("hidden");
@@ -924,7 +923,6 @@ function showRegister() {
     .getElementById("registerForm")
     .classList.remove("hidden");
 }
-
 
 /* =========================================================
    REGISTER
@@ -935,14 +933,12 @@ async function register() {
   const name =
     document
       .getElementById("registerName")
-      .value
-      .trim();
+      .value.trim();
 
   const email =
     document
       .getElementById("registerEmail")
-      .value
-      .trim();
+      .value.trim();
 
   const password =
     document
@@ -960,9 +956,8 @@ async function register() {
       await api(
         "/register",
         {
-          method: "POST",
-
-          body: JSON.stringify({
+          method:"POST",
+          body:JSON.stringify({
             name,
             email,
             password
@@ -970,25 +965,21 @@ async function register() {
         }
       );
 
-    token =
-      data.token;
+    token = data.token;
 
     localStorage.setItem(
       "emora_token",
       token
     );
 
-    currentUser =
-      data.user;
+    currentUser = data.user;
 
-    showApp();
+    await showApp();
 
-  } catch (error) {
-
+  } catch(error) {
     alert(error.message);
   }
 }
-
 
 /* =========================================================
    LOGIN
@@ -999,8 +990,7 @@ async function login() {
   const email =
     document
       .getElementById("loginEmail")
-      .value
-      .trim();
+      .value.trim();
 
   const password =
     document
@@ -1018,44 +1008,37 @@ async function login() {
       await api(
         "/login",
         {
-          method: "POST",
-
-          body: JSON.stringify({
+          method:"POST",
+          body:JSON.stringify({
             email,
             password
           })
         }
       );
 
-    token =
-      data.token;
+    token = data.token;
 
     localStorage.setItem(
       "emora_token",
       token
     );
 
-    currentUser =
-      data.user;
+    currentUser = data.user;
 
-    showApp();
+    await showApp();
 
-  } catch (error) {
-
+  } catch(error) {
     alert(error.message);
   }
 }
 
-
 /* =========================================================
-   AUTO LOGIN
+   SESSION
 ========================================================= */
 
 async function checkSession() {
 
-  if (!token) {
-    return;
-  }
+  if (!token) return;
 
   try {
 
@@ -1065,7 +1048,7 @@ async function checkSession() {
     currentUser =
       data.user;
 
-    showApp();
+    await showApp();
 
   } catch {
 
@@ -1076,7 +1059,6 @@ async function checkSession() {
     );
   }
 }
-
 
 /* =========================================================
    SHOW APP
@@ -1102,13 +1084,14 @@ async function showApp() {
     .textContent =
       currentUser?.email || "";
 
+  updateVoiceButton();
+
   await loadChats();
 
   if (!currentChatId) {
     newChat();
   }
 }
-
 
 /* =========================================================
    LOGOUT
@@ -1117,14 +1100,12 @@ async function showApp() {
 async function logout() {
 
   try {
-
     await api(
       "/logout",
       {
-        method: "POST"
+        method:"POST"
       }
     );
-
   } catch {}
 
   token = null;
@@ -1138,18 +1119,15 @@ async function logout() {
   location.reload();
 }
 
-
 /* =========================================================
    SIDEBAR
 ========================================================= */
 
 function toggleSidebar() {
-
   document
     .getElementById("sidebar")
     .classList.toggle("open");
 }
-
 
 /* =========================================================
    NEW CHAT
@@ -1158,6 +1136,7 @@ function toggleSidebar() {
 function newChat() {
 
   currentChatId = null;
+  lastAssistantReply = "";
 
   document
     .getElementById("chatTitle")
@@ -1168,17 +1147,20 @@ function newChat() {
     .getElementById("messages")
     .innerHTML = "";
 
-  document
-    .getElementById("messageInput")
-    .focus();
-
   clearImage();
+
+  const input =
+    document.getElementById(
+      "messageInput"
+    );
+
+  input.value = "";
+  input.focus();
 
   document
     .getElementById("sidebar")
     .classList.remove("open");
 }
-
 
 /* =========================================================
    LOAD CHATS
@@ -1192,7 +1174,9 @@ async function loadChats() {
       await api("/chats");
 
     const list =
-      document.getElementById("chatList");
+      document.getElementById(
+        "chatList"
+      );
 
     list.innerHTML = "";
 
@@ -1203,7 +1187,6 @@ async function loadChats() {
 
       item.className =
         "chat-item";
-
 
       const openButton =
         document.createElement("button");
@@ -1217,7 +1200,6 @@ async function loadChats() {
       openButton.onclick =
         () => loadChat(chat.id);
 
-
       const deleteButton =
         document.createElement("button");
 
@@ -1229,32 +1211,20 @@ async function loadChats() {
 
       deleteButton.onclick =
         event => {
-
           event.stopPropagation();
-
           deleteChat(chat.id);
         };
 
+      item.appendChild(openButton);
+      item.appendChild(deleteButton);
 
-      item.appendChild(
-        openButton
-      );
-
-      item.appendChild(
-        deleteButton
-      );
-
-      list.appendChild(
-        item
-      );
+      list.appendChild(item);
     });
 
-  } catch (error) {
-
+  } catch(error) {
     console.error(error);
   }
 }
-
 
 /* =========================================================
    LOAD CHAT
@@ -1279,9 +1249,13 @@ async function loadChat(chatId) {
         "Chat";
 
     const messages =
-      document.getElementById("messages");
+      document.getElementById(
+        "messages"
+      );
 
     messages.innerHTML = "";
+
+    lastAssistantReply = "";
 
     data.messages.forEach(message => {
 
@@ -1293,25 +1267,21 @@ async function loadChat(chatId) {
       if (
         message.role === "assistant"
       ) {
-
         lastAssistantReply =
           message.content;
       }
     });
 
-    messages.scrollTop =
-      messages.scrollHeight;
+    scrollMessagesToBottom();
 
     document
       .getElementById("sidebar")
       .classList.remove("open");
 
-  } catch (error) {
-
+  } catch(error) {
     alert(error.message);
   }
 }
-
 
 /* =========================================================
    DELETE CHAT
@@ -1319,11 +1289,7 @@ async function loadChat(chatId) {
 
 async function deleteChat(chatId) {
 
-  if (
-    !confirm(
-      "Delete this chat?"
-    )
-  ) {
+  if (!confirm("Delete this chat?")) {
     return;
   }
 
@@ -1332,7 +1298,7 @@ async function deleteChat(chatId) {
     await api(
       "/chats/" + chatId,
       {
-        method: "DELETE"
+        method:"DELETE"
       }
     );
 
@@ -1340,18 +1306,32 @@ async function deleteChat(chatId) {
       Number(currentChatId) ===
       Number(chatId)
     ) {
-
       newChat();
     }
 
     await loadChats();
 
-  } catch (error) {
-
+  } catch(error) {
     alert(error.message);
   }
 }
 
+/* =========================================================
+   SCROLL
+========================================================= */
+
+function scrollMessagesToBottom() {
+
+  const box =
+    document.getElementById(
+      "messages"
+    );
+
+  requestAnimationFrame(() => {
+    box.scrollTop =
+      box.scrollHeight;
+  });
+}
 
 /* =========================================================
    ADD MESSAGE
@@ -1359,7 +1339,8 @@ async function deleteChat(chatId) {
 
 function addMessage(
   role,
-  content
+  content,
+  imageData = null
 ) {
 
   const messages =
@@ -1378,7 +1359,6 @@ function addMessage(
         : "user"
     );
 
-
   const label =
     document.createElement("div");
 
@@ -1390,33 +1370,46 @@ function addMessage(
       ? "EMORA"
       : "You";
 
-
   const bubble =
     document.createElement("div");
 
   bubble.className =
     "bubble";
 
-  bubble.textContent =
-    content;
+  if (content) {
+    const text =
+      document.createElement("div");
 
+    text.textContent =
+      content;
 
-  wrapper.appendChild(
-    label
-  );
+    bubble.appendChild(text);
+  }
 
-  wrapper.appendChild(
-    bubble
-  );
+  if (imageData) {
 
-  messages.appendChild(
-    wrapper
-  );
+    const img =
+      document.createElement("img");
 
-  messages.scrollTop =
-    messages.scrollHeight;
+    img.className =
+      "message-image";
+
+    img.src =
+      imageData;
+
+    img.alt =
+      "Uploaded image";
+
+    bubble.appendChild(img);
+  }
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(bubble);
+
+  messages.appendChild(wrapper);
+
+  scrollMessagesToBottom();
 }
-
 
 /* =========================================================
    THINKING
@@ -1431,9 +1424,7 @@ function showTyping(show) {
 
   if (show) {
 
-    if (existing) {
-      return;
-    }
+    if (existing) return;
 
     const messages =
       document.getElementById(
@@ -1462,8 +1453,7 @@ function showTyping(show) {
 
     messages.appendChild(box);
 
-    messages.scrollTop =
-      messages.scrollHeight;
+    scrollMessagesToBottom();
 
   } else {
 
@@ -1473,12 +1463,13 @@ function showTyping(show) {
   }
 }
 
-
 /* =========================================================
-   SEND MESSAGE
+   SEND TEXT / IMAGE
 ========================================================= */
 
 async function sendMessage() {
+
+  if (isSending) return;
 
   const input =
     document.getElementById(
@@ -1488,57 +1479,113 @@ async function sendMessage() {
   const message =
     input.value.trim();
 
-  if (!message) {
+  if (!message && !selectedImageData) {
     return;
   }
 
+  isSending = true;
+
+  document
+    .getElementById("sendButton")
+    .disabled = true;
+
   input.value = "";
+
+  const imageToSend =
+    selectedImageData;
+
+  const prompt =
+    message ||
+    "Please analyze this image.";
 
   addMessage(
     "user",
-    message
+    message || "Image",
+    imageToSend
   );
+
+  clearImage();
 
   showTyping(true);
 
   try {
 
-    const data =
-      await api(
-        "/chat",
-        {
-          method: "POST",
+    let data;
 
-          body: JSON.stringify({
-            message,
-            chatId:
-              currentChatId
-          })
-        }
+    if (imageToSend) {
+
+      data =
+        await api(
+          "/analyze-image",
+          {
+            method:"POST",
+
+            body:JSON.stringify({
+              image:
+                imageToSend,
+
+              prompt
+            })
+          }
+        );
+
+      showTyping(false);
+
+      lastAssistantReply =
+        data.reply;
+
+      addMessage(
+        "assistant",
+        data.reply
       );
 
-    showTyping(false);
+      if (autoVoice) {
+        speakText(data.reply);
+      }
 
-    currentChatId =
-      data.chatId;
+    } else {
 
-    document
-      .getElementById("chatTitle")
-      .textContent =
-        data.chat?.title ||
-        "Chat";
+      data =
+        await api(
+          "/chat",
+          {
+            method:"POST",
 
-    lastAssistantReply =
-      data.reply;
+            body:JSON.stringify({
+              message,
+              chatId:
+                currentChatId
+            })
+          }
+        );
 
-    addMessage(
-      "assistant",
-      data.reply
-    );
+      showTyping(false);
 
-    await loadChats();
+      currentChatId =
+        data.chatId;
 
-  } catch (error) {
+      document
+        .getElementById("chatTitle")
+        .textContent =
+          data.chat?.title ||
+          "Chat";
+
+      lastAssistantReply =
+        data.reply;
+
+      addMessage(
+        "assistant",
+        data.reply
+      );
+
+      if (autoVoice) {
+        speakText(data.reply);
+      }
+
+      await loadChats();
+    }
+
+  } catch(error) {
 
     showTyping(false);
 
@@ -1547,12 +1594,21 @@ async function sendMessage() {
       "Sorry, something went wrong: " +
       error.message
     );
+
+  } finally {
+
+    isSending = false;
+
+    document
+      .getElementById("sendButton")
+      .disabled = false;
+
+    input.focus();
   }
 }
 
-
 /* =========================================================
-   ENTER TO SEND
+   ENTER
 ========================================================= */
 
 document
@@ -1573,23 +1629,143 @@ document
     }
   );
 
-
 /* =========================================================
-   IMAGE UPLOAD PREVIEW
+   TEXTAREA AUTO RESIZE
 ========================================================= */
 
-function handleImageUpload(event) {
+document
+  .getElementById("messageInput")
+  .addEventListener(
+    "input",
+    function() {
+
+      this.style.height =
+        "auto";
+
+      this.style.height =
+        Math.min(
+          this.scrollHeight,
+          150
+        ) + "px";
+    }
+  );
+
+/* =========================================================
+   IMAGE RESIZE
+========================================================= */
+
+function compressImage(file) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const reader =
+        new FileReader();
+
+      reader.onload = event => {
+
+        const img =
+          new Image();
+
+        img.onload = () => {
+
+          const maxSize = 1600;
+
+          let width =
+            img.width;
+
+          let height =
+            img.height;
+
+          if (
+            width > maxSize ||
+            height > maxSize
+          ) {
+
+            const ratio =
+              Math.min(
+                maxSize / width,
+                maxSize / height
+              );
+
+            width =
+              Math.round(
+                width * ratio
+              );
+
+            height =
+              Math.round(
+                height * ratio
+              );
+          }
+
+          const canvas =
+            document.createElement(
+              "canvas"
+            );
+
+          canvas.width =
+            width;
+
+          canvas.height =
+            height;
+
+          const ctx =
+            canvas.getContext(
+              "2d"
+            );
+
+          ctx.drawImage(
+            img,
+            0,
+            0,
+            width,
+            height
+          );
+
+          resolve(
+            canvas.toDataURL(
+              "image/jpeg",
+              .82
+            )
+          );
+        };
+
+        img.onerror =
+          () => reject(
+            new Error(
+              "Could not read image."
+            )
+          );
+
+        img.src =
+          event.target.result;
+      };
+
+      reader.onerror =
+        () => reject(
+          new Error(
+            "Could not load image."
+          )
+        );
+
+      reader.readAsDataURL(file);
+    }
+  );
+}
+
+/* =========================================================
+   IMAGE SELECT
+========================================================= */
+
+async function handleImageUpload(event) {
 
   const file =
     event.target.files[0];
 
-  if (!file) {
-    return;
-  }
+  if (!file) return;
 
-  if (
-    !file.type.startsWith("image/")
-  ) {
+  if (!file.type.startsWith("image/")) {
 
     alert(
       "Please select an image."
@@ -1598,62 +1774,365 @@ function handleImageUpload(event) {
     return;
   }
 
-  selectedImageFile =
-    file;
+  try {
 
-  const reader =
-    new FileReader();
+    selectedImageData =
+      await compressImage(file);
 
-  reader.onload =
-    function(e) {
+    selectedImageName =
+      file.name;
 
-      document
-        .getElementById(
-          "imagePreview"
-        )
-        .src =
-          e.target.result;
+    document
+      .getElementById("imagePreview")
+      .src =
+        selectedImageData;
 
-      document
-        .getElementById(
-          "imagePreviewBox"
-        )
-        .style.display =
-          "block";
-    };
+    document
+      .getElementById("imagePreviewBox")
+      .style.display =
+        "block";
 
-  reader.readAsDataURL(file);
+  } catch(error) {
+
+    selectedImageData = null;
+
+    alert(
+      error.message
+    );
+  }
 }
-
 
 function clearImage() {
 
-  selectedImageFile =
-    null;
+  selectedImageData = null;
+  selectedImageName = "";
 
-  document
-    .getElementById(
+  const input =
+    document.getElementById(
       "imageUpload"
-    )
-    .value = "";
+    );
+
+  input.value = "";
 
   document
-    .getElementById(
-      "imagePreview"
-    )
+    .getElementById("imagePreview")
     .src = "";
 
   document
-    .getElementById(
-      "imagePreviewBox"
-    )
+    .getElementById("imagePreviewBox")
     .style.display =
       "none";
 }
 
+/* =========================================================
+   MICROPHONE
+========================================================= */
+
+function setupRecognition() {
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    return false;
+  }
+
+  recognition =
+    new SpeechRecognition();
+
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.lang =
+    "bn-BD";
+
+  recognition.onstart =
+    () => {
+
+      isListening = true;
+
+      const button =
+        document.getElementById(
+          "micButton"
+        );
+
+      button.textContent =
+        "🔴 Listening...";
+
+      button.classList.add(
+        "active"
+      );
+    };
+
+  recognition.onresult =
+    event => {
+
+      let transcript = "";
+
+      for (
+        let i = event.resultIndex;
+        i < event.results.length;
+        i++
+      ) {
+
+        transcript +=
+          event.results[i][0].transcript;
+      }
+
+      const input =
+        document.getElementById(
+          "messageInput"
+        );
+
+      input.value =
+        transcript;
+
+      input.dispatchEvent(
+        new Event("input")
+      );
+    };
+
+  recognition.onerror =
+    event => {
+
+      console.error(
+        "Speech recognition:",
+        event.error
+      );
+
+      if (
+        event.error ===
+        "not-allowed"
+      ) {
+        alert(
+          "Microphone permission was denied. Please allow microphone access in your browser."
+        );
+      }
+    };
+
+  recognition.onend =
+    () => {
+
+      isListening = false;
+
+      const button =
+        document.getElementById(
+          "micButton"
+        );
+
+      button.textContent =
+        "🎙️ Mic";
+
+      button.classList.remove(
+        "active"
+      );
+    };
+
+  return true;
+}
+
+function toggleMic() {
+
+  if (!recognition) {
+
+    const supported =
+      setupRecognition();
+
+    if (!supported) {
+
+      alert(
+        "Voice input is not supported by this browser."
+      );
+
+      return;
+    }
+  }
+
+  if (isListening) {
+
+    recognition.stop();
+
+    return;
+  }
+
+  try {
+
+    recognition.lang =
+      /[\u0980-\u09FF]/.test(
+        document.getElementById(
+          "messageInput"
+        ).value
+      )
+        ? "bn-BD"
+        : "bn-BD";
+
+    recognition.start();
+
+  } catch(error) {
+
+    console.error(error);
+  }
+}
 
 /* =========================================================
-   AI IMAGE GENERATION
+   AUTO VOICE
+========================================================= */
+
+function updateVoiceButton() {
+
+  const button =
+    document.getElementById(
+      "voiceButton"
+    );
+
+  if (!button) return;
+
+  if (autoVoice) {
+
+    button.textContent =
+      "🔊 Auto Voice ON";
+
+    button.classList.add(
+      "active"
+    );
+
+  } else {
+
+    button.textContent =
+      "🔇 Auto Voice OFF";
+
+    button.classList.remove(
+      "active"
+    );
+  }
+}
+
+function toggleAutoVoice() {
+
+  autoVoice =
+    !autoVoice;
+
+  localStorage.setItem(
+    "emora_auto_voice",
+    autoVoice
+      ? "on"
+      : "off"
+  );
+
+  updateVoiceButton();
+
+  if (!autoVoice &&
+      "speechSynthesis" in window) {
+
+    window.speechSynthesis.cancel();
+  }
+}
+
+function getBestVoice(language) {
+
+  if (
+    !("speechSynthesis" in window)
+  ) {
+    return null;
+  }
+
+  const voices =
+    window.speechSynthesis
+      .getVoices();
+
+  if (!voices.length) {
+    return null;
+  }
+
+  const wanted =
+    language
+      .toLowerCase();
+
+  let voice =
+    voices.find(
+      v =>
+        v.lang &&
+        v.lang.toLowerCase() ===
+        wanted
+    );
+
+  if (voice) return voice;
+
+  voice =
+    voices.find(
+      v =>
+        v.lang &&
+        v.lang
+          .toLowerCase()
+          .startsWith(
+            wanted.split("-")[0]
+          )
+    );
+
+  return voice || null;
+}
+
+function speakText(text) {
+
+  if (!text) return;
+
+  if (
+    !("speechSynthesis" in window)
+  ) {
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const speech =
+    new SpeechSynthesisUtterance(
+      text
+    );
+
+  const bengali =
+    /[\u0980-\u09FF]/.test(text);
+
+  speech.lang =
+    bengali
+      ? "bn-BD"
+      : "en-US";
+
+  speech.rate = 1;
+  speech.pitch = 1;
+
+  const voice =
+    getBestVoice(
+      speech.lang
+    );
+
+  if (voice) {
+    speech.voice = voice;
+  }
+
+  window.speechSynthesis.speak(
+    speech
+  );
+}
+
+function speakLastReply() {
+
+  if (!lastAssistantReply) {
+
+    alert(
+      "There is no AI reply to read yet."
+    );
+
+    return;
+  }
+
+  speakText(
+    lastAssistantReply
+  );
+}
+
+/* =========================================================
+   IMAGE GENERATION
 ========================================================= */
 
 async function generateImage() {
@@ -1696,9 +2175,7 @@ async function generateImage() {
     loading
   );
 
-  messages.scrollTop =
-    messages.scrollHeight;
-
+  scrollMessagesToBottom();
 
   try {
 
@@ -1706,9 +2183,9 @@ async function generateImage() {
       await api(
         "/generate-image",
         {
-          method: "POST",
+          method:"POST",
 
-          body: JSON.stringify({
+          body:JSON.stringify({
             prompt
           })
         }
@@ -1716,13 +2193,11 @@ async function generateImage() {
 
     loading.remove();
 
-
     const wrapper =
       document.createElement("div");
 
     wrapper.className =
       "message assistant";
-
 
     const label =
       document.createElement("div");
@@ -1733,16 +2208,64 @@ async function generateImage() {
     label.textContent =
       "EMORA";
 
-
     const bubble =
       document.createElement("div");
 
     bubble.className =
       "bubble";
 
-    bubble.textContent =
+    const title =
+      document.createElement("div");
+
+    title.textContent =
       "Image created";
 
+    bubble.appendChild(
+      title
+    );
+
+    let imageSrc = null;
+
+    if (
+      data.image &&
+      data.image.type ===
+      "base64"
+    ) {
+
+      imageSrc =
+        "data:image/png;base64," +
+        data.image.data;
+
+    } else if (
+      data.image &&
+      data.image.type ===
+      "url"
+    ) {
+
+      imageSrc =
+        data.image.url;
+    }
+
+    if (imageSrc) {
+
+      const img =
+        document.createElement(
+          "img"
+        );
+
+      img.className =
+        "generated-image";
+
+      img.src =
+        imageSrc;
+
+      img.alt =
+        prompt;
+
+      bubble.appendChild(
+        img
+      );
+    }
 
     wrapper.appendChild(
       label
@@ -1752,68 +2275,13 @@ async function generateImage() {
       bubble
     );
 
-
-    if (
-      data.image &&
-      data.image.type === "base64"
-    ) {
-
-      const img =
-        document.createElement("img");
-
-      img.className =
-        "generated-image";
-
-      img.src =
-        "data:image/png;base64," +
-        data.image.data;
-
-      img.alt =
-        prompt;
-
-      bubble.appendChild(
-        document.createElement("br")
-      );
-
-      bubble.appendChild(
-        img
-      );
-
-    } else if (
-      data.image &&
-      data.image.type === "url"
-    ) {
-
-      const img =
-        document.createElement("img");
-
-      img.className =
-        "generated-image";
-
-      img.src =
-        data.image.url;
-
-      img.alt =
-        prompt;
-
-      bubble.appendChild(
-        document.createElement("br")
-      );
-
-      bubble.appendChild(
-        img
-      );
-    }
-
-
     messages.appendChild(
       wrapper
     );
 
-    messages.scrollTop =
-      messages.scrollHeight;
+    scrollMessagesToBottom();
 
-  } catch (error) {
+  } catch(error) {
 
     loading.remove();
 
@@ -1825,59 +2293,23 @@ async function generateImage() {
   }
 }
 
-
 /* =========================================================
-   VOICE REPLY
+   INITIALIZE
 ========================================================= */
 
-function speakLastReply() {
-
-  if (!lastAssistantReply) {
-
-    alert(
-      "There is no AI reply to read yet."
-    );
-
-    return;
-  }
-
-  if (
-    !("speechSynthesis" in window)
-  ) {
-
-    alert(
-      "Voice playback is not supported on this browser."
-    );
-
-    return;
-  }
-
-  window.speechSynthesis.cancel();
-
-  const speech =
-    new SpeechSynthesisUtterance(
-      lastAssistantReply
-    );
-
-  speech.lang =
-    /[\u0980-\u09FF]/.test(
-      lastAssistantReply
-    )
-      ? "bn-BD"
-      : "en-US";
-
-  speech.rate = 1;
-  speech.pitch = 1;
-
-  window.speechSynthesis.speak(
-    speech
-  );
+if (
+  "speechSynthesis" in window
+) {
+  window.speechSynthesis
+    .getVoices();
 }
 
-
-/* =========================================================
-   START
-========================================================= */
+if (
+  "speechSynthesis" in window
+) {
+  window.speechSynthesis.onvoiceschanged =
+    () => {};
+}
 
 checkSession();
 
