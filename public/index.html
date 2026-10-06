@@ -2,10 +2,7 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <title>EMORA AI</title>
 
   <style>
@@ -677,8 +674,6 @@
       }
     }
 
-    /* Overlay */
-
     #overlay {
       display: none;
       position: fixed;
@@ -813,7 +808,10 @@
           autocomplete="new-password"
         >
 
-        <button class="primary-btn" onclick="registerUser()">
+        <button
+          class="primary-btn"
+          onclick="registerUser()"
+        >
           Create Account
         </button>
 
@@ -856,7 +854,10 @@
           Recent Chats
         </div>
 
-        <div id="chatList" class="chat-list"></div>
+        <div
+          id="chatList"
+          class="chat-list"
+        ></div>
 
         <div class="side-bottom">
 
@@ -1099,7 +1100,6 @@
 
   let currentUser = null;
   let currentChatId = null;
-
   let selectedImageData = null;
 
   let autoVoice =
@@ -1108,12 +1108,7 @@
   let recognition = null;
   let isListening = false;
 
-  /*
-    Server TTS audio state
-  */
-
   let currentAudio = null;
-
   let speechRequestId = 0;
 
 
@@ -1158,31 +1153,25 @@
 
   function showLogin() {
 
-    document.getElementById(
-      "loginForm"
-    ).style.display = "block";
+    document.getElementById("loginForm").style.display =
+      "block";
 
-    document.getElementById(
-      "registerForm"
-    ).style.display = "none";
+    document.getElementById("registerForm").style.display =
+      "none";
 
     authError.textContent = "";
-
   }
 
 
   function showRegister() {
 
-    document.getElementById(
-      "loginForm"
-    ).style.display = "none";
+    document.getElementById("loginForm").style.display =
+      "none";
 
-    document.getElementById(
-      "registerForm"
-    ).style.display = "block";
+    document.getElementById("registerForm").style.display =
+      "block";
 
     authError.textContent = "";
-
   }
 
 
@@ -1190,10 +1179,7 @@
      API
   ===================================================== */
 
-  async function api(
-    path,
-    options = {}
-  ) {
+  async function api(path, options = {}) {
 
     const headers = {
       ...(options.headers || {})
@@ -1206,14 +1192,12 @@
 
       headers["Content-Type"] =
         "application/json";
-
     }
 
     if (token) {
 
       headers["Authorization"] =
         "Bearer " + token;
-
     }
 
     const response =
@@ -1241,11 +1225,9 @@
         data.message ||
         "Request failed"
       );
-
     }
 
     return data;
-
   }
 
 
@@ -1274,17 +1256,12 @@
 
     authError.textContent = "";
 
-    if (
-      !name ||
-      !email ||
-      !password
-    ) {
+    if (!name || !email || !password) {
 
       authError.textContent =
         "সব তথ্য পূরণ করুন।";
 
       return;
-
     }
 
     try {
@@ -1311,7 +1288,6 @@
           "emora_token",
           token
         );
-
       }
 
       await startApp();
@@ -1320,9 +1296,7 @@
 
       authError.textContent =
         error.message;
-
     }
-
   }
 
 
@@ -1345,16 +1319,12 @@
 
     authError.textContent = "";
 
-    if (
-      !email ||
-      !password
-    ) {
+    if (!email || !password) {
 
       authError.textContent =
         "Email এবং password দিন।";
 
       return;
-
     }
 
     try {
@@ -1385,9 +1355,7 @@
 
       authError.textContent =
         error.message;
-
     }
-
   }
 
 
@@ -1436,9 +1404,7 @@
 
       app.style.display =
         "none";
-
     }
-
   }
 
 
@@ -1462,9 +1428,7 @@
     } catch (_) {}
 
     token = "";
-
     currentUser = null;
-
     currentChatId = null;
 
     localStorage.removeItem(
@@ -1472,7 +1436,6 @@
     );
 
     location.reload();
-
   }
 
 
@@ -1494,68 +1457,55 @@
           ? data
           : data.chats || [];
 
-      chats.forEach(
-        chat => {
+      chats.forEach(chat => {
 
-          const item =
-            document.createElement(
-              "div"
-            );
+        const item =
+          document.createElement("div");
 
-          item.className =
-            "chat-item" +
-            (
-              String(chat.id) ===
-              String(currentChatId)
-                ? " active"
-                : ""
-            );
+        item.className =
+          "chat-item" +
+          (
+            String(chat.id) ===
+            String(currentChatId)
+              ? " active"
+              : ""
+          );
 
-          const title =
-            document.createElement(
-              "div"
-            );
+        const title =
+          document.createElement("div");
 
-          title.className =
-            "chat-title";
+        title.className =
+          "chat-title";
 
-          title.textContent =
-            chat.title ||
-            "New Chat";
+        title.textContent =
+          chat.title ||
+          "New Chat";
 
-          title.onclick =
-            () => openChat(chat.id);
+        title.onclick =
+          () => openChat(chat.id);
 
-          const del =
-            document.createElement(
-              "button"
-            );
+        const del =
+          document.createElement("button");
 
-          del.className =
-            "delete-chat";
+        del.className =
+          "delete-chat";
 
-          del.textContent =
-            "🗑";
+        del.textContent =
+          "🗑";
 
-          del.onclick =
-            async event => {
+        del.onclick =
+          async event => {
 
-              event.stopPropagation();
+            event.stopPropagation();
 
-              await deleteChat(
-                chat.id
-              );
+            await deleteChat(chat.id);
+          };
 
-            };
+        item.appendChild(title);
+        item.appendChild(del);
+        chatList.appendChild(item);
 
-          item.appendChild(title);
-
-          item.appendChild(del);
-
-          chatList.appendChild(item);
-
-        }
-      );
+      });
 
     } catch (error) {
 
@@ -1563,15 +1513,11 @@
         "Load chats:",
         error
       );
-
     }
-
   }
 
 
-  async function openChat(
-    chatId
-  ) {
+  async function openChat(chatId) {
 
     try {
 
@@ -1601,16 +1547,14 @@
         data.messages ||
         [];
 
-      chatMessages.forEach(
-        msg => {
+      chatMessages.forEach(msg => {
 
-          addMessage(
-            msg.role,
-            msg.content
-          );
+        addMessage(
+          msg.role,
+          msg.content
+        );
 
-        }
-      );
+      });
 
       await loadChats();
 
@@ -1620,27 +1564,15 @@
 
     } catch (error) {
 
-      console.error(
-        error
-      );
-
+      console.error(error);
     }
-
   }
 
 
-  async function deleteChat(
-    chatId
-  ) {
+  async function deleteChat(chatId) {
 
-    if (
-      !confirm(
-        "এই chat delete করতে চান?"
-      )
-    ) {
-
+    if (!confirm("এই chat delete করতে চান?")) {
       return;
-
     }
 
     try {
@@ -1658,19 +1590,14 @@
       ) {
 
         newChat();
-
       }
 
       await loadChats();
 
     } catch (error) {
 
-      alert(
-        error.message
-      );
-
+      alert(error.message);
     }
-
   }
 
 
@@ -1700,7 +1627,6 @@
     scrollToBottom();
 
     closeSidebar();
-
   }
 
 
@@ -1715,20 +1641,14 @@
   ) {
 
     const welcome =
-      document.getElementById(
-        "welcome"
-      );
+      document.getElementById("welcome");
 
     if (welcome) {
-
       welcome.remove();
-
     }
 
     const message =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
     message.className =
       "message " +
@@ -1739,9 +1659,7 @@
       );
 
     const label =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
     label.className =
       "message-label";
@@ -1752,9 +1670,7 @@
         : "EMORA";
 
     const bubble =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
     bubble.className =
       "bubble";
@@ -1762,9 +1678,7 @@
     if (imageSrc) {
 
       const img =
-        document.createElement(
-          "img"
-        );
+        document.createElement("img");
 
       img.className =
         "message-image";
@@ -1776,33 +1690,25 @@
         "Selected image";
 
       bubble.appendChild(img);
-
     }
 
     if (content) {
 
       const text =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       text.textContent =
         content;
 
       bubble.appendChild(text);
-
     }
 
     message.appendChild(label);
-
     message.appendChild(bubble);
 
-    messagesInner.appendChild(
-      message
-    );
+    messagesInner.appendChild(message);
 
     scrollToBottom();
-
   }
 
 
@@ -1815,9 +1721,7 @@
     hideThinking();
 
     const box =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
     box.id =
       "thinking";
@@ -1836,28 +1740,20 @@
       </div>
     `;
 
-    messagesInner.appendChild(
-      box
-    );
+    messagesInner.appendChild(box);
 
     scrollToBottom();
-
   }
 
 
   function hideThinking() {
 
     const thinking =
-      document.getElementById(
-        "thinking"
-      );
+      document.getElementById("thinking");
 
     if (thinking) {
-
       thinking.remove();
-
     }
-
   }
 
 
@@ -1870,19 +1766,12 @@
     const text =
       messageInput.value.trim();
 
-    if (
-      !text &&
-      !selectedImageData
-    ) {
-
+    if (!text && !selectedImageData) {
       return;
-
     }
 
     if (!token) {
-
       return;
-
     }
 
     stopSpeaking();
@@ -1900,17 +1789,13 @@
       imageToSend
     );
 
-    messageInput.value =
-      "";
+    messageInput.value = "";
 
-    autoResize(
-      messageInput
-    );
+    autoResize(messageInput);
 
     removeSelectedImage();
 
-    sendBtn.disabled =
-      true;
+    sendBtn.disabled = true;
 
     showThinking();
 
@@ -1946,16 +1831,13 @@
               })
             }
           );
-
       }
 
       hideThinking();
 
       if (data.chatId) {
-
         currentChatId =
           data.chatId;
-
       }
 
       if (data.chat) {
@@ -1965,7 +1847,6 @@
         ).textContent =
           data.chat.title ||
           "Chat";
-
       }
 
       const reply =
@@ -1978,13 +1859,9 @@
         reply
       );
 
+      // FIXED: সরাসরি TTS
       if (autoVoice) {
-
-        setTimeout(
-          () => speakText(reply),
-          100
-        );
-
+        speakText(reply);
       }
 
       await loadChats();
@@ -2001,13 +1878,10 @@
 
     } finally {
 
-      sendBtn.disabled =
-        false;
+      sendBtn.disabled = false;
 
       messageInput.focus();
-
     }
-
   }
 
 
@@ -2020,33 +1894,25 @@
     document
       .getElementById("imageInput")
       .click();
-
   }
 
 
-  async function handleImageSelect(
-    event
-  ) {
+  async function handleImageSelect(event) {
 
     const file =
       event.target.files?.[0];
 
     if (!file) {
-
       return;
-
     }
 
-    if (
-      !file.type.startsWith("image/")
-    ) {
+    if (!file.type.startsWith("image/")) {
 
       alert(
         "শুধু image file নির্বাচন করুন।"
       );
 
       return;
-
     }
 
     try {
@@ -2069,24 +1935,16 @@
       alert(
         "Image প্রস্তুত করা যায়নি।"
       );
-
     }
 
-    event.target.value =
-      "";
-
+    event.target.value = "";
   }
 
 
-  function compressImage(
-    file
-  ) {
+  function compressImage(file) {
 
     return new Promise(
-      (
-        resolve,
-        reject
-      ) => {
+      (resolve, reject) => {
 
         const reader =
           new FileReader();
@@ -2114,9 +1972,7 @@
                   height > maxSize
                 ) {
 
-                  if (
-                    width > height
-                  ) {
+                  if (width > height) {
 
                     height =
                       Math.round(
@@ -2139,9 +1995,7 @@
 
                     height =
                       maxSize;
-
                   }
-
                 }
 
                 const canvas =
@@ -2156,9 +2010,7 @@
                   height;
 
                 const ctx =
-                  canvas.getContext(
-                    "2d"
-                  );
+                  canvas.getContext("2d");
 
                 ctx.drawImage(
                   img,
@@ -2174,34 +2026,25 @@
                     0.82
                   )
                 );
-
               };
 
-            img.onerror =
-              reject;
+            img.onerror = reject;
 
             img.src =
               event.target.result;
-
           };
 
-        reader.onerror =
-          reject;
+        reader.onerror = reject;
 
-        reader.readAsDataURL(
-          file
-        );
-
+        reader.readAsDataURL(file);
       }
     );
-
   }
 
 
   function removeSelectedImage() {
 
-    selectedImageData =
-      null;
+    selectedImageData = null;
 
     document.getElementById(
       "imagePreview"
@@ -2212,7 +2055,6 @@
       "previewImage"
     ).src =
       "";
-
   }
 
 
@@ -2234,7 +2076,6 @@
       messageInput.focus();
 
       return;
-
     }
 
     showThinking();
@@ -2262,21 +2103,16 @@
         throw new Error(
           "Image পাওয়া যায়নি।"
         );
-
       }
 
       const message =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       message.className =
         "message assistant";
 
       const label =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       label.className =
         "message-label";
@@ -2285,24 +2121,18 @@
         "EMORA";
 
       const bubble =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       bubble.className =
         "bubble";
 
       const img =
-        document.createElement(
-          "img"
-        );
+        document.createElement("img");
 
       img.className =
         "message-image";
 
-      if (
-        image.type === "base64"
-      ) {
+      if (image.type === "base64") {
 
         img.src =
           "data:image/png;base64," +
@@ -2312,36 +2142,24 @@
 
         img.src =
           image.url;
-
       }
 
       img.alt =
         "AI Generated Image";
 
-      bubble.appendChild(
-        img
-      );
+      bubble.appendChild(img);
 
-      message.appendChild(
-        label
-      );
+      message.appendChild(label);
 
-      message.appendChild(
-        bubble
-      );
+      message.appendChild(bubble);
 
-      messagesInner.appendChild(
-        message
-      );
+      messagesInner.appendChild(message);
 
       scrollToBottom();
 
-      messageInput.value =
-        "";
+      messageInput.value = "";
 
-      autoResize(
-        messageInput
-      );
+      autoResize(messageInput);
 
     } catch (error) {
 
@@ -2352,33 +2170,23 @@
         "ছবি তৈরি করা যায়নি.\n\n" +
         error.message
       );
-
     }
-
   }
 
 
   /* =====================================================
      SERVER TTS
-     OPENAI TTS THROUGH /tts
+     FIXED FOR RAW MP3 RESPONSE
   ===================================================== */
 
-  function cleanVoiceText(
-    text
-  ) {
+  function cleanVoiceText(text) {
 
     if (!text) {
-
       return "";
-
     }
 
     let cleaned =
       String(text);
-
-    /*
-      Remove URLs
-    */
 
     cleaned =
       cleaned.replace(
@@ -2392,10 +2200,6 @@
         ""
       );
 
-    /*
-      Remove markdown
-    */
-
     cleaned =
       cleaned.replace(
         /```[\s\S]*?```/g,
@@ -2407,10 +2211,6 @@
         /[*_~`>#]/g,
         ""
       );
-
-    /*
-      Remove common emoji / symbol ranges
-    */
 
     cleaned =
       cleaned.replace(
@@ -2436,51 +2236,32 @@
         ""
       );
 
-    /*
-      Remove excessive whitespace
-    */
-
     cleaned =
       cleaned.replace(
         /\s+/g,
         " "
-      ).trim();
+      )
+      .trim();
 
     return cleaned;
-
   }
 
 
-  async function speakText(
-    text
-  ) {
+  async function speakText(text) {
 
     const cleanText =
       cleanVoiceText(text);
 
     if (!cleanText) {
-
       return;
-
     }
 
     if (!token) {
-
       return;
-
     }
 
-    /*
-      Stop previous audio
-    */
-
+    // Stop previous audio
     stopSpeaking();
-
-    /*
-      Create a new request ID.
-      This prevents an old TTS response
-      from playing after a newer request.
-    */
 
     const requestId =
       ++speechRequestId;
@@ -2508,30 +2289,40 @@
           }
         );
 
-      let data = {};
-
-      try {
-
-        data =
-          await response.json();
-
-      } catch (_) {}
+      /*
+        IMPORTANT:
+        Server now returns RAW MP3,
+        not JSON/base64.
+      */
 
       if (!response.ok) {
 
-        throw new Error(
-          data.error ||
-          data.message ||
-          "TTS request failed"
-        );
+        let errorMessage =
+          "TTS request failed";
 
+        try {
+
+          const errorData =
+            await response.json();
+
+          errorMessage =
+            errorData.error ||
+            errorData.message ||
+            errorMessage;
+
+        } catch (_) {}
+
+        throw new Error(
+          errorMessage
+        );
       }
 
       /*
-        If user already stopped voice
-        or another TTS request started,
-        do not play this audio.
+        Read raw MP3 as Blob
       */
+
+      const audioBlob =
+        await response.blob();
 
       if (
         requestId !==
@@ -2539,62 +2330,31 @@
       ) {
 
         return;
-
       }
 
-      if (!data.audio) {
+      if (
+        !audioBlob ||
+        audioBlob.size === 0
+      ) {
 
         throw new Error(
           "TTS audio পাওয়া যায়নি।"
         );
-
       }
-
-      /*
-        Base64 → binary
-      */
-
-      const binaryString =
-        atob(data.audio);
-
-      const len =
-        binaryString.length;
-
-      const bytes =
-        new Uint8Array(len);
-
-      for (
-        let i = 0;
-        i < len;
-        i++
-      ) {
-
-        bytes[i] =
-          binaryString.charCodeAt(i);
-
-      }
-
-      const blob =
-        new Blob(
-          [bytes],
-          {
-            type:
-              data.mimeType ||
-              "audio/mpeg"
-          }
-        );
 
       const audioUrl =
-        URL.createObjectURL(blob);
+        URL.createObjectURL(
+          audioBlob
+        );
 
       const audio =
         new Audio(audioUrl);
 
-      currentAudio =
-        audio;
-
       audio.preload =
         "auto";
+
+      currentAudio =
+        audio;
 
       audio.onended =
         () => {
@@ -2606,13 +2366,11 @@
 
             currentAudio =
               null;
-
           }
 
           URL.revokeObjectURL(
             audioUrl
           );
-
         };
 
       audio.onerror =
@@ -2625,38 +2383,41 @@
 
             currentAudio =
               null;
-
           }
 
           URL.revokeObjectURL(
             audioUrl
           );
 
+          console.error(
+            "EMORA TTS: Audio playback failed"
+          );
         };
+
+      /*
+        Play generated MP3
+      */
 
       await audio.play();
 
     } catch (error) {
 
       /*
-        Do not show a big error inside chat.
-        Voice failure should not break AI chat.
+        Voice failure must not break chat
       */
 
       console.error(
         "EMORA TTS:",
         error
       );
-
     }
-
   }
 
 
   function stopSpeaking() {
 
     /*
-      Invalidate all previous TTS requests
+      Invalidate old requests
     */
 
     speechRequestId++;
@@ -2674,9 +2435,7 @@
 
       currentAudio =
         null;
-
     }
-
   }
 
 
@@ -2695,22 +2454,17 @@
     );
 
     if (!autoVoice) {
-
       stopSpeaking();
-
     }
 
     updateAutoVoiceButton();
-
   }
 
 
   function updateAutoVoiceButton() {
 
     if (!autoVoiceBtn) {
-
       return;
-
     }
 
     autoVoiceBtn.textContent =
@@ -2722,13 +2476,11 @@
       "active",
       autoVoice
     );
-
   }
 
 
   /* =====================================================
      MICROPHONE / SPEECH RECOGNITION
-     VOICE INPUT ONLY
   ===================================================== */
 
   function setupSpeechRecognition() {
@@ -2743,7 +2495,6 @@
         "এই browser voice input support করে না";
 
       return;
-
     }
 
     recognition =
@@ -2762,8 +2513,7 @@
     recognition.onstart =
       () => {
 
-        isListening =
-          true;
+        isListening = true;
 
         micBtn.classList.add(
           "listening"
@@ -2771,15 +2521,13 @@
 
         micBtn.textContent =
           "⏹";
-
       };
 
 
     recognition.onresult =
       event => {
 
-        let transcript =
-          "";
+        let transcript = "";
 
         for (
           let i = event.resultIndex;
@@ -2790,7 +2538,6 @@
           transcript +=
             event.results[i][0]
               .transcript;
-
         }
 
         messageInput.value =
@@ -2799,7 +2546,6 @@
         autoResize(
           messageInput
         );
-
       };
 
 
@@ -2811,8 +2557,7 @@
           event.error
         );
 
-        isListening =
-          false;
+        isListening = false;
 
         micBtn.classList.remove(
           "listening"
@@ -2820,15 +2565,13 @@
 
         micBtn.textContent =
           "🎤";
-
       };
 
 
     recognition.onend =
       () => {
 
-        isListening =
-          false;
+        isListening = false;
 
         micBtn.classList.remove(
           "listening"
@@ -2836,9 +2579,7 @@
 
         micBtn.textContent =
           "🎤";
-
       };
-
   }
 
 
@@ -2851,7 +2592,6 @@
       );
 
       return;
-
     }
 
     if (isListening) {
@@ -2859,7 +2599,6 @@
       recognition.stop();
 
       return;
-
     }
 
     try {
@@ -2871,12 +2610,8 @@
 
     } catch (error) {
 
-      console.error(
-        error
-      );
-
+      console.error(error);
     }
-
   }
 
 
@@ -2891,10 +2626,8 @@
 
         messages.scrollTop =
           messages.scrollHeight;
-
       }
     );
-
   }
 
 
@@ -2902,9 +2635,7 @@
      TEXTAREA
   ===================================================== */
 
-  function autoResize(
-    element
-  ) {
+  function autoResize(element) {
 
     element.style.height =
       "auto";
@@ -2914,7 +2645,6 @@
         element.scrollHeight,
         130
       ) + "px";
-
   }
 
 
@@ -2934,9 +2664,7 @@
         event.preventDefault();
 
         sendMessage();
-
       }
-
     }
   );
 
@@ -2954,7 +2682,6 @@
     document
       .getElementById("overlay")
       .classList.toggle("show");
-
   }
 
 
@@ -2967,7 +2694,6 @@
     document
       .getElementById("overlay")
       .classList.remove("show");
-
   }
 
 
@@ -2999,10 +2725,7 @@
           )
         : "Profile";
 
-    modal.classList.add(
-      "show"
-    );
-
+    modal.classList.add("show");
   }
 
 
@@ -3012,16 +2735,11 @@
       .getElementById(
         "profileModal"
       )
-      .classList.remove(
-        "show"
-      );
-
+      .classList.remove("show");
   }
 
 
-  function closeModal(
-    event
-  ) {
+  function closeModal(event) {
 
     if (
       event.target.id ===
@@ -3029,9 +2747,7 @@
     ) {
 
       closeProfile();
-
     }
-
   }
 
 
@@ -3050,9 +2766,7 @@
       } else {
 
         showLogin();
-
       }
-
     }
   );
 
