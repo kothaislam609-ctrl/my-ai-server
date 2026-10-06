@@ -2,7 +2,7 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EMORA AI</title>
 
   <style>
@@ -13,601 +13,1266 @@
     }
 
     body {
-      background: #08090d;
-      color: #fff;
       font-family: Arial, sans-serif;
+      background: #0b0b10;
+      color: #fff;
       height: 100vh;
       overflow: hidden;
     }
 
-    .app {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      height: 62px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      border-bottom: 1px solid #20232b;
-      background: #0d0f14;
-    }
-
-    .brand {
-      font-size: 21px;
-      font-weight: 800;
-      letter-spacing: 1px;
-    }
-
-    .brand span {
-      color: #7c5cff;
-    }
-
-    .user {
-      font-size: 13px;
-      color: #aaa;
-      max-width: 130px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    #chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 18px 14px 100px;
-    }
-
-    .welcome {
-      text-align: center;
-      margin-top: 20vh;
-    }
-
-    .logo {
-      width: 72px;
-      height: 72px;
-      margin: auto;
-      border-radius: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg,#7c5cff,#4c8dff);
-      font-size: 28px;
-      font-weight: 900;
-      box-shadow: 0 0 35px #654cff55;
-    }
-
-    .welcome h1 {
-      margin-top: 18px;
-      font-size: 27px;
-    }
-
-    .welcome p {
-      margin-top: 8px;
-      color: #9297a5;
-      font-size: 14px;
-    }
-
-    .message {
-      max-width: 88%;
-      padding: 12px 14px;
-      margin: 10px 0;
-      border-radius: 16px;
-      line-height: 1.5;
-      font-size: 15px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-
-    .user-msg {
-      margin-left: auto;
-      background: #6751d9;
-      border-bottom-right-radius: 5px;
-    }
-
-    .ai-msg {
-      margin-right: auto;
-      background: #171a21;
-      border: 1px solid #252a34;
-      border-bottom-left-radius: 5px;
-    }
-
-    .typing {
-      color: #9297a5;
-      font-size: 13px;
-      margin: 12px;
-    }
-
-    .input-area {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      padding: 10px 12px 14px;
-      background: linear-gradient(transparent,#08090d 25%);
-    }
-
-    .input-box {
-      max-width: 700px;
-      margin: auto;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #151820;
-      border: 1px solid #292d37;
-      border-radius: 18px;
-      padding: 7px;
-    }
-
-    textarea {
-      flex: 1;
-      resize: none;
-      border: 0;
-      outline: 0;
-      background: transparent;
-      color: white;
-      font-size: 15px;
-      padding: 9px;
-      min-height: 42px;
-      max-height: 120px;
-      font-family: inherit;
+    button,
+    textarea,
+    input {
+      font: inherit;
     }
 
     button {
-      border: 0;
       cursor: pointer;
     }
 
-    #send {
-      width: 42px;
-      height: 42px;
-      border-radius: 14px;
-      background: #7058e8;
-      color: white;
-      font-size: 18px;
-    }
-
-    #logout {
-      display: none;
-      background: transparent;
-      color: #888;
-      font-size: 12px;
-      margin: 8px auto;
-    }
-
-    .login {
-      position: fixed;
-      inset: 0;
-      background: #08090d;
+    /* LOGIN */
+    #loginPage {
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
-      z-index: 10;
+      background:
+        radial-gradient(circle at top, #302050 0, transparent 45%),
+        #08080d;
     }
 
-    .login-card {
+    .login-box {
       width: 100%;
       max-width: 400px;
-      background: #11141a;
-      border: 1px solid #272b35;
+      padding: 30px 24px;
+      border: 1px solid #292936;
       border-radius: 24px;
-      padding: 25px;
+      background: rgba(20, 20, 29, .94);
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
     }
 
-    .login-card h2 {
+    .logo {
       text-align: center;
-      margin-bottom: 20px;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      margin-bottom: 8px;
     }
 
-    .login-card input {
+    .subtitle {
+      text-align: center;
+      color: #9b9ba8;
+      margin-bottom: 28px;
+      font-size: 14px;
+    }
+
+    .input {
       width: 100%;
-      padding: 13px;
-      margin: 6px 0;
-      border: 1px solid #292d37;
-      border-radius: 12px;
-      background: #191c24;
-      color: white;
+      padding: 14px 15px;
+      margin-bottom: 13px;
+      border: 1px solid #30303d;
+      border-radius: 13px;
       outline: none;
+      background: #111118;
+      color: white;
     }
 
-    .login-card button {
+    .input:focus {
+      border-color: #8b5cf6;
+    }
+
+    .main-btn {
       width: 100%;
-      padding: 13px;
-      margin-top: 10px;
-      border-radius: 12px;
-      background: #7058e8;
+      border: 0;
+      border-radius: 13px;
+      padding: 14px;
+      background: linear-gradient(135deg,#8b5cf6,#6366f1);
       color: white;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    .switch {
+      text-align: center;
+      color: #9999a5;
+      margin-top: 18px;
+      font-size: 14px;
+    }
+
+    .switch span {
+      color: #a78bfa;
+      cursor: pointer;
       font-weight: bold;
     }
 
-    #loginError {
-      color: #ff7777;
-      font-size: 13px;
+    #authMessage {
       text-align: center;
-      margin-top: 10px;
+      color: #ff7373;
+      margin-top: 12px;
+      font-size: 13px;
+      min-height: 18px;
+    }
+
+    /* APP */
+    #app {
+      display: none;
+      height: 100vh;
+    }
+
+    .app {
+      display: flex;
+      height: 100%;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 280px;
+      background: #101017;
+      border-right: 1px solid #252530;
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      padding: 10px 8px 18px;
+    }
+
+    .new-chat {
+      border: 1px solid #343442;
+      background: #191922;
+      color: white;
+      border-radius: 13px;
+      padding: 12px;
+      margin-bottom: 18px;
+      text-align: left;
+    }
+
+    .new-chat:hover {
+      background: #22222e;
+    }
+
+    .history-title {
+      color: #777784;
+      font-size: 12px;
+      margin: 0 8px 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #chatList {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .chat-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 11px 9px;
+      border-radius: 11px;
+      margin-bottom: 4px;
+      color: #c9c9d3;
+    }
+
+    .chat-item:hover,
+    .chat-item.active {
+      background: #1e1e29;
+      color: white;
+    }
+
+    .chat-title {
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      font-size: 14px;
+    }
+
+    .delete-chat {
+      border: 0;
+      background: transparent;
+      color: #777784;
+      padding: 4px;
+    }
+
+    .delete-chat:hover {
+      color: #ff6262;
+    }
+
+    .profile {
+      border-top: 1px solid #292934;
+      padding-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg,#8b5cf6,#ec4899);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .profile-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .profile-name {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .profile-email {
+      color: #777784;
+      font-size: 11px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .logout {
+      border: 0;
+      background: transparent;
+      color: #aaa;
+      font-size: 12px;
+      padding: 5px;
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .topbar {
+      height: 60px;
+      border-bottom: 1px solid #252530;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      background: #0e0e14;
+    }
+
+    .menu-btn {
+      display: none;
+      border: 0;
+      background: transparent;
+      color: white;
+      font-size: 24px;
+    }
+
+    .top-title {
+      font-weight: bold;
+    }
+
+    .status {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #8f8f9d;
+      font-size: 12px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+
+    /* CHAT */
+    #chatArea {
+      flex: 1;
+      overflow-y: auto;
+      padding: 25px 15px 130px;
+    }
+
+    .welcome {
+      max-width: 700px;
+      margin: 10vh auto 0;
+      text-align: center;
+    }
+
+    .welcome-logo {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .welcome h1 {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .welcome p {
+      color: #92929e;
+      line-height: 1.6;
+    }
+
+    .messages {
+      width: 100%;
+      max-width: 850px;
+      margin: auto;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #242431;
+      font-size: 14px;
+    }
+
+    .user .message-avatar {
+      order: 2;
+      background: #4f46e5;
+    }
+
+    .bubble {
+      max-width: min(760px, 82%);
+      padding: 12px 15px;
+      border-radius: 16px;
+      background: #171720;
+      border: 1px solid #282834;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .user .bubble {
+      background: #29234a;
+      border-color: #41376d;
+    }
+
+    /* TYPING */
+    .typing {
+      display: none;
+      width: 100%;
+      max-width: 850px;
+      margin: 10px auto;
+      color: #8e8e9c;
+      font-size: 13px;
+    }
+
+    .typing span {
+      display: inline-block;
+      animation: blink 1.2s infinite;
+    }
+
+    .typing span:nth-child(2) {
+      animation-delay: .2s;
+    }
+
+    .typing span:nth-child(3) {
+      animation-delay: .4s;
+    }
+
+    @keyframes blink {
+      0%,100% { opacity: .2; }
+      50% { opacity: 1; }
+    }
+
+    /* INPUT */
+    .composer-wrap {
+      position: fixed;
+      bottom: 0;
+      left: 280px;
+      right: 0;
+      padding: 12px 15px 18px;
+      background: linear-gradient(transparent,#0b0b10 30%);
+    }
+
+    .composer {
+      max-width: 850px;
+      margin: auto;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 9px;
+      border: 1px solid #343440;
+      border-radius: 17px;
+      background: #14141c;
+    }
+
+    #messageInput {
+      flex: 1;
+      min-height: 42px;
+      max-height: 140px;
+      resize: none;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: white;
+      padding: 10px;
+    }
+
+    #messageInput::placeholder {
+      color: #70707d;
+    }
+
+    #sendBtn {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 12px;
+      background: #7654e8;
+      color: white;
+      font-size: 18px;
+    }
+
+    #sendBtn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .small-note {
+      max-width: 850px;
+      margin: 6px auto 0;
+      text-align: center;
+      color: #5f5f6b;
+      font-size: 10px;
+    }
+
+    /* MOBILE */
+    @media (max-width: 700px) {
+      .sidebar {
+        position: fixed;
+        z-index: 20;
+        top: 0;
+        bottom: 0;
+        left: -290px;
+        transition: .25s;
+        box-shadow: 10px 0 40px rgba(0,0,0,.5);
+      }
+
+      .sidebar.open {
+        left: 0;
+      }
+
+      .menu-btn {
+        display: block;
+      }
+
+      .composer-wrap {
+        left: 0;
+      }
+
+      .bubble {
+        max-width: 86%;
+      }
+
+      .welcome h1 {
+        font-size: 25px;
+      }
+    }
+
+    .loading {
+      opacity: .6;
+      pointer-events: none;
     }
   </style>
 </head>
 
 <body>
 
-<div class="app">
+  <!-- LOGIN -->
+  <section id="loginPage">
+    <div class="login-box">
 
-  <header>
-    <div class="brand">EMORA <span>AI</span></div>
-    <div class="user" id="userName"></div>
-  </header>
+      <div class="logo">EMORA</div>
+      <div class="subtitle">Your intelligent AI assistant</div>
 
-  <main id="chat">
+      <div id="registerFields" style="display:none;">
+        <input id="nameInput" class="input" type="text" placeholder="Your name">
+      </div>
 
-    <div class="welcome" id="welcome">
-      <div class="logo">E</div>
-      <h1>How can I help?</h1>
-      <p>আমি EMORA AI — তোমার AI assistant.</p>
+      <input id="emailInput" class="input" type="email" placeholder="Email">
+      <input id="passwordInput" class="input" type="password" placeholder="Password">
+
+      <button id="authBtn" class="main-btn" onclick="handleAuth()">
+        Login
+      </button>
+
+      <div id="authMessage"></div>
+
+      <div class="switch">
+        <span id="switchText">Don't have an account?</span>
+        <span id="switchBtn" onclick="toggleAuth()"> Create account</span>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- APP -->
+  <section id="app">
+
+    <div class="app">
+
+      <!-- SIDEBAR -->
+      <aside id="sidebar" class="sidebar">
+
+        <div class="brand">EMORA AI</div>
+
+        <button class="new-chat" onclick="startNewChat()">
+          ＋ New Chat
+        </button>
+
+        <div class="history-title">Recent Chats</div>
+
+        <div id="chatList"></div>
+
+        <div class="profile">
+
+          <div id="avatar" class="avatar">E</div>
+
+          <div class="profile-info">
+            <div id="profileName" class="profile-name">User</div>
+            <div id="profileEmail" class="profile-email"></div>
+          </div>
+
+          <button class="logout" onclick="logout()">
+            Logout
+          </button>
+
+        </div>
+
+      </aside>
+
+
+      <!-- MAIN -->
+      <main class="main">
+
+        <header class="topbar">
+
+          <button class="menu-btn" onclick="toggleSidebar()">
+            ☰
+          </button>
+
+          <div id="topTitle" class="top-title">
+            EMORA AI
+          </div>
+
+          <div class="status">
+            <span class="dot"></span>
+            Online
+          </div>
+
+        </header>
+
+
+        <div id="chatArea">
+
+          <div id="welcome" class="welcome">
+
+            <div class="welcome-logo">✦</div>
+
+            <h1>How can I help you?</h1>
+
+            <p>
+              Welcome to EMORA AI.<br>
+              Ask anything and start a conversation.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div id="typing" class="typing">
+          EMORA is thinking
+          <span>.</span><span>.</span><span>.</span>
+        </div>
+
+
+        <div class="composer-wrap">
+
+          <div class="composer">
+
+            <textarea
+              id="messageInput"
+              placeholder="Message EMORA..."
+              rows="1"
+              onkeydown="handleKey(event)"
+            ></textarea>
+
+            <button id="sendBtn" onclick="sendMessage()">
+              ➤
+            </button>
+
+          </div>
+
+          <div class="small-note">
+            EMORA AI can make mistakes. Check important information.
+          </div>
+
+        </div>
+
+      </main>
+
     </div>
 
-  </main>
-
-  <div class="input-area">
-    <div class="input-box">
-      <textarea
-        id="message"
-        placeholder="EMORA AI-কে কিছু জিজ্ঞেস করো..."
-        rows="1"></textarea>
-
-      <button id="send">➤</button>
-    </div>
-  </div>
-
-</div>
-
-
-<!-- LOGIN -->
-
-<div class="login" id="loginScreen">
-
-  <div class="login-card">
-
-    <h2>EMORA AI</h2>
-
-    <input
-      id="email"
-      type="email"
-      placeholder="Email">
-
-    <input
-      id="password"
-      type="password"
-      placeholder="Password">
-
-    <button id="loginBtn">
-      Login
-    </button>
-
-    <div id="loginError"></div>
-
-  </div>
-
-</div>
+  </section>
 
 
 <script>
 
-const API_URL = window.location.origin;
+  /* =========================
+     CONFIG
+  ========================= */
 
-const token =
-  localStorage.getItem("my_ai_token");
+  const API_BASE = window.location.origin;
 
-const chat =
-  document.getElementById("chat");
-
-const message =
-  document.getElementById("message");
-
-const send =
-  document.getElementById("send");
-
-const loginScreen =
-  document.getElementById("loginScreen");
-
-const loginBtn =
-  document.getElementById("loginBtn");
-
-const loginError =
-  document.getElementById("loginError");
-
-const userName =
-  document.getElementById("userName");
-
-const welcome =
-  document.getElementById("welcome");
+  let token = localStorage.getItem("my_ai_token") || "";
+  let currentUser = null;
+  let currentChatId = null;
+  let registerMode = false;
 
 
-// -------------------------
-// CHECK LOGIN
-// -------------------------
+  /* =========================
+     API
+  ========================= */
 
-async function loadUser() {
+  async function api(path, options = {}) {
 
-  if (!token) {
-    loginScreen.style.display = "flex";
-    return;
+    const headers = {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    };
+
+    if (token) {
+      headers.Authorization = "Bearer " + token;
+    }
+
+    const response = await fetch(API_BASE + path, {
+      ...options,
+      headers
+    });
+
+    let data = {};
+
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error || "Request failed");
+    }
+
+    return data;
   }
 
-  try {
 
-    const res = await fetch(
-      API_URL + "/me",
-      {
-        headers: {
-          Authorization: "Bearer " + token
-        }
-      }
-    );
+  /* =========================
+     AUTH MODE
+  ========================= */
 
-    const data = await res.json();
+  function toggleAuth() {
 
-    if (!data.success) {
-      localStorage.removeItem("my_ai_token");
-      loginScreen.style.display = "flex";
+    registerMode = !registerMode;
+
+    document.getElementById("registerFields").style.display =
+      registerMode ? "block" : "none";
+
+    document.getElementById("authBtn").textContent =
+      registerMode ? "Create account" : "Login";
+
+    document.getElementById("switchText").textContent =
+      registerMode
+        ? "Already have an account?"
+        : "Don't have an account?";
+
+    document.getElementById("switchBtn").textContent =
+      registerMode
+        ? " Login"
+        : " Create account";
+
+    document.getElementById("authMessage").textContent = "";
+  }
+
+
+  /* =========================
+     AUTH
+  ========================= */
+
+  async function handleAuth() {
+
+    const email =
+      document.getElementById("emailInput").value.trim();
+
+    const password =
+      document.getElementById("passwordInput").value;
+
+    const name =
+      document.getElementById("nameInput").value.trim();
+
+    const message =
+      document.getElementById("authMessage");
+
+    message.textContent = "";
+
+    if (!email || !password) {
+      message.textContent = "Email and password are required.";
       return;
     }
 
-    loginScreen.style.display = "none";
-
-    userName.textContent =
-      data.user.name;
-
-  } catch (error) {
-
-    loginScreen.style.display = "flex";
-
-  }
-}
-
-
-// -------------------------
-// LOGIN
-// -------------------------
-
-loginBtn.onclick = async () => {
-
-  const email =
-    document.getElementById("email").value.trim();
-
-  const password =
-    document.getElementById("password").value;
-
-  loginError.textContent = "";
-
-  if (!email || !password) {
-
-    loginError.textContent =
-      "Email এবং password দাও।";
-
-    return;
-  }
-
-  loginBtn.disabled = true;
-  loginBtn.textContent = "Logging in...";
-
-  try {
-
-    const res = await fetch(
-      API_URL + "/login",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
-
-        body: JSON.stringify({
-          email,
-          password
-        })
-      }
-    );
-
-    const data = await res.json();
-
-    if (!data.success) {
-
-      loginError.textContent =
-        data.error || "Login failed.";
-
-      loginBtn.disabled = false;
-      loginBtn.textContent = "Login";
-
+    if (registerMode && !name) {
+      message.textContent = "Please enter your name.";
       return;
     }
 
-    localStorage.setItem(
-      "my_ai_token",
-      data.token
-    );
+    const btn = document.getElementById("authBtn");
 
-    location.reload();
+    btn.disabled = true;
+    btn.textContent = registerMode ? "Creating..." : "Logging in...";
 
-  } catch (error) {
+    try {
 
-    loginError.textContent =
-      "Server-এর সাথে যোগাযোগ করা যাচ্ছে না।";
-
-    loginBtn.disabled = false;
-    loginBtn.textContent = "Login";
-  }
-
-};
-
-
-// -------------------------
-// ADD MESSAGE
-// -------------------------
-
-function addMessage(text, type) {
-
-  if (welcome)
-    welcome.style.display = "none";
-
-  const div =
-    document.createElement("div");
-
-  div.className =
-    "message " +
-    (type === "user"
-      ? "user-msg"
-      : "ai-msg");
-
-  div.textContent = text;
-
-  chat.appendChild(div);
-
-  chat.scrollTop =
-    chat.scrollHeight;
-}
-
-
-// -------------------------
-// SEND MESSAGE
-// -------------------------
-
-async function sendMessage() {
-
-  const text =
-    message.value.trim();
-
-  if (!text) return;
-
-  if (!token) {
-
-    loginScreen.style.display =
-      "flex";
-
-    return;
-  }
-
-  addMessage(text, "user");
-
-  message.value = "";
-
-  send.disabled = true;
-
-  const typing =
-    document.createElement("div");
-
-  typing.className = "typing";
-
-  typing.textContent =
-    "EMORA AI is thinking...";
-
-  chat.appendChild(typing);
-
-  chat.scrollTop =
-    chat.scrollHeight;
-
-
-  try {
-
-    const res =
-      await fetch(
-        API_URL + "/chat",
+      const data = await api(
+        registerMode ? "/register" : "/login",
         {
           method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-
-            Authorization:
-              "Bearer " + token
-          },
-
-          body: JSON.stringify({
-            message: text
-          })
+          body: JSON.stringify(
+            registerMode
+              ? { name, email, password }
+              : { email, password }
+          )
         }
       );
 
-    const data =
-      await res.json();
+      token = data.token;
 
-    typing.remove();
+      localStorage.setItem("my_ai_token", token);
 
-    if (!res.ok || !data.success) {
+      await loadCurrentUser();
 
-      addMessage(
-        data.error ||
-        "AI response পাওয়া যায়নি।",
-        "ai"
-      );
+      showApp();
 
-    } else {
+    } catch (error) {
 
-      addMessage(
-        data.reply,
-        "ai"
-      );
+      message.textContent = error.message;
 
+    } finally {
+
+      btn.disabled = false;
+      btn.textContent =
+        registerMode ? "Create account" : "Login";
     }
-
-  } catch (error) {
-
-    typing.remove();
-
-    addMessage(
-      "Server-এর সাথে যোগাযোগ করা যাচ্ছে না।",
-      "ai"
-    );
-
   }
 
-  send.disabled = false;
 
-  message.focus();
-}
+  async function loadCurrentUser() {
+
+    const data = await api("/me");
+
+    currentUser = data.user || data;
+
+    document.getElementById("profileName").textContent =
+      currentUser.name || "User";
+
+    document.getElementById("profileEmail").textContent =
+      currentUser.email || "";
+
+    document.getElementById("avatar").textContent =
+      (currentUser.name || "U").charAt(0).toUpperCase();
+  }
 
 
-// -------------------------
-// BUTTON
-// -------------------------
+  function showApp() {
 
-send.onclick =
-  sendMessage;
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("app").style.display = "block";
+
+    loadChats();
+    startNewChat();
+  }
 
 
-// -------------------------
-// ENTER
-// -------------------------
+  function logout() {
 
-message.addEventListener(
-  "keydown",
-  function(e) {
+    api("/logout", {
+      method: "POST"
+    }).catch(() => {});
+
+    token = "";
+    currentUser = null;
+    currentChatId = null;
+
+    localStorage.removeItem("my_ai_token");
+
+    document.getElementById("app").style.display = "none";
+    document.getElementById("loginPage").style.display = "flex";
+
+    document.getElementById("emailInput").value = "";
+    document.getElementById("passwordInput").value = "";
+  }
+
+
+  /* =========================
+     CHAT LIST
+  ========================= */
+
+  async function loadChats() {
+
+    if (!token) return;
+
+    const list = document.getElementById("chatList");
+
+    try {
+
+      const data = await api("/chats");
+
+      const chats = data.chats || [];
+
+      list.innerHTML = "";
+
+      if (!chats.length) {
+
+        list.innerHTML = `
+          <div style="
+            color:#666674;
+            font-size:12px;
+            padding:10px;
+          ">
+            No chats yet
+          </div>
+        `;
+
+        return;
+      }
+
+      chats.forEach(chat => {
+
+        const item = document.createElement("div");
+
+        item.className =
+          "chat-item" +
+          (Number(chat.id) === Number(currentChatId)
+            ? " active"
+            : "");
+
+        const title = document.createElement("div");
+
+        title.className = "chat-title";
+
+        title.textContent =
+          chat.title || "New Chat";
+
+        title.onclick = () => openChat(chat.id);
+
+        const del = document.createElement("button");
+
+        del.className = "delete-chat";
+        del.textContent = "×";
+
+        del.onclick = event => {
+          event.stopPropagation();
+          deleteChat(chat.id);
+        };
+
+        item.appendChild(title);
+        item.appendChild(del);
+
+        list.appendChild(item);
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+  }
+
+
+  /* =========================
+     NEW CHAT
+  ========================= */
+
+  function startNewChat() {
+
+    currentChatId = null;
+
+    document.getElementById("topTitle").textContent =
+      "EMORA AI";
+
+    const area = document.getElementById("chatArea");
+
+    area.innerHTML = `
+      <div id="welcome" class="welcome">
+
+        <div class="welcome-logo">✦</div>
+
+        <h1>How can I help you?</h1>
+
+        <p>
+          Welcome to EMORA AI.<br>
+          Ask anything and start a conversation.
+        </p>
+
+      </div>
+    `;
+
+    document.getElementById("messageInput").focus();
+
+    loadChats();
+
+    closeSidebar();
+  }
+
+
+  /* =========================
+     OPEN CHAT
+  ========================= */
+
+  async function openChat(id) {
+
+    try {
+
+      const data = await api("/chats/" + id);
+
+      currentChatId = data.chat.id;
+
+      document.getElementById("topTitle").textContent =
+        data.chat.title || "EMORA AI";
+
+      renderMessages(data.messages || []);
+
+      loadChats();
+
+      closeSidebar();
+
+    } catch (error) {
+
+      alert(error.message);
+
+    }
+  }
+
+
+  /* =========================
+     RENDER MESSAGES
+  ========================= */
+
+  function renderMessages(messages) {
+
+    const area = document.getElementById("chatArea");
+
+    area.innerHTML = "";
+
+    const container = document.createElement("div");
+
+    container.className = "messages";
+
+    messages.forEach(message => {
+
+      addMessage(
+        message.role === "user"
+          ? "user"
+          : "assistant",
+        message.content,
+        container
+      );
+
+    });
+
+    area.appendChild(container);
+
+    scrollBottom();
+  }
+
+
+  function addMessage(role, content, container = null) {
+
+    const area = document.getElementById("chatArea");
+
+    if (!container) {
+
+      let messages =
+        area.querySelector(".messages");
+
+      if (!messages) {
+
+        messages = document.createElement("div");
+
+        messages.className = "messages";
+
+        area.innerHTML = "";
+
+        area.appendChild(messages);
+      }
+
+      container = messages;
+    }
+
+    const welcome =
+      document.getElementById("welcome");
+
+    if (welcome) {
+      welcome.remove();
+    }
+
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "message " + role;
+
+    const avatar =
+      document.createElement("div");
+
+    avatar.className =
+      "message-avatar";
+
+    avatar.textContent =
+      role === "user" ? "You" : "✦";
+
+    const bubble =
+      document.createElement("div");
+
+    bubble.className = "bubble";
+
+    bubble.textContent = content;
+
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+
+    container.appendChild(row);
+
+    scrollBottom();
+  }
+
+
+  /* =========================
+     SEND MESSAGE
+  ========================= */
+
+  async function sendMessage() {
+
+    const input =
+      document.getElementById("messageInput");
+
+    const text =
+      input.value.trim();
+
+    if (!text) return;
+
+    const sendBtn =
+      document.getElementById("sendBtn");
+
+    input.value = "";
+
+    addMessage("user", text);
+
+    sendBtn.disabled = true;
+
+    showTyping(true);
+
+    try {
+
+      const data = await api("/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          chatId: currentChatId,
+          message: text
+        })
+      });
+
+      currentChatId =
+        data.chatId ||
+        data.chat?.id ||
+        currentChatId;
+
+      if (data.reply) {
+        addMessage("assistant", data.reply);
+      }
+
+      if (data.chat?.title) {
+        document.getElementById("topTitle").textContent =
+          data.chat.title;
+      }
+
+      loadChats();
+
+    } catch (error) {
+
+      addMessage(
+        "assistant",
+        "Sorry, something went wrong: " +
+        error.message
+      );
+
+    } finally {
+
+      sendBtn.disabled = false;
+
+      showTyping(false);
+
+      input.focus();
+    }
+  }
+
+
+  /* =========================
+     DELETE CHAT
+  ========================= */
+
+  async function deleteChat(id) {
+
+    const ok =
+      confirm("Delete this chat?");
+
+    if (!ok) return;
+
+    try {
+
+      await api("/chats/" + id, {
+        method: "DELETE"
+      });
+
+      if (Number(currentChatId) === Number(id)) {
+        startNewChat();
+      }
+
+      loadChats();
+
+    } catch (error) {
+
+      alert(error.message);
+
+    }
+  }
+
+
+  /* =========================
+     TYPING
+  ========================= */
+
+  function showTyping(show) {
+
+    document.getElementById("typing").style.display =
+      show ? "block" : "none";
+
+    if (show) {
+      scrollBottom();
+    }
+  }
+
+
+  /* =========================
+     KEYBOARD
+  ========================= */
+
+  function handleKey(event) {
 
     if (
-      e.key === "Enter" &&
-      !e.shiftKey
+      event.key === "Enter" &&
+      !event.shiftKey
     ) {
 
-      e.preventDefault();
+      event.preventDefault();
 
       sendMessage();
     }
-
   }
-);
 
 
-// -------------------------
-// START
-// -------------------------
+  /* =========================
+     SCROLL
+  ========================= */
 
-loadUser();
+  function scrollBottom() {
+
+    const area =
+      document.getElementById("chatArea");
+
+    setTimeout(() => {
+
+      area.scrollTop =
+        area.scrollHeight;
+
+    }, 50);
+  }
+
+
+  /* =========================
+     MOBILE SIDEBAR
+  ========================= */
+
+  function toggleSidebar() {
+
+    document
+      .getElementById("sidebar")
+      .classList.toggle("open");
+  }
+
+
+  function closeSidebar() {
+
+    document
+      .getElementById("sidebar")
+      .classList.remove("open");
+  }
+
+
+  /* =========================
+     AUTO LOGIN
+  ========================= */
+
+  async function init() {
+
+    if (!token) return;
+
+    try {
+
+      await loadCurrentUser();
+
+      showApp();
+
+    } catch (error) {
+
+      token = "";
+
+      localStorage.removeItem("my_ai_token");
+
+    }
+  }
+
+
+  /* =========================
+     START
+  ========================= */
+
+  init();
 
 </script>
 
