@@ -1,11 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>My AI Assistant</title>
 
+
   <style>
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -13,145 +22,408 @@
       font-family: Arial, sans-serif;
     }
 
+
     body {
+
       min-height: 100vh;
-      background: #0b0f19;
+
+      background:
+        radial-gradient(
+          circle at top,
+          #1d2945,
+          #090d16 55%
+        );
+
       color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+
       padding: 20px;
+
     }
+
 
     .app {
+
       width: 100%;
+
       max-width: 430px;
+
+      margin: 0 auto;
+
+      padding-top: 30px;
+
     }
+
 
     .card {
-      background: #151b29;
-      border: 1px solid #283247;
-      border-radius: 22px;
+
+      background: rgba(
+        21,
+        27,
+        41,
+        0.95
+      );
+
+      border:
+        1px solid #2b3852;
+
+      border-radius: 24px;
+
       padding: 28px 22px;
-      box-shadow: 0 15px 50px rgba(0,0,0,.35);
+
+      box-shadow:
+        0 20px 60px
+        rgba(0,0,0,.4);
+
     }
+
 
     h1 {
+
       text-align: center;
+
       margin-bottom: 8px;
+
     }
+
+
+    h2 {
+
+      margin-bottom: 8px;
+
+    }
+
 
     .subtitle {
+
       text-align: center;
+
       color: #9aa5b5;
+
       margin-bottom: 25px;
+
     }
+
 
     .tabs {
+
       display: flex;
+
       gap: 8px;
+
       margin-bottom: 20px;
+
     }
+
 
     .tabs button {
+
       flex: 1;
+
       padding: 12px;
+
       border: 0;
+
       border-radius: 12px;
+
       background: #222b3d;
+
       color: white;
+
       cursor: pointer;
+
+      font-size: 15px;
+
     }
+
 
     .tabs button.active {
+
       background: #5865f2;
+
     }
+
 
     input {
+
       width: 100%;
+
       padding: 14px;
+
       margin-bottom: 12px;
+
       border-radius: 12px;
-      border: 1px solid #303b51;
+
+      border:
+        1px solid #303b51;
+
       background: #0e1420;
+
       color: white;
+
       outline: none;
+
+      font-size: 15px;
+
     }
+
+
+    input:focus {
+
+      border-color: #5865f2;
+
+    }
+
 
     .main-btn {
+
       width: 100%;
+
       padding: 14px;
+
       border: 0;
+
       border-radius: 12px;
+
       background: #5865f2;
+
       color: white;
+
       font-size: 16px;
+
       font-weight: bold;
+
       cursor: pointer;
+
     }
+
 
     .main-btn:disabled {
+
       opacity: .6;
+
+      cursor: not-allowed;
+
     }
+
 
     .message {
+
       margin-top: 15px;
+
       text-align: center;
+
       min-height: 22px;
+
       color: #aeb8c8;
+
+      line-height: 1.4;
+
     }
+
 
     .hidden {
-      display: none;
+
+      display: none !important;
+
     }
+
 
     .dashboard {
+
       text-align: center;
+
     }
+
 
     .ai-circle {
+
       width: 110px;
+
       height: 110px;
+
       margin: 20px auto;
+
       border-radius: 50%;
-      background: #5865f2;
+
+      background:
+        linear-gradient(
+          135deg,
+          #5865f2,
+          #7c4dff
+        );
+
       display: flex;
+
       align-items: center;
+
       justify-content: center;
+
       font-size: 38px;
+
+      font-weight: bold;
+
+      box-shadow:
+        0 0 35px
+        rgba(88,101,242,.4);
+
     }
 
-    .logout {
+
+    .profile {
+
       margin-top: 20px;
-      background: #2b3446;
+
+      text-align: left;
+
     }
+
+
+    .profile-item {
+
+      background: #0e1420;
+
+      border:
+        1px solid #29344a;
+
+      border-radius: 14px;
+
+      padding: 14px;
+
+      margin-bottom: 10px;
+
+    }
+
+
+    .profile-label {
+
+      color: #8e9bb0;
+
+      font-size: 12px;
+
+      margin-bottom: 5px;
+
+    }
+
+
+    .profile-value {
+
+      font-size: 15px;
+
+      word-break: break-word;
+
+    }
+
+
+    .plan {
+
+      display: inline-block;
+
+      margin-top: 5px;
+
+      padding: 6px 12px;
+
+      border-radius: 20px;
+
+      background: #222b3d;
+
+      color: #cbd4e3;
+
+      font-size: 13px;
+
+    }
+
+
+    .logout {
+
+      margin-top: 20px;
+
+      background: #2b3446;
+
+    }
+
+
+    .logout:hover {
+
+      background: #3a455a;
+
+    }
+
+
+    .loading {
+
+      text-align: center;
+
+      color: #aeb8c8;
+
+      padding: 20px;
+
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
+
 <div class="app">
 
-  <!-- AUTH -->
-  <div class="card" id="authCard">
 
-    <h1>My AI Assistant</h1>
-    <p class="subtitle">Your personal AI workspace</p>
+  <!-- ============================= -->
+  <!-- AUTH CARD -->
+  <!-- ============================= -->
+
+  <div
+    class="card"
+    id="authCard"
+  >
+
+    <h1>
+      My AI Assistant
+    </h1>
+
+    <p class="subtitle">
+      Your personal AI workspace
+    </p>
+
 
     <div class="tabs">
-      <button id="registerTab" class="active">Register</button>
-      <button id="loginTab">Login</button>
+
+      <button
+        id="registerTab"
+        class="active"
+      >
+        Register
+      </button>
+
+
+      <button
+        id="loginTab"
+      >
+        Login
+      </button>
+
     </div>
 
+
+    <!-- =========================== -->
     <!-- REGISTER -->
-    <form id="registerForm">
+    <!-- =========================== -->
+
+    <form
+      id="registerForm"
+    >
 
       <input
         id="registerName"
         type="text"
         placeholder="Your name"
+        minlength="2"
+        maxlength="100"
         required
       >
+
 
       <input
         id="registerEmail"
@@ -160,22 +432,36 @@
         required
       >
 
+
       <input
         id="registerPassword"
         type="password"
         placeholder="Password"
         minlength="8"
+        maxlength="128"
         required
       >
 
-      <button class="main-btn" type="submit">
+
+      <button
+        class="main-btn"
+        id="registerButton"
+        type="submit"
+      >
         Create Account
       </button>
 
     </form>
 
+
+    <!-- =========================== -->
     <!-- LOGIN -->
-    <form id="loginForm" class="hidden">
+    <!-- =========================== -->
+
+    <form
+      id="loginForm"
+      class="hidden"
+    >
 
       <input
         id="loginEmail"
@@ -184,6 +470,7 @@
         required
       >
 
+
       <input
         id="loginPassword"
         type="password"
@@ -191,139 +478,369 @@
         required
       >
 
-      <button class="main-btn" type="submit">
+
+      <button
+        class="main-btn"
+        id="loginButton"
+        type="submit"
+      >
         Login
       </button>
 
     </form>
 
-    <div class="message" id="message"></div>
+
+    <div
+      class="message"
+      id="message"
+    ></div>
 
   </div>
 
 
+  <!-- ============================= -->
   <!-- DASHBOARD -->
-  <div class="card dashboard hidden" id="dashboard">
+  <!-- ============================= -->
 
-    <h1>Welcome 👋</h1>
+  <div
+    class="card dashboard hidden"
+    id="dashboard"
+  >
+
+    <h1>
+      Welcome 👋
+    </h1>
+
 
     <div class="ai-circle">
       AI
     </div>
 
-    <h2 id="userName">User</h2>
+
+    <h2 id="dashboardName">
+      User
+    </h2>
+
 
     <p class="subtitle">
       Your AI Assistant is ready.
     </p>
 
+
+    <div class="plan">
+      FREE PLAN
+    </div>
+
+
+    <!-- PROFILE -->
+
+    <div class="profile">
+
+
+      <div class="profile-item">
+
+        <div class="profile-label">
+          Name
+        </div>
+
+        <div
+          class="profile-value"
+          id="profileName"
+        >
+          —
+        </div>
+
+      </div>
+
+
+      <div class="profile-item">
+
+        <div class="profile-label">
+          Email
+        </div>
+
+        <div
+          class="profile-value"
+          id="profileEmail"
+        >
+          —
+        </div>
+
+      </div>
+
+
+      <div class="profile-item">
+
+        <div class="profile-label">
+          User ID
+        </div>
+
+        <div
+          class="profile-value"
+          id="profileId"
+        >
+          —
+        </div>
+
+      </div>
+
+
+      <div class="profile-item">
+
+        <div class="profile-label">
+          Plan
+        </div>
+
+        <div
+          class="profile-value"
+          id="profilePlan"
+        >
+          —
+        </div>
+
+      </div>
+
+
+      <div class="profile-item">
+
+        <div class="profile-label">
+          Account Created
+        </div>
+
+        <div
+          class="profile-value"
+          id="profileCreated"
+        >
+          —
+        </div>
+
+      </div>
+
+
+    </div>
+
+
     <button
       class="main-btn logout"
-      id="logoutBtn"
+      id="logoutButton"
     >
       Logout
     </button>
 
+
+    <div
+      class="message"
+      id="dashboardMessage"
+    ></div>
+
   </div>
+
 
 </div>
 
 
 <script>
 
+
+  // =====================================
+  // API
+  // =====================================
+
   const API_URL =
-    "https://my-ai-server-hncp.onrender.com";
+    window.location.origin;
 
-  const registerTab =
-    document.getElementById("registerTab");
 
-  const loginTab =
-    document.getElementById("loginTab");
-
-  const registerForm =
-    document.getElementById("registerForm");
-
-  const loginForm =
-    document.getElementById("loginForm");
-
-  const message =
-    document.getElementById("message");
+  // =====================================
+  // ELEMENTS
+  // =====================================
 
   const authCard =
-    document.getElementById("authCard");
+    document.getElementById(
+      "authCard"
+    );
 
   const dashboard =
-    document.getElementById("dashboard");
+    document.getElementById(
+      "dashboard"
+    );
 
-  const userName =
-    document.getElementById("userName");
+  const registerTab =
+    document.getElementById(
+      "registerTab"
+    );
+
+  const loginTab =
+    document.getElementById(
+      "loginTab"
+    );
+
+  const registerForm =
+    document.getElementById(
+      "registerForm"
+    );
+
+  const loginForm =
+    document.getElementById(
+      "loginForm"
+    );
+
+  const message =
+    document.getElementById(
+      "message"
+    );
+
+  const dashboardMessage =
+    document.getElementById(
+      "dashboardMessage"
+    );
+
+  const registerButton =
+    document.getElementById(
+      "registerButton"
+    );
+
+  const loginButton =
+    document.getElementById(
+      "loginButton"
+    );
+
+  const logoutButton =
+    document.getElementById(
+      "logoutButton"
+    );
 
 
-  // ==========================
-  // SWITCH TO REGISTER
-  // ==========================
+  // =====================================
+  // TOKEN
+  // =====================================
+
+  function getToken() {
+
+    return localStorage.getItem(
+      "my_ai_token"
+    );
+
+  }
+
+
+  function saveToken(token) {
+
+    localStorage.setItem(
+      "my_ai_token",
+      token
+    );
+
+  }
+
+
+  function removeToken() {
+
+    localStorage.removeItem(
+      "my_ai_token"
+    );
+
+  }
+
+
+  // =====================================
+  // REGISTER TAB
+  // =====================================
 
   registerTab.onclick = () => {
 
-    registerTab.classList.add("active");
-    loginTab.classList.remove("active");
+    registerTab.classList.add(
+      "active"
+    );
 
-    registerForm.classList.remove("hidden");
-    loginForm.classList.add("hidden");
+    loginTab.classList.remove(
+      "active"
+    );
+
+    registerForm.classList.remove(
+      "hidden"
+    );
+
+    loginForm.classList.add(
+      "hidden"
+    );
 
     message.textContent = "";
+
   };
 
 
-  // ==========================
-  // SWITCH TO LOGIN
-  // ==========================
+  // =====================================
+  // LOGIN TAB
+  // =====================================
 
   loginTab.onclick = () => {
 
-    loginTab.classList.add("active");
-    registerTab.classList.remove("active");
+    loginTab.classList.add(
+      "active"
+    );
 
-    loginForm.classList.remove("hidden");
-    registerForm.classList.add("hidden");
+    registerTab.classList.remove(
+      "active"
+    );
+
+    loginForm.classList.remove(
+      "hidden"
+    );
+
+    registerForm.classList.add(
+      "hidden"
+    );
 
     message.textContent = "";
+
   };
 
 
-  // ==========================
+  // =====================================
   // REGISTER
-  // ==========================
+  // =====================================
 
   registerForm.addEventListener(
     "submit",
-    async (event) => {
+    async event => {
 
       event.preventDefault();
+
 
       const name =
         document.getElementById(
           "registerName"
         ).value.trim();
 
+
       const email =
         document.getElementById(
           "registerEmail"
         ).value.trim();
+
 
       const password =
         document.getElementById(
           "registerPassword"
         ).value;
 
+
+      registerButton.disabled = true;
+
+      registerButton.textContent =
+        "Creating Account...";
+
+
       message.textContent =
-        "Creating account...";
+        "Creating your account...";
+
 
       try {
 
         const response =
           await fetch(
-            API_URL + "/register",
+            API_URL +
+            "/register",
             {
               method: "POST",
 
@@ -332,29 +849,42 @@
                   "application/json"
               },
 
-              body: JSON.stringify({
-                name,
-                email,
-                password
-              })
+              body:
+                JSON.stringify({
+                  name,
+                  email,
+                  password
+                })
             }
           );
+
 
         const data =
           await response.json();
 
+
         if (data.success) {
+
+          registerForm.reset();
+
 
           message.textContent =
             "Account created successfully!";
 
-          registerForm.reset();
 
-          setTimeout(() => {
+          setTimeout(
+            () => {
 
-            loginTab.click();
+              loginTab.click();
 
-          }, 1000);
+              document.getElementById(
+                "loginEmail"
+              ).value = email;
+
+            },
+            800
+          );
+
 
         } else {
 
@@ -364,48 +894,336 @@
 
         }
 
+
       } catch (error) {
+
+        console.error(error);
 
         message.textContent =
           "Server connection failed.";
 
       }
 
+
+      registerButton.disabled =
+        false;
+
+      registerButton.textContent =
+        "Create Account";
+
     }
   );
 
 
-  // ==========================
+  // =====================================
   // LOGIN
-  // ==========================
+  // =====================================
 
   loginForm.addEventListener(
     "submit",
-    async (event) => {
+    async event => {
 
       event.preventDefault();
 
+
+      const email =
+        document.getElementById(
+          "loginEmail"
+        ).value.trim();
+
+
+      const password =
+        document.getElementById(
+          "loginPassword"
+        ).value;
+
+
+      loginButton.disabled = true;
+
+      loginButton.textContent =
+        "Logging in...";
+
+
       message.textContent =
-        "Login system will be connected next.";
+        "Checking your account...";
+
+
+      try {
+
+        const response =
+          await fetch(
+            API_URL +
+            "/login",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify({
+                  email,
+                  password
+                })
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (data.success) {
+
+          saveToken(
+            data.token
+          );
+
+
+          loginForm.reset();
+
+          message.textContent =
+            "Login successful!";
+
+
+          showDashboard(
+            data.user
+          );
+
+
+        } else {
+
+          message.textContent =
+            data.error ||
+            "Login failed.";
+
+        }
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+          "Server connection failed.";
+
+      }
+
+
+      loginButton.disabled =
+        false;
+
+      loginButton.textContent =
+        "Login";
 
     }
   );
 
 
-  // ==========================
+  // =====================================
+  // SHOW DASHBOARD
+  // =====================================
+
+  function showDashboard(user) {
+
+    authCard.classList.add(
+      "hidden"
+    );
+
+    dashboard.classList.remove(
+      "hidden"
+    );
+
+
+    document.getElementById(
+      "dashboardName"
+    ).textContent =
+      user.name;
+
+
+    document.getElementById(
+      "profileName"
+    ).textContent =
+      user.name;
+
+
+    document.getElementById(
+      "profileEmail"
+    ).textContent =
+      user.email;
+
+
+    document.getElementById(
+      "profileId"
+    ).textContent =
+      user.id;
+
+
+    document.getElementById(
+      "profilePlan"
+    ).textContent =
+      String(
+        user.plan
+      ).toUpperCase();
+
+
+    document.getElementById(
+      "profileCreated"
+    ).textContent =
+      new Date(
+        user.created_at
+      ).toLocaleString();
+
+
+    dashboardMessage.textContent =
+      "";
+
+  }
+
+
+  // =====================================
+  // LOAD PROFILE
+  // =====================================
+
+  async function loadProfile() {
+
+    const token =
+      getToken();
+
+
+    if (!token) {
+      return;
+    }
+
+
+    try {
+
+      const response =
+        await fetch(
+          API_URL +
+          "/me",
+          {
+            method: "GET",
+
+            headers: {
+              "Authorization":
+                "Bearer " +
+                token
+            }
+          }
+        );
+
+
+      const data =
+        await response.json();
+
+
+      if (
+        response.ok &&
+        data.success
+      ) {
+
+        showDashboard(
+          data.user
+        );
+
+      } else {
+
+        removeToken();
+
+      }
+
+
+    } catch (error) {
+
+      console.error(
+        "Profile load error:",
+        error
+      );
+
+    }
+
+  }
+
+
+  // =====================================
   // LOGOUT
-  // ==========================
+  // =====================================
 
-  document
-    .getElementById("logoutBtn")
-    .onclick = () => {
+  logoutButton.onclick =
+    async () => {
 
-      dashboard.classList.add("hidden");
-      authCard.classList.remove("hidden");
+      const token =
+        getToken();
+
+
+      logoutButton.disabled =
+        true;
+
+
+      try {
+
+        if (token) {
+
+          await fetch(
+            API_URL +
+            "/logout",
+            {
+              method: "POST",
+
+              headers: {
+                "Authorization":
+                  "Bearer " +
+                  token
+              }
+            }
+          );
+
+        }
+
+      } catch (error) {
+
+        console.error(error);
+
+      }
+
+
+      removeToken();
+
+
+      dashboard.classList.add(
+        "hidden"
+      );
+
+      authCard.classList.remove(
+        "hidden"
+      );
+
+
+      loginTab.click();
+
+
+      dashboardMessage.textContent =
+        "";
+
+
+      logoutButton.disabled =
+        false;
 
     };
 
+
+  // =====================================
+  // START
+  // =====================================
+
+  loadProfile();
+
 </script>
 
+
 </body>
+
 </html>
