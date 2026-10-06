@@ -20,6 +20,7 @@ const pool = new Pool({
 // ========================================
 
 async function initDatabase() {
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id BIGSERIAL PRIMARY KEY,
@@ -46,11 +47,25 @@ async function initDatabase() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS sessions (
+      id BIGSERIAL PRIMARY KEY,
+      user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT UNIQUE NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMPTZ NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_chats_user_id
     ON chats(user_id);
 
     CREATE INDEX IF NOT EXISTS idx_messages_chat_id
     ON messages(chat_id);
+
+    CREATE INDEX IF NOT EXISTS idx_sessions_token_hash
+    ON sessions(token_hash);
+
+    CREATE INDEX IF NOT EXISTS idx_sessions_user_id
+    ON sessions(user_id);
   `);
 
   console.log("Database tables ready.");
@@ -62,15 +77,66 @@ async function initDatabase() {
 // ========================================
 
 async function hashPassword(password) {
-  const salt = crypto.randomBytes(16).toString("hex");
 
-  const key = await scrypt(
-    password,
-    salt,
-    64
-  );
+  const salt =
+    crypto.randomBytes(16).toString("hex");
+
+  const key =
+    await scrypt(
+      password,
+      salt,
+      64
+    );
 
   return `${salt}:${key.toString("hex")}`;
+}
+
+
+// ========================================
+// VERIFY PASSWORD
+// ========================================
+
+async function verifyPassword(
+  password,
+  storedHash
+) {
+
+  try {
+
+    const parts =
+      storedHash.split(":");
+
+    if (parts.length !== 2) {
+      return false;
+    }
+
+    const salt = parts[0];
+    const storedKey =
+      Buffer.from(parts[1], "hex");
+
+    const derivedKey =
+      await scrypt(
+        password,
+        salt,
+        64
+      );
+
+    if (
+      storedKey.length !==
+      derivedKey.length
+    ) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(
+      storedKey,
+      derivedKey
+    );
+
+  } catch {
+
+    return false;
+  }
 }
 
 
@@ -79,40 +145,65 @@ async function hashPassword(password) {
 // ========================================
 
 function readBody(req) {
-  return new Promise((resolve, reject) => {
 
-    let body = "";
+  return new Promise(
+    (resolve, reject) => {
 
-    req.on("data", chunk => {
+      let body = "";
 
-      body += chunk;
+      req.on(
+        "data",
+        chunk => {
 
-      if (body.length > 10000) {
-        reject(new Error("Request body too large"));
-        req.destroy();
-      }
+          body += chunk;
 
-    });
+          if (body.length > 10000) {
 
-    req.on("end", () => {
+            reject(
+              new Error(
+                "Request body too large"
+              )
+            );
 
-      try {
+            req.destroy();
+          }
 
-        const data = JSON.parse(body || "{}");
+        }
+      );
 
-        resolve(data);
+      req.on(
+        "end",
+        () => {
 
-      } catch {
+          try {
 
-        reject(new Error("Invalid JSON"));
+            const data =
+              JSON.parse(
+                body || "{}"
+              );
 
-      }
+            resolve(data);
 
-    });
+          } catch {
 
-    req.on("error", reject);
+            reject(
+              new Error(
+                "Invalid JSON"
+              )
+            );
 
-  });
+          }
+
+        }
+      );
+
+      req.on(
+        "error",
+        reject
+      );
+
+    }
+  );
 }
 
 
@@ -120,17 +211,32 @@ function readBody(req) {
 // SEND JSON
 // ========================================
 
-function sendJSON(res, statusCode, data) {
+function sendJSON(
+  res,
+  statusCode,
+  data
+) {
 
-  res.writeHead(statusCode, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
-  });
+  res.writeHead(
+    statusCode,
+    {
+      "Content-Type":
+        "application/json; charset=utf-8",
 
-  res.end(JSON.stringify(data));
+      "Access-Control-Allow-Origin":
+        "*",
 
+      "Access-Control-Allow-Methods":
+        "GET, POST, OPTIONS",
+
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization"
+    }
+  );
+
+  res.end(
+    JSON.stringify(data)
+  );
 }
 
 
@@ -140,11 +246,12 @@ function sendJSON(res, statusCode, data) {
 
 function sendWebsite(res) {
 
-  const filePath = path.join(
-    __dirname,
-    "public",
-    "index.html"
-  );
+  const filePath =
+    path.join(
+      __dirname,
+      "public",
+      "index.html"
+    );
 
   fs.readFile(
     filePath,
@@ -158,26 +265,155 @@ function sendWebsite(res) {
           error
         );
 
-        sendJSON(res, 500, {
-          success: false,
-          error: "Website file not found."
-        });
+        sendJSON(
+          res,
+          500,
+          {
+            success: false,
+            error:
+              "Website file not found."
+          }
+        );
 
         return;
       }
 
-      res.writeHead(200, {
-        "Content-Type":
-          "text/html; charset=utf-8",
-        "Cache-Control":
-          "no-cache"
-      });
+      res.writeHead(
+        200,
+        {
+          "Content-Type":
+            "text/html; charset=utf-8",
+
+          "Cache-Control":
+            "no-cache"
+        }
+      );
 
       res.end(html);
-
     }
   );
+}
 
+
+// ========================================
+// CREATE LOGIN SESSION
+// ========================================
+
+async function createSession(userId) {
+
+  const token =
+    crypto
+      .randomBytes(48)
+      .toString("hex");
+
+  const tokenHash =
+    crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+  const expiresAt =
+    new Date(
+      Date.now() +
+      7 * 24 * 60 * 60 * 1000
+    );
+
+  await pool.query(
+    `
+    INSERT INTO sessions
+    (
+      user_id,
+      token_hash,
+      expires_at
+    )
+    VALUES
+    (
+      $1,
+      $2,
+      $3
+    )
+    `,
+    [
+      userId,
+      tokenHash,
+      expiresAt
+    ]
+  );
+
+  return token;
+}
+
+
+// ========================================
+// GET AUTH TOKEN
+// ========================================
+
+function getToken(req) {
+
+  const header =
+    req.headers.authorization || "";
+
+  if (
+    !header.startsWith(
+      "Bearer "
+    )
+  ) {
+    return null;
+  }
+
+  return header
+    .substring(7)
+    .trim();
+}
+
+
+// ========================================
+// GET CURRENT USER
+// ========================================
+
+async function getCurrentUser(req) {
+
+  const token =
+    getToken(req);
+
+  if (!token) {
+    return null;
+  }
+
+  const tokenHash =
+    crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+  const result =
+    await pool.query(
+      `
+      SELECT
+        u.id,
+        u.name,
+        u.email,
+        u.plan,
+        u.role,
+        u.created_at
+      FROM sessions s
+      JOIN users u
+        ON u.id = s.user_id
+      WHERE
+        s.token_hash = $1
+        AND s.expires_at > NOW()
+      LIMIT 1
+      `,
+      [tokenHash]
+    );
+
+  if (
+    result.rows.length === 0
+  ) {
+    return null;
+  }
+
+  return result.rows[0];
 }
 
 
@@ -185,372 +421,701 @@ function sendWebsite(res) {
 // SERVER
 // ========================================
 
-const server = http.createServer(
-  async (req, res) => {
+const server =
+  http.createServer(
+    async (req, res) => {
 
-    // ====================================
-    // CORS
-    // ====================================
+      // ==================================
+      // CORS
+      // ==================================
 
-    res.setHeader(
-      "Access-Control-Allow-Origin",
-      "*"
-    );
+      res.setHeader(
+        "Access-Control-Allow-Origin",
+        "*"
+      );
 
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET, POST, OPTIONS"
-    );
+      res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET, POST, OPTIONS"
+      );
 
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type"
-    );
-
-
-    // ====================================
-    // OPTIONS
-    // ====================================
-
-    if (req.method === "OPTIONS") {
-
-      res.writeHead(204);
-      res.end();
-
-      return;
-    }
+      res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization"
+      );
 
 
-    // ====================================
-    // WEBSITE
-    // ====================================
+      // ==================================
+      // OPTIONS
+      // ==================================
 
-    if (
-      req.method === "GET" &&
-      (
-        req.url === "/" ||
-        req.url === "/index.html"
-      )
-    ) {
+      if (
+        req.method === "OPTIONS"
+      ) {
 
-      sendWebsite(res);
+        res.writeHead(204);
+        res.end();
 
-      return;
-    }
-
-
-    // ====================================
-    // DATABASE TEST
-    // ====================================
-
-    if (
-      req.method === "GET" &&
-      req.url === "/database-test"
-    ) {
-
-      try {
-
-        const result =
-          await pool.query(
-            "SELECT NOW() AS time"
-          );
-
-        sendJSON(res, 200, {
-          success: true,
-          database: "connected",
-          time: result.rows[0].time
-        });
-
-      } catch (error) {
-
-        console.error(
-          "Database test error:",
-          error
-        );
-
-        sendJSON(res, 500, {
-          success: false,
-          database: "connection_failed"
-        });
-
+        return;
       }
 
-      return;
-    }
+
+      // ==================================
+      // WEBSITE
+      // ==================================
+
+      if (
+        req.method === "GET" &&
+        (
+          req.url === "/" ||
+          req.url === "/index.html"
+        )
+      ) {
+
+        sendWebsite(res);
+
+        return;
+      }
 
 
-    // ====================================
-    // REGISTER
-    // ====================================
+      // ==================================
+      // DATABASE TEST
+      // ==================================
 
-    if (
-      req.method === "POST" &&
-      req.url === "/register"
-    ) {
+      if (
+        req.method === "GET" &&
+        req.url === "/database-test"
+      ) {
 
-      try {
+        try {
 
-        const data =
-          await readBody(req);
+          const result =
+            await pool.query(
+              "SELECT NOW() AS time"
+            );
 
-
-        const name =
-          String(
-            data.name || ""
-          ).trim();
-
-
-        const email =
-          String(
-            data.email || ""
-          )
-          .trim()
-          .toLowerCase();
-
-
-        const password =
-          String(
-            data.password || ""
+          sendJSON(
+            res,
+            200,
+            {
+              success: true,
+              database: "connected",
+              time:
+                result.rows[0].time
+            }
           );
 
+        } catch (error) {
 
-        // NAME CHECK
-
-        if (
-          name.length < 2 ||
-          name.length > 100
-        ) {
-
-          sendJSON(res, 400, {
-            success: false,
-            error: "Invalid name."
-          });
-
-          return;
-        }
-
-
-        // EMAIL CHECK
-
-        const emailRegex =
-          /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-
-        if (
-          !emailRegex.test(email) ||
-          email.length > 255
-        ) {
-
-          sendJSON(res, 400, {
-            success: false,
-            error: "Invalid email."
-          });
-
-          return;
-        }
-
-
-        // PASSWORD CHECK
-
-        if (
-          password.length < 8 ||
-          password.length > 128
-        ) {
-
-          sendJSON(res, 400, {
-            success: false,
-            error:
-              "Password must be 8 to 128 characters."
-          });
-
-          return;
-        }
-
-
-        // CHECK EXISTING USER
-
-        const existing =
-          await pool.query(
-            `
-            SELECT id
-            FROM users
-            WHERE email = $1
-            LIMIT 1
-            `,
-            [email]
+          console.error(
+            error
           );
 
-
-        if (existing.rows.length > 0) {
-
-          sendJSON(res, 409, {
-            success: false,
-            error:
-              "An account with this email already exists."
-          });
-
-          return;
+          sendJSON(
+            res,
+            500,
+            {
+              success: false,
+              database:
+                "connection_failed"
+            }
+          );
         }
 
-
-        // HASH PASSWORD
-
-        const passwordHash =
-          await hashPassword(password);
+        return;
+      }
 
 
-        // CREATE USER
+      // ==================================
+      // REGISTER
+      // ==================================
 
-        const result =
-          await pool.query(
-            `
-            INSERT INTO users
-            (
-              name,
-              email,
-              password_hash,
-              plan,
-              role
+      if (
+        req.method === "POST" &&
+        req.url === "/register"
+      ) {
+
+        try {
+
+          const data =
+            await readBody(req);
+
+          const name =
+            String(
+              data.name || ""
+            ).trim();
+
+          const email =
+            String(
+              data.email || ""
             )
-            VALUES
-            (
-              $1,
-              $2,
-              $3,
-              'free',
-              'user'
+            .trim()
+            .toLowerCase();
+
+          const password =
+            String(
+              data.password || ""
+            );
+
+
+          if (
+            name.length < 2 ||
+            name.length > 100
+          ) {
+
+            sendJSON(
+              res,
+              400,
+              {
+                success: false,
+                error:
+                  "Invalid name."
+              }
+            );
+
+            return;
+          }
+
+
+          const emailRegex =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+          if (
+            !emailRegex.test(email) ||
+            email.length > 255
+          ) {
+
+            sendJSON(
+              res,
+              400,
+              {
+                success: false,
+                error:
+                  "Invalid email."
+              }
+            );
+
+            return;
+          }
+
+
+          if (
+            password.length < 8 ||
+            password.length > 128
+          ) {
+
+            sendJSON(
+              res,
+              400,
+              {
+                success: false,
+                error:
+                  "Password must be 8 to 128 characters."
+              }
+            );
+
+            return;
+          }
+
+
+          const existing =
+            await pool.query(
+              `
+              SELECT id
+              FROM users
+              WHERE email = $1
+              LIMIT 1
+              `,
+              [email]
+            );
+
+
+          if (
+            existing.rows.length > 0
+          ) {
+
+            sendJSON(
+              res,
+              409,
+              {
+                success: false,
+                error:
+                  "An account with this email already exists."
+              }
+            );
+
+            return;
+          }
+
+
+          const passwordHash =
+            await hashPassword(
+              password
+            );
+
+
+          const result =
+            await pool.query(
+              `
+              INSERT INTO users
+              (
+                name,
+                email,
+                password_hash,
+                plan,
+                role
+              )
+              VALUES
+              (
+                $1,
+                $2,
+                $3,
+                'free',
+                'user'
+              )
+              RETURNING
+                id,
+                name,
+                email,
+                plan,
+                role,
+                created_at
+              `,
+              [
+                name,
+                email,
+                passwordHash
+              ]
+            );
+
+
+          sendJSON(
+            res,
+            201,
+            {
+              success: true,
+              message:
+                "Account created successfully.",
+              user:
+                result.rows[0]
+            }
+          );
+
+        } catch (error) {
+
+          console.error(
+            "Register error:",
+            error
+          );
+
+          sendJSON(
+            res,
+            500,
+            {
+              success: false,
+              error:
+                "Unable to create account."
+            }
+          );
+        }
+
+        return;
+      }
+
+
+      // ==================================
+      // LOGIN
+      // ==================================
+
+      if (
+        req.method === "POST" &&
+        req.url === "/login"
+      ) {
+
+        try {
+
+          const data =
+            await readBody(req);
+
+          const email =
+            String(
+              data.email || ""
             )
-            RETURNING
-              id,
-              name,
-              email,
-              plan,
-              role,
-              created_at
-            `,
-            [
-              name,
-              email,
-              passwordHash
-            ]
+            .trim()
+            .toLowerCase();
+
+          const password =
+            String(
+              data.password || ""
+            );
+
+
+          if (
+            !email ||
+            !password
+          ) {
+
+            sendJSON(
+              res,
+              400,
+              {
+                success: false,
+                error:
+                  "Email and password are required."
+              }
+            );
+
+            return;
+          }
+
+
+          const result =
+            await pool.query(
+              `
+              SELECT
+                id,
+                name,
+                email,
+                password_hash,
+                plan,
+                role,
+                created_at
+              FROM users
+              WHERE email = $1
+              LIMIT 1
+              `,
+              [email]
+            );
+
+
+          if (
+            result.rows.length === 0
+          ) {
+
+            sendJSON(
+              res,
+              401,
+              {
+                success: false,
+                error:
+                  "Invalid email or password."
+              }
+            );
+
+            return;
+          }
+
+
+          const user =
+            result.rows[0];
+
+
+          const passwordCorrect =
+            await verifyPassword(
+              password,
+              user.password_hash
+            );
+
+
+          if (!passwordCorrect) {
+
+            sendJSON(
+              res,
+              401,
+              {
+                success: false,
+                error:
+                  "Invalid email or password."
+              }
+            );
+
+            return;
+          }
+
+
+          const token =
+            await createSession(
+              user.id
+            );
+
+
+          sendJSON(
+            res,
+            200,
+            {
+              success: true,
+              message:
+                "Login successful.",
+              token: token,
+              user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                plan: user.plan,
+                role: user.role,
+                created_at:
+                  user.created_at
+              }
+            }
           );
 
 
-        const user =
-          result.rows[0];
+        } catch (error) {
+
+          console.error(
+            "Login error:",
+            error
+          );
+
+          sendJSON(
+            res,
+            500,
+            {
+              success: false,
+              error:
+                "Unable to login."
+            }
+          );
+        }
+
+        return;
+      }
 
 
-        sendJSON(res, 201, {
-          success: true,
-          message:
-            "Account created successfully.",
-          user: user
-        });
+      // ==================================
+      // PROFILE
+      // ==================================
+
+      if (
+        req.method === "GET" &&
+        req.url === "/me"
+      ) {
+
+        try {
+
+          const user =
+            await getCurrentUser(req);
 
 
-      } catch (error) {
+          if (!user) {
 
-        console.error(
-          "Register error:",
-          error
+            sendJSON(
+              res,
+              401,
+              {
+                success: false,
+                error:
+                  "Not authenticated."
+              }
+            );
+
+            return;
+          }
+
+
+          sendJSON(
+            res,
+            200,
+            {
+              success: true,
+              user: user
+            }
+          );
+
+
+        } catch (error) {
+
+          console.error(
+            "Profile error:",
+            error
+          );
+
+          sendJSON(
+            res,
+            500,
+            {
+              success: false,
+              error:
+                "Unable to load profile."
+            }
+          );
+        }
+
+        return;
+      }
+
+
+      // ==================================
+      // LOGOUT
+      // ==================================
+
+      if (
+        req.method === "POST" &&
+        req.url === "/logout"
+      ) {
+
+        try {
+
+          const token =
+            getToken(req);
+
+
+          if (token) {
+
+            const tokenHash =
+              crypto
+                .createHash("sha256")
+                .update(token)
+                .digest("hex");
+
+
+            await pool.query(
+              `
+              DELETE FROM sessions
+              WHERE token_hash = $1
+              `,
+              [tokenHash]
+            );
+          }
+
+
+          sendJSON(
+            res,
+            200,
+            {
+              success: true,
+              message:
+                "Logged out successfully."
+            }
+          );
+
+
+        } catch (error) {
+
+          console.error(
+            "Logout error:",
+            error
+          );
+
+          sendJSON(
+            res,
+            500,
+            {
+              success: false,
+              error:
+                "Unable to logout."
+            }
+          );
+        }
+
+        return;
+      }
+
+
+      // ==================================
+      // CHAT TEST
+      // ==================================
+
+      if (
+        req.method === "GET" &&
+        req.url === "/chat"
+      ) {
+
+        sendJSON(
+          res,
+          200,
+          {
+            success: true,
+            reply:
+              "🎉 Chat API ঠিকমতো কাজ করছে!"
+          }
         );
 
+        return;
+      }
 
-        sendJSON(res, 500, {
+
+      // ==================================
+      // CHAT POST
+      // ==================================
+
+      if (
+        req.method === "POST" &&
+        req.url === "/chat"
+      ) {
+
+        try {
+
+          const data =
+            await readBody(req);
+
+          const message =
+            String(
+              data.message || ""
+            ).trim();
+
+
+          if (!message) {
+
+            sendJSON(
+              res,
+              400,
+              {
+                success: false,
+                error:
+                  "Message is required."
+              }
+            );
+
+            return;
+          }
+
+
+          sendJSON(
+            res,
+            200,
+            {
+              success: true,
+              reply:
+                `তুমি বলেছো: ${message}`
+            }
+          );
+
+
+        } catch {
+
+          sendJSON(
+            res,
+            400,
+            {
+              success: false,
+              error:
+                "Invalid JSON"
+            }
+          );
+        }
+
+        return;
+      }
+
+
+      // ==================================
+      // 404
+      // ==================================
+
+      sendJSON(
+        res,
+        404,
+        {
           success: false,
           error:
-            "Unable to create account."
-        });
-
-      }
-
-      return;
-    }
-
-
-    // ====================================
-    // CHAT GET TEST
-    // ====================================
-
-    if (
-      req.method === "GET" &&
-      req.url === "/chat"
-    ) {
-
-      sendJSON(res, 200, {
-        success: true,
-        reply:
-          "🎉 Chat API ঠিকমতো কাজ করছে!"
-      });
-
-      return;
-    }
-
-
-    // ====================================
-    // CHAT POST TEST
-    // ====================================
-
-    if (
-      req.method === "POST" &&
-      req.url === "/chat"
-    ) {
-
-      try {
-
-        const data =
-          await readBody(req);
-
-
-        const message =
-          String(
-            data.message || ""
-          ).trim();
-
-
-        if (!message) {
-
-          sendJSON(res, 400, {
-            success: false,
-            error:
-              "Message is required."
-          });
-
-          return;
+            "Not Found"
         }
+      );
 
-
-        sendJSON(res, 200, {
-          success: true,
-          reply:
-            `তুমি বলেছো: ${message}`
-        });
-
-
-      } catch (error) {
-
-        sendJSON(res, 400, {
-          success: false,
-          error: "Invalid JSON"
-        });
-
-      }
-
-      return;
     }
-
-
-    // ====================================
-    // 404
-    // ====================================
-
-    sendJSON(res, 404, {
-      success: false,
-      error: "Not Found"
-    });
-
-  }
-);
+  );
 
 
 // ========================================
@@ -577,7 +1142,6 @@ async function startServer() {
       "Database initialization failed:",
       error
     );
-
   }
 
 
@@ -591,7 +1155,6 @@ async function startServer() {
 
     }
   );
-
 }
 
 
