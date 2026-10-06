@@ -154,37 +154,36 @@ function createRandomToken() {
 ========================================================= */
 
 async function hashPassword(password) {
-  const salt = crypto.randomBytes(16).toString("hex");
+  const salt =
+    crypto.randomBytes(16).toString("hex");
 
-  const derivedKey = await scrypt(
-    password,
-    salt,
-    64
-  );
+  const derivedKey =
+    await scrypt(password, salt, 64);
 
   return `${salt}:${derivedKey.toString("hex")}`;
 }
 
 async function verifyPassword(password, storedHash) {
   try {
-    const parts = storedHash.split(":");
+    const parts =
+      storedHash.split(":");
 
-    if (parts.length !== 2) return false;
+    if (parts.length !== 2) {
+      return false;
+    }
 
     const salt = parts[0];
 
-    const storedKey = Buffer.from(
-      parts[1],
-      "hex"
-    );
+    const storedKey =
+      Buffer.from(parts[1], "hex");
 
-    const derivedKey = await scrypt(
-      password,
-      salt,
-      64
-    );
+    const derivedKey =
+      await scrypt(password, salt, 64);
 
-    if (storedKey.length !== derivedKey.length) {
+    if (
+      storedKey.length !==
+      derivedKey.length
+    ) {
       return false;
     }
 
@@ -192,6 +191,7 @@ async function verifyPassword(password, storedHash) {
       storedKey,
       derivedKey
     );
+
   } catch {
     return false;
   }
@@ -202,13 +202,17 @@ async function verifyPassword(password, storedHash) {
 ========================================================= */
 
 async function createSession(userId) {
-  const token = createRandomToken();
-  const tokenHash = hashToken(token);
+  const token =
+    createRandomToken();
 
-  const expiresAt = new Date(
-    Date.now() +
-    7 * 24 * 60 * 60 * 1000
-  );
+  const tokenHash =
+    hashToken(token);
+
+  const expiresAt =
+    new Date(
+      Date.now() +
+      7 * 24 * 60 * 60 * 1000
+    );
 
   await pool.query(
     `
@@ -234,38 +238,82 @@ function getBearerToken(req) {
     return null;
   }
 
-  return header.slice(7).trim();
+  return header
+    .slice(7)
+    .trim();
 }
 
 async function getCurrentUser(req) {
-  const token = getBearerToken(req);
+  const token =
+    getBearerToken(req);
 
-  if (!token) return null;
+  if (!token) {
+    return null;
+  }
 
-  const tokenHash = hashToken(token);
+  const tokenHash =
+    hashToken(token);
 
-  const result = await pool.query(
-    `
-      SELECT
-        u.id,
-        u.name,
-        u.email,
-        u.plan,
-        u.role,
-        u.created_at
-      FROM sessions s
-      JOIN users u
-        ON u.id = s.user_id
-      WHERE s.token_hash = $1
-        AND s.expires_at > NOW()
-      LIMIT 1
-    `,
-    [tokenHash]
-  );
+  const result =
+    await pool.query(
+      `
+        SELECT
+          u.id,
+          u.name,
+          u.email,
+          u.plan,
+          u.role,
+          u.created_at
+        FROM sessions s
+        JOIN users u
+          ON u.id = s.user_id
+        WHERE s.token_hash = $1
+          AND s.expires_at > NOW()
+        LIMIT 1
+      `,
+      [tokenHash]
+    );
 
   return result.rows.length
     ? result.rows[0]
     : null;
+}
+
+/* =========================================================
+   REMOVE EMOJIS / SYMBOLS FOR VOICE
+========================================================= */
+
+function cleanTextForVoice(text) {
+  return String(text || "")
+    .replace(
+      /[\u{1F000}-\u{1FAFF}]/gu,
+      " "
+    )
+    .replace(
+      /[\u{2600}-\u{27BF}]/gu,
+      " "
+    )
+    .replace(
+      /[\u{2300}-\u{23FF}]/gu,
+      " "
+    )
+    .replace(
+      /[\u{2B00}-\u{2BFF}]/gu,
+      " "
+    )
+    .replace(
+      /https?:\/\/\S+/gi,
+      " "
+    )
+    .replace(
+      /[*_~`#]+/g,
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
 }
 
 /* =========================================================
@@ -286,41 +334,49 @@ async function askAI(messages) {
     process.env.OPENAI_MODEL ||
     "gpt-6-luna";
 
-  const input = messages.map(message => ({
-    role:
-      message.role === "assistant"
-        ? "assistant"
-        : "user",
-    content: message.content
-  }));
+  const input =
+    messages.map(message => ({
+      role:
+        message.role === "assistant"
+          ? "assistant"
+          : "user",
 
-  const response = await fetch(
-    "https://api.openai.com/v1/responses",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type":
-          "application/json",
-        "Authorization":
-          `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
+      content:
+        message.content
+    }));
 
-        instructions:
-          "You are EMORA AI, a helpful and intelligent AI assistant. " +
-          "Answer naturally and clearly. " +
-          "If the user writes Bengali, reply in Bengali. " +
-          "If the user writes English, reply in English. " +
-          "Do not repeatedly introduce yourself. " +
-          "Do not say your name unnecessarily.",
+  const response =
+    await fetch(
+      "https://api.openai.com/v1/responses",
+      {
+        method: "POST",
 
-        input
-      })
-    }
-  );
+        headers: {
+          "Content-Type":
+            "application/json",
 
-  const data = await response.json();
+          "Authorization":
+            `Bearer ${apiKey}`
+        },
+
+        body: JSON.stringify({
+          model,
+
+          instructions:
+            "You are EMORA AI, a helpful and intelligent AI assistant. " +
+            "If the user writes Bengali, reply in natural Bengali. " +
+            "If the user writes English, reply in English. " +
+            "Do not unnecessarily repeat your name. " +
+            "Do not use emojis unless the user specifically asks for them. " +
+            "Keep normal answers clean and natural.",
+
+          input
+        })
+      }
+    );
+
+  const data =
+    await response.json();
 
   if (!response.ok) {
     console.error(
@@ -342,11 +398,14 @@ async function askAI(messages) {
 
   if (Array.isArray(data.output)) {
     for (const item of data.output) {
-      if (!Array.isArray(item.content)) continue;
+      if (!Array.isArray(item.content)) {
+        continue;
+      }
 
       for (const content of item.content) {
         if (
-          content.type === "output_text" &&
+          content.type ===
+            "output_text" &&
           content.text
         ) {
           text += content.text;
@@ -367,51 +426,57 @@ async function askAI(messages) {
 }
 
 /* =========================================================
-   IMAGE ANALYSIS
+   FEMALE BANGLA TTS
 ========================================================= */
 
-async function analyzeImage(req, res) {
-  const user = await getCurrentUser(req);
+async function generateSpeech(req, res) {
+  const user =
+    await getCurrentUser(req);
 
   if (!user) {
     sendJSON(res, 401, {
-      error: "Unauthorized."
+      error:
+        "Unauthorized."
     });
+
     return;
   }
 
-  const body = await readBody(
-    req,
-    12000000
-  );
+  const body =
+    await readBody(req, 50000);
 
-  const image =
-    String(body.image || "").trim();
-
-  const prompt =
+  const rawText =
     String(
-      body.prompt ||
-      "Describe and analyze this image clearly."
+      body.text || ""
     ).trim();
 
-  if (!image) {
+  if (!rawText) {
     sendJSON(res, 400, {
-      error: "Image is required."
+      error:
+        "Text is required."
     });
+
     return;
   }
 
-  if (!image.startsWith("data:image/")) {
+  const text =
+    cleanTextForVoice(rawText);
+
+  if (!text) {
     sendJSON(res, 400, {
-      error: "Invalid image format."
+      error:
+        "No speakable text."
     });
+
     return;
   }
 
-  if (image.length > 10000000) {
+  if (text.length > 4000) {
     sendJSON(res, 400, {
-      error: "Image is too large."
+      error:
+        "Text is too long."
     });
+
     return;
   }
 
@@ -423,6 +488,181 @@ async function analyzeImage(req, res) {
       error:
         "OPENAI_API_KEY is not configured."
     });
+
+    return;
+  }
+
+  try {
+    const response =
+      await fetch(
+        "https://api.openai.com/v1/audio/speech",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            "Authorization":
+              `Bearer ${apiKey}`
+          },
+
+          body: JSON.stringify({
+            model:
+              process.env.OPENAI_TTS_MODEL ||
+              "gpt-4o-mini-tts",
+
+            voice:
+              process.env.OPENAI_TTS_VOICE ||
+              "coral",
+
+            input: text,
+
+            instructions:
+              "Speak naturally in Bengali when the input is Bengali. " +
+              "Use a warm, friendly female-style voice. " +
+              "Speak clearly and naturally. " +
+              "Never say emojis, markdown symbols, URLs, or formatting characters aloud.",
+
+            response_format:
+              "mp3"
+          })
+        }
+      );
+
+    if (!response.ok) {
+      const errorText =
+        await response.text();
+
+      console.error(
+        "TTS API error:",
+        errorText
+      );
+
+      let message =
+        "Voice generation failed.";
+
+      try {
+        const errorData =
+          JSON.parse(errorText);
+
+        message =
+          errorData?.error?.message ||
+          message;
+
+      } catch (_) {}
+
+      sendJSON(res, 500, {
+        error: message
+      });
+
+      return;
+    }
+
+    const audioBuffer =
+      Buffer.from(
+        await response.arrayBuffer()
+      );
+
+    sendJSON(res, 200, {
+      success: true,
+
+      audio:
+        audioBuffer.toString("base64"),
+
+      mimeType:
+        "audio/mpeg"
+    });
+
+  } catch (error) {
+    console.error(
+      "TTS exception:",
+      error
+    );
+
+    sendJSON(res, 500, {
+      error:
+        error.message ||
+        "Voice generation failed."
+    });
+  }
+}
+
+/* =========================================================
+   IMAGE ANALYSIS
+========================================================= */
+
+async function analyzeImage(req, res) {
+  const user =
+    await getCurrentUser(req);
+
+  if (!user) {
+    sendJSON(res, 401, {
+      error:
+        "Unauthorized."
+    });
+
+    return;
+  }
+
+  const body =
+    await readBody(
+      req,
+      12000000
+    );
+
+  const image =
+    String(
+      body.image || ""
+    ).trim();
+
+  const prompt =
+    String(
+      body.message ||
+      body.prompt ||
+      "Describe and analyze this image clearly."
+    ).trim();
+
+  if (!image) {
+    sendJSON(res, 400, {
+      error:
+        "Image is required."
+    });
+
+    return;
+  }
+
+  if (
+    !image.startsWith(
+      "data:image/"
+    )
+  ) {
+    sendJSON(res, 400, {
+      error:
+        "Invalid image format."
+    });
+
+    return;
+  }
+
+  if (image.length > 10000000) {
+    sendJSON(res, 400, {
+      error:
+        "Image is too large."
+    });
+
+    return;
+  }
+
+  const apiKey =
+    process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    sendJSON(res, 500, {
+      error:
+        "OPENAI_API_KEY is not configured."
+    });
+
     return;
   }
 
@@ -431,44 +671,58 @@ async function analyzeImage(req, res) {
       process.env.OPENAI_MODEL ||
       "gpt-6-luna";
 
-    const response = await fetch(
-      "https://api.openai.com/v1/responses",
-      {
-        method: "POST",
+    const response =
+      await fetch(
+        "https://api.openai.com/v1/responses",
+        {
+          method: "POST",
 
-        headers: {
-          "Content-Type":
-            "application/json",
-          "Authorization":
-            `Bearer ${apiKey}`
-        },
+          headers: {
+            "Content-Type":
+              "application/json",
 
-        body: JSON.stringify({
-          model,
+            "Authorization":
+              `Bearer ${apiKey}`
+          },
 
-          instructions:
-            "You are EMORA AI. Analyze the provided image accurately. " +
-            "Answer in Bengali if the user's prompt is Bengali, otherwise English.",
+          body: JSON.stringify({
+            model,
 
-          input: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "input_text",
-                  text: prompt
-                },
-                {
-                  type: "input_image",
-                  image_url: image,
-                  detail: "auto"
-                }
-              ]
-            }
-          ]
-        })
-      }
-    );
+            instructions:
+              "You are EMORA AI. " +
+              "Analyze the image accurately. " +
+              "If the user writes Bengali, answer in Bengali. " +
+              "Do not unnecessarily use emojis.",
+
+            input: [
+              {
+                role: "user",
+
+                content: [
+                  {
+                    type:
+                      "input_text",
+
+                    text:
+                      prompt
+                  },
+
+                  {
+                    type:
+                      "input_image",
+
+                    image_url:
+                      image,
+
+                    detail:
+                      "auto"
+                  }
+                ]
+              }
+            ]
+          })
+        }
+      );
 
     const data =
       await response.json();
@@ -491,22 +745,32 @@ async function analyzeImage(req, res) {
     let reply =
       data.output_text || "";
 
-    if (!reply && Array.isArray(data.output)) {
+    if (
+      !reply &&
+      Array.isArray(data.output)
+    ) {
       for (const item of data.output) {
-        if (!Array.isArray(item.content)) continue;
+        if (!Array.isArray(item.content)) {
+          continue;
+        }
 
-        for (const content of item.content) {
+        for (
+          const content of item.content
+        ) {
           if (
-            content.type === "output_text" &&
+            content.type ===
+              "output_text" &&
             content.text
           ) {
-            reply += content.text;
+            reply +=
+              content.text;
           }
         }
       }
     }
 
-    reply = reply.trim();
+    reply =
+      reply.trim();
 
     if (!reply) {
       throw new Error(
@@ -538,26 +802,35 @@ async function analyzeImage(req, res) {
 ========================================================= */
 
 async function generateImage(req, res) {
-  const user = await getCurrentUser(req);
+  const user =
+    await getCurrentUser(req);
 
   if (!user) {
     sendJSON(res, 401, {
-      error: "Unauthorized."
+      error:
+        "Unauthorized."
     });
+
     return;
   }
 
   const body =
-    await readBody(req, 20000);
+    await readBody(
+      req,
+      20000
+    );
 
   const prompt =
-    String(body.prompt || "").trim();
+    String(
+      body.prompt || ""
+    ).trim();
 
   if (!prompt) {
     sendJSON(res, 400, {
       error:
         "Image prompt is required."
     });
+
     return;
   }
 
@@ -566,6 +839,7 @@ async function generateImage(req, res) {
       error:
         "Image prompt is too long."
     });
+
     return;
   }
 
@@ -577,6 +851,7 @@ async function generateImage(req, res) {
       error:
         "OPENAI_API_KEY is not configured."
     });
+
     return;
   }
 
@@ -590,6 +865,7 @@ async function generateImage(req, res) {
           headers: {
             "Content-Type":
               "application/json",
+
             "Authorization":
               `Bearer ${apiKey}`
           },
@@ -638,6 +914,7 @@ async function generateImage(req, res) {
         error:
           "Image API returned no image."
       });
+
       return;
     }
 
@@ -647,11 +924,15 @@ async function generateImage(req, res) {
     if (image.b64_json) {
       sendJSON(res, 200, {
         success: true,
+
         prompt,
 
         image: {
-          type: "base64",
-          data: image.b64_json
+          type:
+            "base64",
+
+          data:
+            image.b64_json
         }
       });
 
@@ -661,11 +942,15 @@ async function generateImage(req, res) {
     if (image.url) {
       sendJSON(res, 200, {
         success: true,
+
         prompt,
 
         image: {
-          type: "url",
-          url: image.url
+          type:
+            "url",
+
+          url:
+            image.url
         }
       });
 
@@ -692,7 +977,7 @@ async function generateImage(req, res) {
 }
 
 /* =========================================================
-   STATIC WEBSITE
+   WEBSITE
 ========================================================= */
 
 function sendWebsite(res) {
@@ -708,6 +993,7 @@ function sendWebsite(res) {
       error:
         "public/index.html not found."
     });
+
     return;
   }
 
@@ -719,12 +1005,14 @@ function sendWebsite(res) {
           error:
             "Could not load website."
         });
+
         return;
       }
 
       res.writeHead(200, {
         "Content-Type":
           "text/html; charset=utf-8",
+
         "Cache-Control":
           "no-store"
       });
@@ -739,24 +1027,36 @@ function sendWebsite(res) {
 ========================================================= */
 
 async function register(req, res) {
-  const body = await readBody(req);
+  const body =
+    await readBody(req);
 
   const name =
-    String(body.name || "").trim();
+    String(
+      body.name || ""
+    ).trim();
 
   const email =
-    String(body.email || "")
+    String(
+      body.email || ""
+    )
       .trim()
       .toLowerCase();
 
   const password =
-    String(body.password || "");
+    String(
+      body.password || ""
+    );
 
-  if (!name || !email || !password) {
+  if (
+    !name ||
+    !email ||
+    !password
+  ) {
     sendJSON(res, 400, {
       error:
         "Name, email and password are required."
     });
+
     return;
   }
 
@@ -765,6 +1065,7 @@ async function register(req, res) {
       error:
         "Password must be at least 6 characters."
     });
+
     return;
   }
 
@@ -784,11 +1085,14 @@ async function register(req, res) {
       error:
         "An account with this email already exists."
     });
+
     return;
   }
 
   const passwordHash =
-    await hashPassword(password);
+    await hashPassword(
+      password
+    );
 
   const result =
     await pool.query(
@@ -815,12 +1119,16 @@ async function register(req, res) {
     result.rows[0];
 
   const token =
-    await createSession(user.id);
+    await createSession(
+      user.id
+    );
 
   sendJSON(res, 201, {
     message:
       "Registration successful.",
+
     token,
+
     user
   });
 }
@@ -830,21 +1138,30 @@ async function register(req, res) {
 ========================================================= */
 
 async function login(req, res) {
-  const body = await readBody(req);
+  const body =
+    await readBody(req);
 
   const email =
-    String(body.email || "")
+    String(
+      body.email || ""
+    )
       .trim()
       .toLowerCase();
 
   const password =
-    String(body.password || "");
+    String(
+      body.password || ""
+    );
 
-  if (!email || !password) {
+  if (
+    !email ||
+    !password
+  ) {
     sendJSON(res, 400, {
       error:
         "Email and password are required."
     });
+
     return;
   }
 
@@ -864,6 +1181,7 @@ async function login(req, res) {
       error:
         "Invalid email or password."
     });
+
     return;
   }
 
@@ -881,11 +1199,14 @@ async function login(req, res) {
       error:
         "Invalid email or password."
     });
+
     return;
   }
 
   const token =
-    await createSession(userRow.id);
+    await createSession(
+      userRow.id
+    );
 
   sendJSON(res, 200, {
     message:
@@ -894,11 +1215,21 @@ async function login(req, res) {
     token,
 
     user: {
-      id: userRow.id,
-      name: userRow.name,
-      email: userRow.email,
-      plan: userRow.plan,
-      role: userRow.role,
+      id:
+        userRow.id,
+
+      name:
+        userRow.name,
+
+      email:
+        userRow.email,
+
+      plan:
+        userRow.plan,
+
+      role:
+        userRow.role,
+
       created_at:
         userRow.created_at
     }
@@ -918,6 +1249,7 @@ async function me(req, res) {
       error:
         "Unauthorized."
     });
+
     return;
   }
 
@@ -940,7 +1272,9 @@ async function logout(req, res) {
         DELETE FROM sessions
         WHERE token_hash = $1
       `,
-      [hashToken(token)]
+      [
+        hashToken(token)
+      ]
     );
   }
 
@@ -963,6 +1297,7 @@ async function chat(req, res) {
       error:
         "Unauthorized."
     });
+
     return;
   }
 
@@ -970,7 +1305,9 @@ async function chat(req, res) {
     await readBody(req);
 
   const message =
-    String(body.message || "").trim();
+    String(
+      body.message || ""
+    ).trim();
 
   let chatId =
     body.chatId
@@ -982,6 +1319,7 @@ async function chat(req, res) {
       error:
         "Message is required."
     });
+
     return;
   }
 
@@ -990,6 +1328,7 @@ async function chat(req, res) {
       error:
         "Message is too long."
     });
+
     return;
   }
 
@@ -1005,7 +1344,10 @@ async function chat(req, res) {
           INSERT INTO chats
           (user_id, title)
           VALUES ($1, $2)
-          RETURNING id, title, created_at
+          RETURNING
+            id,
+            title,
+            created_at
         `,
         [
           user.id,
@@ -1040,6 +1382,7 @@ async function chat(req, res) {
       error:
         "Chat not found."
     });
+
     return;
   }
 
@@ -1081,7 +1424,9 @@ async function chat(req, res) {
   try {
     reply =
       await askAI(history);
+
   } catch (error) {
+
     console.error(
       "AI error:",
       error
@@ -1092,7 +1437,9 @@ async function chat(req, res) {
         DELETE FROM messages
         WHERE id = $1
       `,
-      [userMessageId]
+      [
+        userMessageId
+      ]
     );
 
     sendJSON(res, 500, {
@@ -1118,13 +1465,18 @@ async function chat(req, res) {
 
   sendJSON(res, 200, {
     reply,
+
     chat:
       chatResult.rows[0],
+
     chatId,
 
     message: {
-      role: "assistant",
-      content: reply
+      role:
+        "assistant",
+
+      content:
+        reply
     }
   });
 }
@@ -1142,6 +1494,7 @@ async function getChats(req, res) {
       error:
         "Unauthorized."
     });
+
     return;
   }
 
@@ -1165,7 +1518,11 @@ async function getChats(req, res) {
   });
 }
 
-async function getChat(req, res, chatId) {
+async function getChat(
+  req,
+  res,
+  chatId
+) {
   const user =
     await getCurrentUser(req);
 
@@ -1174,6 +1531,7 @@ async function getChat(req, res, chatId) {
       error:
         "Unauthorized."
     });
+
     return;
   }
 
@@ -1200,6 +1558,7 @@ async function getChat(req, res, chatId) {
       error:
         "Chat not found."
     });
+
     return;
   }
 
@@ -1221,12 +1580,17 @@ async function getChat(req, res, chatId) {
   sendJSON(res, 200, {
     chat:
       chatResult.rows[0],
+
     messages:
       messagesResult.rows
   });
 }
 
-async function deleteChat(req, res, chatId) {
+async function deleteChat(
+  req,
+  res,
+  chatId
+) {
   const user =
     await getCurrentUser(req);
 
@@ -1235,6 +1599,7 @@ async function deleteChat(req, res, chatId) {
       error:
         "Unauthorized."
     });
+
     return;
   }
 
@@ -1257,6 +1622,7 @@ async function deleteChat(req, res, chatId) {
       error:
         "Chat not found."
     });
+
     return;
   }
 
@@ -1270,16 +1636,22 @@ async function deleteChat(req, res, chatId) {
    DATABASE TEST
 ========================================================= */
 
-async function databaseTest(req, res) {
+async function databaseTest(
+  req,
+  res
+) {
   const result =
     await pool.query(
       "SELECT NOW() AS now"
     );
 
   sendJSON(res, 200, {
-    success: true,
+    success:
+      true,
+
     message:
       "Database connection is working.",
+
     time:
       result.rows[0].now
   });
@@ -1292,19 +1664,27 @@ async function databaseTest(req, res) {
 const server =
   http.createServer(
     async (req, res) => {
+
       try {
 
-        if (req.method === "OPTIONS") {
+        if (
+          req.method ===
+          "OPTIONS"
+        ) {
+
           res.writeHead(204, {
             "Access-Control-Allow-Origin":
               "*",
+
             "Access-Control-Allow-Headers":
               "Content-Type, Authorization",
+
             "Access-Control-Allow-Methods":
               "GET, POST, DELETE, OPTIONS"
           });
 
           res.end();
+
           return;
         }
 
@@ -1317,77 +1697,154 @@ const server =
         const pathname =
           url.pathname;
 
+        /* HOME */
+
         if (
           req.method === "GET" &&
           pathname === "/"
         ) {
+
           sendWebsite(res);
+
           return;
         }
+
+        /* REGISTER */
 
         if (
           req.method === "POST" &&
           pathname === "/register"
         ) {
-          await register(req, res);
+
+          await register(
+            req,
+            res
+          );
+
           return;
         }
+
+        /* LOGIN */
 
         if (
           req.method === "POST" &&
           pathname === "/login"
         ) {
-          await login(req, res);
+
+          await login(
+            req,
+            res
+          );
+
           return;
         }
+
+        /* ME */
 
         if (
           req.method === "GET" &&
           pathname === "/me"
         ) {
-          await me(req, res);
+
+          await me(
+            req,
+            res
+          );
+
           return;
         }
+
+        /* LOGOUT */
 
         if (
           req.method === "POST" &&
           pathname === "/logout"
         ) {
-          await logout(req, res);
+
+          await logout(
+            req,
+            res
+          );
+
           return;
         }
+
+        /* DATABASE TEST */
 
         if (
           req.method === "GET" &&
           pathname === "/database-test"
         ) {
-          await databaseTest(req, res);
+
+          await databaseTest(
+            req,
+            res
+          );
+
           return;
         }
+
+        /* TTS */
+
+        if (
+          req.method === "POST" &&
+          pathname === "/tts"
+        ) {
+
+          await generateSpeech(
+            req,
+            res
+          );
+
+          return;
+        }
+
+        /* IMAGE GENERATION */
 
         if (
           req.method === "POST" &&
           pathname === "/generate-image"
         ) {
-          await generateImage(req, res);
+
+          await generateImage(
+            req,
+            res
+          );
+
           return;
         }
+
+        /* IMAGE ANALYSIS */
 
         if (
           req.method === "POST" &&
           pathname === "/analyze-image"
         ) {
-          await analyzeImage(req, res);
+
+          await analyzeImage(
+            req,
+            res
+          );
+
           return;
         }
+
+        /* GET CHATS */
 
         if (
           req.method === "GET" &&
           pathname === "/chats"
         ) {
-          await getChats(req, res);
+
+          await getChats(
+            req,
+            res
+          );
+
           return;
         }
+
+        /* CHAT BY ID */
 
         const chatMatch =
           pathname.match(
@@ -1395,33 +1852,52 @@ const server =
           );
 
         if (chatMatch) {
-          const chatId =
-            Number(chatMatch[1]);
 
-          if (req.method === "GET") {
+          const chatId =
+            Number(
+              chatMatch[1]
+            );
+
+          if (
+            req.method === "GET"
+          ) {
+
             await getChat(
               req,
               res,
               chatId
             );
+
             return;
           }
 
-          if (req.method === "DELETE") {
+          if (
+            req.method ===
+            "DELETE"
+          ) {
+
             await deleteChat(
               req,
               res,
               chatId
             );
+
             return;
           }
         }
+
+        /* CHAT */
 
         if (
           req.method === "POST" &&
           pathname === "/chat"
         ) {
-          await chat(req, res);
+
+          await chat(
+            req,
+            res
+          );
+
           return;
         }
 
@@ -1429,12 +1905,16 @@ const server =
           req.method === "GET" &&
           pathname === "/chat"
         ) {
+
           sendJSON(res, 200, {
             message:
               "EMORA AI Real Chat API is ready."
           });
+
           return;
         }
+
+        /* NOT FOUND */
 
         sendJSON(res, 404, {
           error:
@@ -1442,6 +1922,7 @@ const server =
         });
 
       } catch (error) {
+
         console.error(
           "SERVER ERROR:",
           error
@@ -1461,20 +1942,25 @@ const server =
 ========================================================= */
 
 async function start() {
+
   try {
+
     await initDatabase();
 
     server.listen(
       PORT,
       "0.0.0.0",
       () => {
+
         console.log(
           `EMORA AI Server running on port ${PORT}`
         );
+
       }
     );
 
   } catch (error) {
+
     console.error(
       "Startup failed:",
       error
