@@ -1,1362 +1,1342 @@
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMORA AI</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background: #08090d;
-      color: #fff;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    button,
-    textarea,
-    input {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    /* LOGIN */
-
-    #loginScreen {
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      background:
-        radial-gradient(circle at top, #20253b 0, #08090d 45%);
-    }
-
-    .loginBox {
-      width: 100%;
-      max-width: 400px;
-      padding: 30px;
-      border: 1px solid #272b3a;
-      border-radius: 22px;
-      background: rgba(17, 18, 25, .94);
-      box-shadow: 0 20px 60px rgba(0,0,0,.45);
-    }
-
-    .logo {
-      text-align: center;
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #9297a8;
-      margin-bottom: 28px;
-    }
-
-    .input {
-      width: 100%;
-      padding: 14px;
-      margin-bottom: 12px;
-      border: 1px solid #303445;
-      border-radius: 12px;
-      outline: none;
-      background: #0d0f16;
-      color: white;
-    }
-
-    .input:focus {
-      border-color: #6573ff;
-    }
-
-    .primaryBtn {
-      width: 100%;
-      border: 0;
-      border-radius: 12px;
-      padding: 14px;
-      background: #5865f2;
-      color: white;
-      font-weight: bold;
-      margin-top: 5px;
-    }
-
-    .primaryBtn:disabled {
-      opacity: .6;
-    }
-
-    #loginError {
-      color: #ff7777;
-      margin-top: 14px;
-      text-align: center;
-      min-height: 20px;
-    }
-
-    /* APP */
-
-    #app {
-      display: none;
-      height: 100vh;
-      position: relative;
-    }
-
-    .appLayout {
-      height: 100%;
-      display: flex;
-    }
-
-    /* SIDEBAR */
-
-    .sidebar {
-      width: 290px;
-      background: #0d0f15;
-      border-right: 1px solid #242733;
-      display: flex;
-      flex-direction: column;
-      z-index: 20;
-    }
-
-    .sideTop {
-      padding: 16px;
-      border-bottom: 1px solid #242733;
-    }
-
-    .brandSmall {
-      font-size: 19px;
-      font-weight: 800;
-      margin-bottom: 15px;
-      letter-spacing: 1px;
-    }
-
-    .newChatBtn {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #34394c;
-      border-radius: 12px;
-      background: #171a25;
-      color: white;
-      font-weight: bold;
-    }
-
-    .newChatBtn:hover {
-      background: #202436;
-    }
-
-    .historyTitle {
-      padding: 15px 16px 8px;
-      color: #888fa3;
-      font-size: 13px;
-    }
-
-    .history {
-      flex: 1;
-      overflow-y: auto;
-      padding: 5px 10px;
-    }
-
-    .historyItem {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 11px;
-      border-radius: 10px;
-      margin-bottom: 4px;
-      color: #ddd;
-      background: transparent;
-    }
-
-    .historyItem:hover {
-      background: #191c27;
-    }
-
-    .historyItem.active {
-      background: #202436;
-    }
-
-    .historyText {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    .deleteChat {
-      border: 0;
-      background: transparent;
-      color: #777d8e;
-      padding: 5px;
-      font-size: 16px;
-    }
-
-    .deleteChat:hover {
-      color: #ff6b6b;
-    }
-
-    .emptyHistory {
-      color: #666d7d;
-      text-align: center;
-      padding: 25px 10px;
-      font-size: 14px;
-    }
-
-    .profileArea {
-      padding: 14px;
-      border-top: 1px solid #242733;
-    }
-
-    .profileName {
-      font-size: 14px;
-      margin-bottom: 10px;
-      color: #d9dce7;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .logoutBtn {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #343744;
-      border-radius: 10px;
-      background: transparent;
-      color: #aaa;
-    }
-
-    .logoutBtn:hover {
-      background: #1b1d26;
-      color: white;
-    }
-
-    /* MAIN */
-
-    .main {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      background: #08090d;
-    }
-
-    .topbar {
-      height: 60px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0 16px;
-      border-bottom: 1px solid #242733;
-      background: rgba(8,9,13,.92);
-    }
-
-    .menuBtn {
-      display: none;
-      border: 0;
-      background: transparent;
-      color: white;
-      font-size: 25px;
-    }
-
-    .topBrand {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: 1px;
-    }
-
-    .status {
-      margin-left: auto;
-      font-size: 12px;
-      color: #8d95a8;
-    }
-
-    .statusDot {
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      background: #43d17a;
-      border-radius: 50%;
-      margin-right: 5px;
-    }
-
-    /* CHAT */
-
-    .chatArea {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-    }
-
-    .welcome {
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      color: #8c93a5;
-    }
-
-    .welcomeBox {
-      max-width: 500px;
-    }
-
-    .welcomeLogo {
-      font-size: 38px;
-      font-weight: 900;
-      color: white;
-      margin-bottom: 10px;
-    }
-
-    .welcomeText {
-      line-height: 1.6;
-    }
-
-    .messageRow {
-      display: flex;
-      margin-bottom: 18px;
-    }
-
-    .messageRow.user {
-      justify-content: flex-end;
-    }
-
-    .bubble {
-      max-width: min(750px, 85%);
-      padding: 12px 15px;
-      border-radius: 17px;
-      line-height: 1.55;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-
-    .user .bubble {
-      background: #5865f2;
-      color: white;
-      border-bottom-right-radius: 5px;
-    }
-
-    .assistant .bubble {
-      background: #171922;
-      border: 1px solid #292d3a;
-      color: #e8eaf0;
-      border-bottom-left-radius: 5px;
-    }
-
-    .typing {
-      display: none;
-      color: #8c93a5;
-      font-size: 14px;
-      padding: 5px 2px 15px;
-    }
-
-    /* INPUT */
-
-    .inputArea {
-      padding: 12px 16px 16px;
-      border-top: 1px solid #242733;
-      background: #08090d;
-    }
-
-    .inputBox {
-      max-width: 900px;
-      margin: auto;
-      display: flex;
-      gap: 8px;
-      align-items: flex-end;
-      background: #151720;
-      border: 1px solid #2c3040;
-      border-radius: 17px;
-      padding: 8px;
-    }
-
-    #messageInput {
-      flex: 1;
-      min-height: 42px;
-      max-height: 140px;
-      resize: none;
-      border: 0;
-      outline: 0;
-      background: transparent;
-      color: white;
-      padding: 10px;
-      line-height: 1.4;
-    }
-
-    #messageInput::placeholder {
-      color: #6e7484;
-    }
-
-    .sendBtn {
-      width: 42px;
-      height: 42px;
-      border: 0;
-      border-radius: 12px;
-      background: #5865f2;
-      color: white;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .sendBtn:disabled {
-      opacity: .45;
-    }
-
-    /* MOBILE */
-
-    .overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.6);
-      z-index: 15;
-    }
-
-    @media (max-width: 700px) {
-      .sidebar {
-        position: fixed;
-        left: -300px;
-        top: 0;
-        bottom: 0;
-        transition: left .25s ease;
-        box-shadow: 15px 0 40px rgba(0,0,0,.4);
-      }
-
-      .sidebar.open {
-        left: 0;
-      }
-
-      .menuBtn {
-        display: block;
-      }
-
-      .overlay.show {
-        display: block;
-      }
-
-      .chatArea {
-        padding: 15px 12px;
-      }
-
-      .bubble {
-        max-width: 88%;
-      }
-
-      .inputArea {
-        padding: 10px;
-      }
-
-      .status {
-        display: none;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-  <!-- LOGIN -->
-  <section id="loginScreen">
-    <div class="loginBox">
-      <div class="logo">EMORA AI</div>
-      <div class="subtitle">Your intelligent AI assistant</div>
-
-      <input
-        id="email"
-        class="input"
-        type="email"
-        placeholder="Email"
-        autocomplete="email"
-      />
-
-      <input
-        id="password"
-        class="input"
-        type="password"
-        placeholder="Password"
-        autocomplete="current-password"
-      />
-
-      <button id="loginBtn" class="primaryBtn">
-        Login
-      </button>
-
-      <div id="loginError"></div>
-    </div>
-  </section>
-
-
-  <!-- APP -->
-  <section id="app">
-
-    <div class="overlay" id="overlay"></div>
-
-    <div class="appLayout">
-
-      <!-- SIDEBAR -->
-      <aside class="sidebar" id="sidebar">
-
-        <div class="sideTop">
-          <div class="brandSmall">EMORA AI</div>
-
-          <button class="newChatBtn" id="newChatBtn">
-            ＋ New Chat
-          </button>
-        </div>
-
-        <div class="historyTitle">
-          Recent Chats
-        </div>
-
-        <div class="history" id="historyList">
-          <div class="emptyHistory">
-            No chats yet
-          </div>
-        </div>
-
-        <div class="profileArea">
-          <div class="profileName" id="profileName">
-            User
-          </div>
-
-          <button class="logoutBtn" id="logoutBtn">
-            Logout
-          </button>
-        </div>
-
-      </aside>
-
-
-      <!-- MAIN -->
-      <main class="main">
-
-        <header class="topbar">
-
-          <button class="menuBtn" id="menuBtn">
-            ☰
-          </button>
-
-          <div class="topBrand">
-            EMORA AI
-          </div>
-
-          <div class="status">
-            <span class="statusDot"></span>
-            AI Online
-          </div>
-
-        </header>
-
-
-        <!-- CHAT -->
-        <div class="chatArea" id="chatArea">
-
-          <div class="welcome" id="welcome">
-            <div class="welcomeBox">
-              <div class="welcomeLogo">
-                EMORA AI
-              </div>
-
-              <div class="welcomeText">
-                তোমার AI assistant।<br>
-                যেকোনো প্রশ্ন লিখে শুরু করো।
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <div class="typing" id="typing">
-          EMORA AI is thinking...
-        </div>
-
-
-        <!-- INPUT -->
-        <div class="inputArea">
-
-          <div class="inputBox">
-
-            <textarea
-              id="messageInput"
-              placeholder="Message EMORA AI..."
-              rows="1"
-            ></textarea>
-
-            <button
-              class="sendBtn"
-              id="sendBtn"
-              title="Send"
-            >
-              ➤
-            </button>
-
-          </div>
-
-        </div>
-
-      </main>
-
-    </div>
-  </section>
-
-
-<script>
-  const API_URL = window.location.origin;
-  const TOKEN_KEY = "my_ai_token";
-
-  let token = localStorage.getItem(TOKEN_KEY);
-  let currentUser = null;
-  let currentChatId = null;
-  let sending = false;
-
-  const loginScreen = document.getElementById("loginScreen");
-  const app = document.getElementById("app");
-
-  const emailInput = document.getElementById("email");
-  const passwordInput = document.getElementById("password");
-  const loginBtn = document.getElementById("loginBtn");
-  const loginError = document.getElementById("loginError");
-
-  const sidebar = document.getElementById("sidebar");
-  const overlay = document.getElementById("overlay");
-  const menuBtn = document.getElementById("menuBtn");
-
-  const historyList = document.getElementById("historyList");
-  const newChatBtn = document.getElementById("newChatBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-
-  const profileName = document.getElementById("profileName");
-
-  const chatArea = document.getElementById("chatArea");
-  const welcome = document.getElementById("welcome");
-  const typing = document.getElementById("typing");
-
-  const messageInput = document.getElementById("messageInput");
-  const sendBtn = document.getElementById("sendBtn");
-
-
-  /* -------------------------
-     API HELPER
-  ------------------------- */
-
-  async function api(path, options = {}) {
-
-    const headers = {
-      ...(options.headers || {})
-    };
-
-    if (token) {
-      headers.Authorization = "Bearer " + token;
-    }
-
-    if (options.body && !headers["Content-Type"]) {
-      headers["Content-Type"] = "application/json";
-    }
-
-    const response = await fetch(API_URL + path, {
-      ...options,
-      headers
-    });
-
-    let data = {};
-
-    try {
-      data = await response.json();
-    } catch {
-      data = {};
-    }
-
-    if (response.status === 401) {
-      logoutLocal();
-      throw new Error("Session expired");
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-        data.message ||
-        "Something went wrong"
-      );
-    }
-
-    return data;
-  }
-
-
-  /* -------------------------
-     LOGIN
-  ------------------------- */
-
-  async function login() {
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-
-    loginError.textContent = "";
-
-    if (!email || !password) {
-      loginError.textContent =
-        "Email and password required.";
-      return;
-    }
-
-    loginBtn.disabled = true;
-    loginBtn.textContent = "Logging in...";
-
-    try {
-
-      const data = await api("/login", {
-        method: "POST",
-        body: JSON.stringify({
-          email,
-          password
-        })
-      });
-
-      token = data.token;
-
-      localStorage.setItem(
-        TOKEN_KEY,
-        token
-      );
-
-      await loadUser();
-
-      showApp();
-
-    } catch (error) {
-
-      loginError.textContent =
-        error.message || "Login failed.";
-
-    } finally {
-
-      loginBtn.disabled = false;
-      loginBtn.textContent = "Login";
-    }
-  }
-
-
-  loginBtn.addEventListener("click", login);
-
-  passwordInput.addEventListener("keydown", event => {
-    if (event.key === "Enter") {
-      login();
-    }
+const http = require("http");
+const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
+const { promisify } = require("util");
+const { Pool } = require("pg");
+
+const PORT = process.env.PORT || 10000;
+
+const scrypt = promisify(crypto.scrypt);
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL
+    ? { rejectUnauthorized: false }
+    : false
+});
+
+
+/* =========================================================
+   DATABASE
+========================================================= */
+
+async function initDatabase() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id BIGSERIAL PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      plan VARCHAR(20) NOT NULL DEFAULT 'free',
+      role VARCHAR(20) NOT NULL DEFAULT 'user',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS chats (
+      id BIGSERIAL PRIMARY KEY,
+      user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+      title VARCHAR(255),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id BIGSERIAL PRIMARY KEY,
+      chat_id BIGINT REFERENCES chats(id) ON DELETE CASCADE,
+      role VARCHAR(20) NOT NULL,
+      content TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS sessions (
+      id BIGSERIAL PRIMARY KEY,
+      user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT UNIQUE NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMPTZ NOT NULL
+    );
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_chats_user_id
+    ON chats(user_id);
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_messages_chat_id
+    ON messages(chat_id);
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_sessions_token_hash
+    ON sessions(token_hash);
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_sessions_user_id
+    ON sessions(user_id);
+  `);
+
+  console.log("Database initialized.");
+}
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function sendJSON(res, status, data) {
+  res.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Cache-Control": "no-store"
   });
 
-
-  /* -------------------------
-     USER
-  ------------------------- */
-
-  async function loadUser() {
-
-    const data = await api("/me");
-
-    currentUser = data.user || data;
-
-    profileName.textContent =
-      currentUser.name ||
-      currentUser.email ||
-      "User";
-  }
+  res.end(JSON.stringify(data));
+}
 
 
-  /* -------------------------
-     SHOW APP
-  ------------------------- */
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
 
-  function showApp() {
+    req.on("data", chunk => {
+      body += chunk;
 
-    loginScreen.style.display = "none";
-    app.style.display = "block";
-
-    loadChats();
-    startNewChat();
-  }
-
-
-  /* -------------------------
-     CHAT HISTORY
-  ------------------------- */
-
-  async function loadChats() {
-
-    try {
-
-      const data = await api("/chats");
-
-      const chats =
-        Array.isArray(data)
-          ? data
-          : (data.chats || []);
-
-      renderHistory(chats);
-
-    } catch (error) {
-
-      console.error(
-        "Could not load chats:",
-        error
-      );
-    }
-  }
-
-
-  function renderHistory(chats) {
-
-    historyList.innerHTML = "";
-
-    if (!chats.length) {
-
-      historyList.innerHTML = `
-        <div class="emptyHistory">
-          No chats yet
-        </div>
-      `;
-
-      return;
-    }
-
-    chats.forEach(chat => {
-
-      const item =
-        document.createElement("div");
-
-      item.className =
-        "historyItem" +
-        (
-          Number(chat.id) === Number(currentChatId)
-            ? " active"
-            : ""
-        );
-
-      const text =
-        document.createElement("div");
-
-      text.className = "historyText";
-
-      text.textContent =
-        chat.title ||
-        "New Chat";
-
-      text.onclick = () => {
-        openChat(chat.id);
-      };
-
-      const deleteBtn =
-        document.createElement("button");
-
-      deleteBtn.className =
-        "deleteChat";
-
-      deleteBtn.textContent = "🗑";
-
-      deleteBtn.title = "Delete chat";
-
-      deleteBtn.onclick = event => {
-
-        event.stopPropagation();
-
-        deleteChat(chat.id);
-      };
-
-      item.appendChild(text);
-      item.appendChild(deleteBtn);
-
-      item.onclick = () => {
-        openChat(chat.id);
-      };
-
-      historyList.appendChild(item);
+      if (body.length > 10000) {
+        reject(new Error("Request body too large."));
+        req.destroy();
+      }
     });
-  }
 
+    req.on("end", () => {
+      if (!body) {
+        resolve({});
+        return;
+      }
 
-  /* -------------------------
-     OPEN CHAT
-  ------------------------- */
-
-  async function openChat(chatId) {
-
-    try {
-
-      closeSidebar();
-
-      const data =
-        await api("/chats/" + encodeURIComponent(chatId));
-
-      currentChatId =
-        data.chat?.id ||
-        chatId;
-
-      const messages =
-        data.messages ||
-        data.chat?.messages ||
-        [];
-
-      renderMessages(messages);
-
-      await loadChats();
-
-      scrollBottom();
-
-    } catch (error) {
-
-      alert(
-        error.message ||
-        "Could not open chat."
-      );
-    }
-  }
-
-
-  /* -------------------------
-     RENDER MESSAGES
-  ------------------------- */
-
-  function renderMessages(messages) {
-
-    chatArea.innerHTML = "";
-
-    if (!messages.length) {
-
-      showWelcome();
-
-      return;
-    }
-
-    messages.forEach(message => {
-
-      addMessage(
-        message.role,
-        message.content
-      );
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error("Invalid JSON."));
+      }
     });
-  }
+
+    req.on("error", reject);
+  });
+}
 
 
-  function showWelcome() {
-
-    chatArea.innerHTML = `
-      <div class="welcome" id="welcome">
-        <div class="welcomeBox">
-          <div class="welcomeLogo">
-            EMORA AI
-          </div>
-
-          <div class="welcomeText">
-            তোমার AI assistant।<br>
-            যেকোনো প্রশ্ন লিখে শুরু করো।
-          </div>
-        </div>
-      </div>
-    `;
-  }
+function hashToken(token) {
+  return crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+}
 
 
-  /* -------------------------
-     NEW CHAT
-  ------------------------- */
-
-  function startNewChat() {
-
-    currentChatId = null;
-
-    showWelcome();
-
-    messageInput.value = "";
-
-    messageInput.focus();
-
-    closeSidebar();
-
-    loadChats();
-  }
+function createRandomToken() {
+  return crypto.randomBytes(48).toString("hex");
+}
 
 
-  newChatBtn.addEventListener(
-    "click",
-    startNewChat
+/* =========================================================
+   PASSWORD
+========================================================= */
+
+async function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString("hex");
+
+  const derivedKey = await scrypt(
+    password,
+    salt,
+    64
   );
 
+  return `${salt}:${derivedKey.toString("hex")}`;
+}
 
-  /* -------------------------
-     ADD MESSAGE
-  ------------------------- */
 
-  function addMessage(role, content) {
+async function verifyPassword(password, storedHash) {
+  try {
+    const parts = storedHash.split(":");
 
-    if (welcome) {
-      welcome.remove();
+    if (parts.length !== 2) {
+      return false;
     }
 
-    const row =
-      document.createElement("div");
-
-    row.className =
-      "messageRow " +
-      (
-        role === "user"
-          ? "user"
-          : "assistant"
-      );
-
-    const bubble =
-      document.createElement("div");
-
-    bubble.className = "bubble";
-
-    bubble.textContent =
-      content || "";
-
-    row.appendChild(bubble);
-
-    chatArea.appendChild(row);
-
-    scrollBottom();
-  }
-
-
-  /* -------------------------
-     SEND MESSAGE
-  ------------------------- */
-
-  async function sendMessage() {
-
-    if (sending) return;
-
-    const message =
-      messageInput.value.trim();
-
-    if (!message) return;
-
-    sending = true;
-
-    sendBtn.disabled = true;
-    messageInput.disabled = true;
-
-    addMessage(
-      "user",
-      message
+    const salt = parts[0];
+    const storedKey = Buffer.from(
+      parts[1],
+      "hex"
     );
 
-    messageInput.value = "";
-    autoResize();
+    const derivedKey = await scrypt(
+      password,
+      salt,
+      64
+    );
 
-    typing.style.display = "block";
+    if (storedKey.length !== derivedKey.length) {
+      return false;
+    }
 
-    scrollBottom();
+    return crypto.timingSafeEqual(
+      storedKey,
+      derivedKey
+    );
 
-    try {
+  } catch {
+    return false;
+  }
+}
 
-      const body = {
-        message
-      };
 
-      if (currentChatId) {
-        body.chatId =
-          Number(currentChatId);
+/* =========================================================
+   SESSION
+========================================================= */
+
+async function createSession(userId) {
+  const token = createRandomToken();
+  const tokenHash = hashToken(token);
+
+  const expiresAt =
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  await pool.query(
+    `
+      INSERT INTO sessions
+      (user_id, token_hash, expires_at)
+      VALUES ($1, $2, $3)
+    `,
+    [
+      userId,
+      tokenHash,
+      expiresAt
+    ]
+  );
+
+  return token;
+}
+
+
+function getBearerToken(req) {
+  const header =
+    req.headers.authorization || "";
+
+  if (!header.startsWith("Bearer ")) {
+    return null;
+  }
+
+  return header.slice(7).trim();
+}
+
+
+async function getCurrentUser(req) {
+  const token = getBearerToken(req);
+
+  if (!token) {
+    return null;
+  }
+
+  const tokenHash = hashToken(token);
+
+  const result = await pool.query(
+    `
+      SELECT
+        u.id,
+        u.name,
+        u.email,
+        u.plan,
+        u.role,
+        u.created_at
+      FROM sessions s
+      JOIN users u
+        ON u.id = s.user_id
+      WHERE s.token_hash = $1
+        AND s.expires_at > NOW()
+      LIMIT 1
+    `,
+    [tokenHash]
+  );
+
+  if (!result.rows.length) {
+    return null;
+  }
+
+  return result.rows[0];
+}
+
+
+/* =========================================================
+   OPENAI
+========================================================= */
+
+async function askAI(messages) {
+
+  const apiKey =
+    process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error(
+      "OPENAI_API_KEY is not configured."
+    );
+  }
+
+  const model =
+    process.env.OPENAI_MODEL ||
+    "gpt-6-luna";
+
+  const input = messages.map(message => ({
+    role:
+      message.role === "assistant"
+        ? "assistant"
+        : "user",
+
+    content: message.content
+  }));
+
+  const response = await fetch(
+    "https://api.openai.com/v1/responses",
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+
+      body: JSON.stringify({
+        model,
+
+        instructions:
+          "You are EMORA AI, a helpful and intelligent AI assistant. " +
+          "Answer naturally and clearly. " +
+          "If the user writes Bengali, reply in Bengali. " +
+          "If the user writes English, reply in English. " +
+          "Do not repeatedly introduce yourself or say your name unnecessarily.",
+
+        input
+      })
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error(
+      "OpenAI API error:",
+      data
+    );
+
+    throw new Error(
+      data?.error?.message ||
+      "OpenAI request failed."
+    );
+  }
+
+  if (data.output_text) {
+    return data.output_text.trim();
+  }
+
+  let text = "";
+
+  if (Array.isArray(data.output)) {
+
+    for (const item of data.output) {
+
+      if (!Array.isArray(item.content)) {
+        continue;
       }
 
-      const data =
-        await api("/chat", {
-          method: "POST",
-          body: JSON.stringify(body)
+      for (const content of item.content) {
+
+        if (
+          content.type === "output_text" &&
+          content.text
+        ) {
+          text += content.text;
+        }
+      }
+    }
+  }
+
+  text = text.trim();
+
+  if (!text) {
+    throw new Error(
+      "AI returned an empty response."
+    );
+  }
+
+  return text;
+}
+
+
+/* =========================================================
+   STATIC WEBSITE
+========================================================= */
+
+function sendWebsite(res) {
+
+  const filePath =
+    path.join(
+      __dirname,
+      "public",
+      "index.html"
+    );
+
+  if (!fs.existsSync(filePath)) {
+
+    sendJSON(res, 404, {
+      error:
+        "public/index.html not found."
+    });
+
+    return;
+  }
+
+  fs.readFile(
+    filePath,
+    (error, data) => {
+
+      if (error) {
+
+        sendJSON(res, 500, {
+          error:
+            "Could not load website."
         });
 
-      /*
-        Backend creates a new chat
-        automatically when chatId
-        is not supplied.
-      */
-
-      if (data.chat?.id) {
-
-        currentChatId =
-          data.chat.id;
-
-      } else if (data.chatId) {
-
-        currentChatId =
-          data.chatId;
-
+        return;
       }
 
-      const reply =
-        data.reply ||
-        data.response ||
-        data.message ||
-        "I couldn't generate a response.";
+      res.writeHead(200, {
+        "Content-Type":
+          "text/html; charset=utf-8",
 
-      typing.style.display = "none";
+        "Cache-Control":
+          "no-store"
+      });
 
-      addMessage(
-        "assistant",
-        reply
-      );
-
-      await loadChats();
-
-    } catch (error) {
-
-      typing.style.display = "none";
-
-      addMessage(
-        "assistant",
-        "Sorry, something went wrong. Please try again."
-      );
-
-      console.error(error);
-
-    } finally {
-
-      sending = false;
-
-      sendBtn.disabled = false;
-      messageInput.disabled = false;
-
-      messageInput.focus();
-
-      scrollBottom();
+      res.end(data);
     }
+  );
+}
+
+
+/* =========================================================
+   REGISTER
+========================================================= */
+
+async function register(req, res) {
+
+  const body = await readBody(req);
+
+  const name =
+    String(body.name || "").trim();
+
+  const email =
+    String(body.email || "")
+      .trim()
+      .toLowerCase();
+
+  const password =
+    String(body.password || "");
+
+  if (!name || !email || !password) {
+
+    sendJSON(res, 400, {
+      error:
+        "Name, email and password are required."
+    });
+
+    return;
+  }
+
+  if (password.length < 6) {
+
+    sendJSON(res, 400, {
+      error:
+        "Password must be at least 6 characters."
+    });
+
+    return;
+  }
+
+  const existing =
+    await pool.query(
+      `
+        SELECT id
+        FROM users
+        WHERE email = $1
+        LIMIT 1
+      `,
+      [email]
+    );
+
+  if (existing.rows.length) {
+
+    sendJSON(res, 409, {
+      error:
+        "An account with this email already exists."
+    });
+
+    return;
+  }
+
+  const passwordHash =
+    await hashPassword(password);
+
+  const result =
+    await pool.query(
+      `
+        INSERT INTO users
+        (name, email, password_hash)
+        VALUES ($1, $2, $3)
+        RETURNING
+          id,
+          name,
+          email,
+          plan,
+          role,
+          created_at
+      `,
+      [
+        name,
+        email,
+        passwordHash
+      ]
+    );
+
+  const user = result.rows[0];
+
+  const token =
+    await createSession(user.id);
+
+  sendJSON(res, 201, {
+    message: "Registration successful.",
+    token,
+    user
+  });
+}
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+async function login(req, res) {
+
+  const body = await readBody(req);
+
+  const email =
+    String(body.email || "")
+      .trim()
+      .toLowerCase();
+
+  const password =
+    String(body.password || "");
+
+  if (!email || !password) {
+
+    sendJSON(res, 400, {
+      error:
+        "Email and password are required."
+    });
+
+    return;
+  }
+
+  const result =
+    await pool.query(
+      `
+        SELECT *
+        FROM users
+        WHERE email = $1
+        LIMIT 1
+      `,
+      [email]
+    );
+
+  if (!result.rows.length) {
+
+    sendJSON(res, 401, {
+      error:
+        "Invalid email or password."
+    });
+
+    return;
+  }
+
+  const userRow =
+    result.rows[0];
+
+  const valid =
+    await verifyPassword(
+      password,
+      userRow.password_hash
+    );
+
+  if (!valid) {
+
+    sendJSON(res, 401, {
+      error:
+        "Invalid email or password."
+    });
+
+    return;
+  }
+
+  const token =
+    await createSession(
+      userRow.id
+    );
+
+  sendJSON(res, 200, {
+    message: "Login successful.",
+
+    token,
+
+    user: {
+      id: userRow.id,
+      name: userRow.name,
+      email: userRow.email,
+      plan: userRow.plan,
+      role: userRow.role,
+      created_at: userRow.created_at
+    }
+  });
+}
+
+
+/* =========================================================
+   ME
+========================================================= */
+
+async function me(req, res) {
+
+  const user =
+    await getCurrentUser(req);
+
+  if (!user) {
+
+    sendJSON(res, 401, {
+      error: "Unauthorized."
+    });
+
+    return;
+  }
+
+  sendJSON(res, 200, {
+    user
+  });
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+async function logout(req, res) {
+
+  const token =
+    getBearerToken(req);
+
+  if (token) {
+
+    const tokenHash =
+      hashToken(token);
+
+    await pool.query(
+      `
+        DELETE FROM sessions
+        WHERE token_hash = $1
+      `,
+      [tokenHash]
+    );
+  }
+
+  sendJSON(res, 200, {
+    message: "Logged out."
+  });
+}
+
+
+/* =========================================================
+   CREATE / CONTINUE CHAT
+========================================================= */
+
+async function chat(req, res) {
+
+  const user =
+    await getCurrentUser(req);
+
+  if (!user) {
+
+    sendJSON(res, 401, {
+      error: "Unauthorized."
+    });
+
+    return;
+  }
+
+  const body =
+    await readBody(req);
+
+  const message =
+    String(body.message || "").trim();
+
+  let chatId =
+    body.chatId
+      ? Number(body.chatId)
+      : null;
+
+  if (!message) {
+
+    sendJSON(res, 400, {
+      error:
+        "Message is required."
+    });
+
+    return;
+  }
+
+  if (message.length > 5000) {
+
+    sendJSON(res, 400, {
+      error:
+        "Message is too long."
+    });
+
+    return;
   }
 
 
-  sendBtn.addEventListener(
-    "click",
-    sendMessage
-  );
+  /* -----------------------------------------
+     CREATE NEW CHAT
+  ----------------------------------------- */
 
+  if (!chatId) {
 
-  /* -------------------------
-     ENTER TO SEND
-  ------------------------- */
+    const title =
+      message.length > 80
+        ? message.slice(0, 80) + "..."
+        : message;
 
-  messageInput.addEventListener(
-    "keydown",
-    event => {
+    const chatResult =
+      await pool.query(
+        `
+          INSERT INTO chats
+          (user_id, title)
+          VALUES ($1, $2)
+          RETURNING id, title, created_at
+        `,
+        [
+          user.id,
+          title
+        ]
+      );
 
-      if (
-        event.key === "Enter" &&
-        !event.shiftKey
-      ) {
-
-        event.preventDefault();
-
-        sendMessage();
-      }
-    }
-  );
-
-
-  /* -------------------------
-     AUTO RESIZE
-  ------------------------- */
-
-  messageInput.addEventListener(
-    "input",
-    autoResize
-  );
-
-  function autoResize() {
-
-    messageInput.style.height =
-      "auto";
-
-    messageInput.style.height =
-      Math.min(
-        messageInput.scrollHeight,
-        140
-      ) + "px";
+    chatId =
+      chatResult.rows[0].id;
   }
 
 
-  /* -------------------------
-     DELETE CHAT
-  ------------------------- */
+  /* -----------------------------------------
+     CHECK CHAT OWNERSHIP
+  ----------------------------------------- */
 
-  async function deleteChat(chatId) {
+  const chatResult =
+    await pool.query(
+      `
+        SELECT id, title, created_at
+        FROM chats
+        WHERE id = $1
+          AND user_id = $2
+        LIMIT 1
+      `,
+      [
+        chatId,
+        user.id
+      ]
+    );
 
-    const confirmed =
-      confirm(
-        "Delete this chat?"
-      );
+  if (!chatResult.rows.length) {
 
-    if (!confirmed) return;
+    sendJSON(res, 404, {
+      error:
+        "Chat not found."
+    });
 
-    try {
+    return;
+  }
 
-      await api(
-        "/chats/" +
-        encodeURIComponent(chatId),
-        {
-          method: "DELETE"
-        }
-      );
 
-      if (
-        Number(chatId) ===
-        Number(currentChatId)
-      ) {
+  /* -----------------------------------------
+     SAVE USER MESSAGE
+  ----------------------------------------- */
 
-        startNewChat();
+  await pool.query(
+    `
+      INSERT INTO messages
+      (chat_id, role, content)
+      VALUES ($1, 'user', $2)
+    `,
+    [
+      chatId,
+      message
+    ]
+  );
 
-      } else {
 
-        await loadChats();
-      }
+  /* -----------------------------------------
+     LOAD CHAT HISTORY FOR AI
+  ----------------------------------------- */
 
-    } catch (error) {
+  const historyResult =
+    await pool.query(
+      `
+        SELECT
+          role,
+          content
+        FROM messages
+        WHERE chat_id = $1
+        ORDER BY id ASC
+      `,
+      [chatId]
+    );
 
-      alert(
+  /*
+    Limit the amount of history sent to AI.
+    This keeps requests manageable.
+  */
+
+  const history =
+    historyResult.rows.slice(-40);
+
+
+  /* -----------------------------------------
+     ASK AI
+  ----------------------------------------- */
+
+  let reply;
+
+  try {
+
+    reply =
+      await askAI(history);
+
+  } catch (error) {
+
+    console.error(
+      "AI error:",
+      error
+    );
+
+    /*
+      Remove the just-added user message
+      if AI failed, so the chat does not
+      contain an unanswered message.
+    */
+
+    await pool.query(
+      `
+        DELETE FROM messages
+        WHERE id = (
+          SELECT id
+          FROM messages
+          WHERE chat_id = $1
+          ORDER BY id DESC
+          LIMIT 1
+        )
+      `,
+      [chatId]
+    );
+
+    sendJSON(res, 500, {
+      error:
         error.message ||
-        "Could not delete chat."
-      );
-    }
+        "AI request failed."
+    });
+
+    return;
   }
 
 
-  /* -------------------------
-     LOGOUT
-  ------------------------- */
+  /* -----------------------------------------
+     SAVE AI MESSAGE
+  ----------------------------------------- */
 
-  logoutBtn.addEventListener(
-    "click",
-    async () => {
+  await pool.query(
+    `
+      INSERT INTO messages
+      (chat_id, role, content)
+      VALUES ($1, 'assistant', $2)
+    `,
+    [
+      chatId,
+      reply
+    ]
+  );
+
+
+  /* -----------------------------------------
+     RESPONSE
+  ----------------------------------------- */
+
+  sendJSON(res, 200, {
+
+    reply,
+
+    chat: chatResult.rows[0],
+
+    chatId,
+
+    message: {
+      role: "assistant",
+      content: reply
+    }
+  });
+}
+
+
+/* =========================================================
+   GET ALL CHATS
+========================================================= */
+
+async function getChats(req, res) {
+
+  const user =
+    await getCurrentUser(req);
+
+  if (!user) {
+
+    sendJSON(res, 401, {
+      error: "Unauthorized."
+    });
+
+    return;
+  }
+
+  const result =
+    await pool.query(
+      `
+        SELECT
+          id,
+          title,
+          created_at
+        FROM chats
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+      `,
+      [user.id]
+    );
+
+  sendJSON(res, 200, {
+    chats: result.rows
+  });
+}
+
+
+/* =========================================================
+   GET ONE CHAT + MESSAGES
+========================================================= */
+
+async function getChat(req, res, chatId) {
+
+  const user =
+    await getCurrentUser(req);
+
+  if (!user) {
+
+    sendJSON(res, 401, {
+      error: "Unauthorized."
+    });
+
+    return;
+  }
+
+  const chatResult =
+    await pool.query(
+      `
+        SELECT
+          id,
+          title,
+          created_at
+        FROM chats
+        WHERE id = $1
+          AND user_id = $2
+        LIMIT 1
+      `,
+      [
+        chatId,
+        user.id
+      ]
+    );
+
+  if (!chatResult.rows.length) {
+
+    sendJSON(res, 404, {
+      error:
+        "Chat not found."
+    });
+
+    return;
+  }
+
+  const messagesResult =
+    await pool.query(
+      `
+        SELECT
+          id,
+          role,
+          content,
+          created_at
+        FROM messages
+        WHERE chat_id = $1
+        ORDER BY id ASC
+      `,
+      [chatId]
+    );
+
+  sendJSON(res, 200, {
+
+    chat:
+      chatResult.rows[0],
+
+    messages:
+      messagesResult.rows
+  });
+}
+
+
+/* =========================================================
+   DELETE CHAT
+========================================================= */
+
+async function deleteChat(req, res, chatId) {
+
+  const user =
+    await getCurrentUser(req);
+
+  if (!user) {
+
+    sendJSON(res, 401, {
+      error: "Unauthorized."
+    });
+
+    return;
+  }
+
+  const result =
+    await pool.query(
+      `
+        DELETE FROM chats
+        WHERE id = $1
+          AND user_id = $2
+        RETURNING id
+      `,
+      [
+        chatId,
+        user.id
+      ]
+    );
+
+  if (!result.rows.length) {
+
+    sendJSON(res, 404, {
+      error:
+        "Chat not found."
+    });
+
+    return;
+  }
+
+  sendJSON(res, 200, {
+    message:
+      "Chat deleted successfully."
+  });
+}
+
+
+/* =========================================================
+   DATABASE TEST
+========================================================= */
+
+async function databaseTest(req, res) {
+
+  const result =
+    await pool.query(
+      "SELECT NOW() AS now"
+    );
+
+  sendJSON(res, 200, {
+
+    success: true,
+
+    message:
+      "Database connection is working.",
+
+    time:
+      result.rows[0].now
+  });
+}
+
+
+/* =========================================================
+   SERVER
+========================================================= */
+
+const server =
+  http.createServer(
+    async (req, res) => {
 
       try {
 
-        if (token) {
+        if (req.method === "OPTIONS") {
 
-          await api(
-            "/logout",
-            {
-              method: "POST"
-            }
-          );
+          res.writeHead(204, {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers":
+              "Content-Type, Authorization",
+            "Access-Control-Allow-Methods":
+              "GET, POST, DELETE, OPTIONS"
+          });
+
+          res.end();
+
+          return;
         }
 
-      } catch {}
 
-      logoutLocal();
+        const url =
+          new URL(
+            req.url,
+            `http://${req.headers.host}`
+          );
+
+        const pathname =
+          url.pathname;
+
+
+        /* WEBSITE */
+
+        if (
+          req.method === "GET" &&
+          pathname === "/"
+        ) {
+
+          sendWebsite(res);
+
+          return;
+        }
+
+
+        /* REGISTER */
+
+        if (
+          req.method === "POST" &&
+          pathname === "/register"
+        ) {
+
+          await register(req, res);
+
+          return;
+        }
+
+
+        /* LOGIN */
+
+        if (
+          req.method === "POST" &&
+          pathname === "/login"
+        ) {
+
+          await login(req, res);
+
+          return;
+        }
+
+
+        /* ME */
+
+        if (
+          req.method === "GET" &&
+          pathname === "/me"
+        ) {
+
+          await me(req, res);
+
+          return;
+        }
+
+
+        /* LOGOUT */
+
+        if (
+          req.method === "POST" &&
+          pathname === "/logout"
+        ) {
+
+          await logout(req, res);
+
+          return;
+        }
+
+
+        /* DATABASE TEST */
+
+        if (
+          req.method === "GET" &&
+          pathname === "/database-test"
+        ) {
+
+          await databaseTest(req, res);
+
+          return;
+        }
+
+
+        /* GET ALL CHATS */
+
+        if (
+          req.method === "GET" &&
+          pathname === "/chats"
+        ) {
+
+          await getChats(req, res);
+
+          return;
+        }
+
+
+        /* GET / DELETE SINGLE CHAT */
+
+        const chatMatch =
+          pathname.match(
+            /^\/chats\/(\d+)$/
+          );
+
+        if (chatMatch) {
+
+          const chatId =
+            Number(chatMatch[1]);
+
+          if (req.method === "GET") {
+
+            await getChat(
+              req,
+              res,
+              chatId
+            );
+
+            return;
+          }
+
+          if (req.method === "DELETE") {
+
+            await deleteChat(
+              req,
+              res,
+              chatId
+            );
+
+            return;
+          }
+        }
+
+
+        /* CHAT */
+
+        if (
+          req.method === "POST" &&
+          pathname === "/chat"
+        ) {
+
+          await chat(req, res);
+
+          return;
+        }
+
+
+        /* CHAT STATUS */
+
+        if (
+          req.method === "GET" &&
+          pathname === "/chat"
+        ) {
+
+          sendJSON(res, 200, {
+            message:
+              "EMORA AI Real Chat API is ready."
+          });
+
+          return;
+        }
+
+
+        /* NOT FOUND */
+
+        sendJSON(res, 404, {
+          error:
+            "Route not found."
+        });
+
+      } catch (error) {
+
+        console.error(
+          "SERVER ERROR:",
+          error
+        );
+
+        sendJSON(res, 500, {
+          error:
+            "Internal server error."
+        });
+      }
     }
   );
 
 
-  function logoutLocal() {
+/* =========================================================
+   START
+========================================================= */
 
-    localStorage.removeItem(
-      TOKEN_KEY
+async function start() {
+
+  try {
+
+    await initDatabase();
+
+    server.listen(
+      PORT,
+      "0.0.0.0",
+      () => {
+
+        console.log(
+          `EMORA AI Server running on port ${PORT}`
+        );
+      }
     );
 
-    token = null;
-    currentUser = null;
-    currentChatId = null;
+  } catch (error) {
 
-    app.style.display = "none";
-    loginScreen.style.display = "flex";
-
-    emailInput.value = "";
-    passwordInput.value = "";
-    loginError.textContent = "";
-  }
-
-
-  /* -------------------------
-     MOBILE SIDEBAR
-  ------------------------- */
-
-  menuBtn.addEventListener(
-    "click",
-    () => {
-
-      sidebar.classList.add(
-        "open"
-      );
-
-      overlay.classList.add(
-        "show"
-      );
-    }
-  );
-
-
-  overlay.addEventListener(
-    "click",
-    closeSidebar
-  );
-
-
-  function closeSidebar() {
-
-    sidebar.classList.remove(
-      "open"
+    console.error(
+      "Startup failed:",
+      error
     );
 
-    overlay.classList.remove(
-      "show"
-    );
+    process.exit(1);
   }
+}
 
 
-  /* -------------------------
-     SCROLL
-  ------------------------- */
-
-  function scrollBottom() {
-
-    requestAnimationFrame(() => {
-
-      chatArea.scrollTop =
-        chatArea.scrollHeight;
-
-    });
-  }
-
-
-  /* -------------------------
-     AUTO LOGIN
-  ------------------------- */
-
-  async function checkSession() {
-
-    if (!token) {
-
-      loginScreen.style.display =
-        "flex";
-
-      app.style.display =
-        "none";
-
-      return;
-    }
-
-    try {
-
-      await loadUser();
-
-      showApp();
-
-    } catch {
-
-      logoutLocal();
-    }
-  }
-
-
-  checkSession();
-
-</script>
-
-</body>
-</html>
+start();
