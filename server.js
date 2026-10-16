@@ -29,7 +29,7 @@ async function initDatabase() {
       plan VARCHAR(20) NOT NULL DEFAULT 'free',
       role VARCHAR(20) NOT NULL DEFAULT 'user',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
+    )
   `);
 
   await pool.query(`
@@ -38,7 +38,7 @@ async function initDatabase() {
       user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
       title VARCHAR(255),
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
+    )
   `);
 
   await pool.query(`
@@ -48,7 +48,7 @@ async function initDatabase() {
       role VARCHAR(20) NOT NULL,
       content TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
+    )
   `);
 
   await pool.query(`
@@ -58,27 +58,27 @@ async function initDatabase() {
       token_hash TEXT UNIQUE NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       expires_at TIMESTAMPTZ NOT NULL
-    );
+    )
   `);
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_chats_user_id
-    ON chats(user_id);
+    ON chats(user_id)
   `);
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_messages_chat_id
-    ON messages(chat_id);
+    ON messages(chat_id)
   `);
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_sessions_token_hash
-    ON sessions(token_hash);
+    ON sessions(token_hash)
   `);
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id
-    ON sessions(user_id);
+    ON sessions(user_id)
   `);
 
   console.log("Database initialized.");
@@ -89,9 +89,7 @@ async function initDatabase() {
 ========================================================= */
 
 function sendJSON(res, status, data) {
-  if (res.headersSent) {
-    return;
-  }
+  if (res.headersSent) return;
 
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
@@ -137,9 +135,7 @@ function readBody(req, maxSize = 12000000) {
     });
 
     req.on("error", error => {
-      if (!finished) {
-        reject(error);
-      }
+      if (!finished) reject(error);
     });
   });
 }
@@ -160,15 +156,9 @@ function createRandomToken() {
 ========================================================= */
 
 async function hashPassword(password) {
-  const salt = crypto
-    .randomBytes(16)
-    .toString("hex");
+  const salt = crypto.randomBytes(16).toString("hex");
 
-  const derivedKey = await scrypt(
-    password,
-    salt,
-    64
-  );
+  const derivedKey = await scrypt(password, salt, 64);
 
   return `${salt}:${derivedKey.toString("hex")}`;
 }
@@ -177,32 +167,18 @@ async function verifyPassword(password, storedHash) {
   try {
     const parts = storedHash.split(":");
 
-    if (parts.length !== 2) {
-      return false;
-    }
+    if (parts.length !== 2) return false;
 
     const salt = parts[0];
+    const storedKey = Buffer.from(parts[1], "hex");
 
-    const storedKey = Buffer.from(
-      parts[1],
-      "hex"
-    );
-
-    const derivedKey = await scrypt(
-      password,
-      salt,
-      64
-    );
+    const derivedKey = await scrypt(password, salt, 64);
 
     if (storedKey.length !== derivedKey.length) {
       return false;
     }
 
-    return crypto.timingSafeEqual(
-      storedKey,
-      derivedKey
-    );
-
+    return crypto.timingSafeEqual(storedKey, derivedKey);
   } catch {
     return false;
   }
@@ -214,37 +190,25 @@ async function verifyPassword(password, storedHash) {
 
 async function createSession(userId) {
   const token = createRandomToken();
-
   const tokenHash = hashToken(token);
 
   const expiresAt = new Date(
-    Date.now() +
-    7 * 24 * 60 * 60 * 1000
+    Date.now() + 7 * 24 * 60 * 60 * 1000
   );
 
   await pool.query(
-    `
-      INSERT INTO sessions
-      (user_id, token_hash, expires_at)
-      VALUES ($1, $2, $3)
-    `,
-    [
-      userId,
-      tokenHash,
-      expiresAt
-    ]
+    `INSERT INTO sessions (user_id, token_hash, expires_at)
+     VALUES ($1, $2, $3)`,
+    [userId, tokenHash, expiresAt]
   );
 
   return token;
 }
 
 function getBearerToken(req) {
-  const header =
-    req.headers.authorization || "";
+  const header = req.headers.authorization || "";
 
-  if (!header.startsWith("Bearer ")) {
-    return null;
-  }
+  if (!header.startsWith("Bearer ")) return null;
 
   return header.slice(7).trim();
 }
@@ -252,70 +216,34 @@ function getBearerToken(req) {
 async function getCurrentUser(req) {
   const token = getBearerToken(req);
 
-  if (!token) {
-    return null;
-  }
-
-  const tokenHash = hashToken(token);
+  if (!token) return null;
 
   const result = await pool.query(
-    `
-      SELECT
-        u.id,
-        u.name,
-        u.email,
-        u.plan,
-        u.role,
-        u.created_at
-      FROM sessions s
-      JOIN users u
-        ON u.id = s.user_id
-      WHERE s.token_hash = $1
-        AND s.expires_at > NOW()
-      LIMIT 1
-    `,
-    [tokenHash]
+    `SELECT u.id, u.name, u.email, u.plan, u.role, u.created_at
+     FROM sessions s
+     JOIN users u ON u.id = s.user_id
+     WHERE s.token_hash = $1
+       AND s.expires_at > NOW()
+     LIMIT 1`,
+    [hashToken(token)]
   );
 
-  return result.rows.length
-    ? result.rows[0]
-    : null;
+  return result.rows.length ? result.rows[0] : null;
 }
 
 /* =========================================================
-   REMOVE EMOJIS / SYMBOLS FOR VOICE
+   CLEAN TEXT FOR VOICE
 ========================================================= */
 
 function cleanTextForVoice(text) {
   return String(text || "")
-    .replace(
-      /[\u{1F000}-\u{1FAFF}]/gu,
-      " "
-    )
-    .replace(
-      /[\u{2600}-\u{27BF}]/gu,
-      " "
-    )
-    .replace(
-      /[\u{2300}-\u{23FF}]/gu,
-      " "
-    )
-    .replace(
-      /[\u{2B00}-\u{2BFF}]/gu,
-      " "
-    )
-    .replace(
-      /https?:\/\/\S+/gi,
-      " "
-    )
-    .replace(
-      /[*_~`#]+/g,
-      " "
-    )
-    .replace(
-      /\s+/g,
-      " "
-    )
+    .replace(/[\u{1F000}-\u{1FAFF}]/gu, " ")
+    .replace(/[\u{2600}-\u{27BF}]/gu, " ")
+    .replace(/[\u{2300}-\u{23FF}]/gu, " ")
+    .replace(/[\u{2B00}-\u{2BFF}]/gu, " ")
+    .replace(/https?:\/\/\S+/gi, " ")
+    .replace(/[*_~`#]+/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -324,53 +252,35 @@ function cleanTextForVoice(text) {
 ========================================================= */
 
 async function askAI(messages) {
-  const apiKey =
-    process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
-    throw new Error(
-      "OPENAI_API_KEY is not configured."
-    );
+    throw new Error("OPENAI_API_KEY is not configured.");
   }
 
-  const model =
-    process.env.OPENAI_MODEL ||
-    "gpt-6-luna";
+  const model = process.env.OPENAI_MODEL || "gpt-6-luna";
 
   const input = messages.map(message => ({
-    role:
-      message.role === "assistant"
-        ? "assistant"
-        : "user",
-
-    content:
-      message.content
+    role: message.role === "assistant" ? "assistant" : "user",
+    content: message.content
   }));
 
   const response = await fetch(
     "https://api.openai.com/v1/responses",
     {
       method: "POST",
-
       headers: {
-        "Content-Type":
-          "application/json",
-
-        "Authorization":
-          `Bearer ${apiKey}`
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
       },
-
       body: JSON.stringify({
         model,
-
         instructions:
-          "You are EMORA AI, a helpful and intelligent AI assistant. " +
-          "If the user writes Bengali, reply in natural Bengali. " +
-          "If the user writes English, reply in English. " +
+          "You are EMORA AI, a helpful AI assistant. " +
+          "Reply in natural Bengali when the user writes Bengali. " +
+          "Reply in English when the user writes English. " +
           "Do not unnecessarily repeat your name. " +
-          "Do not use emojis unless the user specifically asks for them. " +
-          "Keep normal answers clean and natural.",
-
+          "Avoid emojis unless requested. Keep answers natural.",
         input
       })
     }
@@ -379,14 +289,9 @@ async function askAI(messages) {
   const data = await response.json();
 
   if (!response.ok) {
-    console.error(
-      "OpenAI API error:",
-      data
-    );
-
+    console.error("OpenAI API error:", data);
     throw new Error(
-      data?.error?.message ||
-      "OpenAI request failed."
+      data?.error?.message || "OpenAI request failed."
     );
   }
 
@@ -398,15 +303,10 @@ async function askAI(messages) {
 
   if (Array.isArray(data.output)) {
     for (const item of data.output) {
-      if (!Array.isArray(item.content)) {
-        continue;
-      }
+      if (!Array.isArray(item.content)) continue;
 
       for (const content of item.content) {
-        if (
-          content.type === "output_text" &&
-          content.text
-        ) {
+        if (content.type === "output_text" && content.text) {
           text += content.text;
         }
       }
@@ -415,204 +315,167 @@ async function askAI(messages) {
 
   text = text.trim();
 
-  if (!text) {
-    throw new Error(
-      "AI returned an empty response."
-    );
-  }
+  if (!text) throw new Error("AI returned an empty response.");
 
   return text;
 }
 
 /* =========================================================
-   EMORA AI VOICE / TTS
-   DIRECT MP3 RESPONSE
+   EMORA AI VOICE - ELEVENLABS TTS
+   POST /tts
+   Returns MP3 audio
 ========================================================= */
 
 async function generateSpeech(req, res) {
   try {
-    const user =
-      await getCurrentUser(req);
+    const user = await getCurrentUser(req);
 
     if (!user) {
       sendJSON(res, 401, {
         success: false,
-        error: "Unauthorized."
+        error: "Unauthorized. Please log in."
       });
-
       return;
     }
 
-    const body =
-      await readBody(req, 50000);
-
-    const rawText =
-      String(body.text || "").trim();
+    const body = await readBody(req, 50000);
+    const rawText = String(body.text || "").trim();
 
     if (!rawText) {
       sendJSON(res, 400, {
         success: false,
         error: "Text is required."
       });
-
       return;
     }
 
-    const text =
-      cleanTextForVoice(rawText);
+    const text = cleanTextForVoice(rawText);
 
     if (!text) {
       sendJSON(res, 400, {
         success: false,
         error: "No speakable text."
       });
-
       return;
     }
 
     if (text.length > 4000) {
       sendJSON(res, 400, {
         success: false,
-        error: "Text is too long."
+        error: "Text is too long. Maximum is 4000 characters."
       });
-
       return;
     }
 
-    const apiKey =
-      process.env.OPENAI_API_KEY;
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    const voiceId = process.env.ELEVENLABS_VOICE_ID;
 
     if (!apiKey) {
       sendJSON(res, 500, {
         success: false,
-        error:
-          "OPENAI_API_KEY is not configured."
+        error: "ELEVENLABS_API_KEY is not configured in Render."
       });
-
       return;
     }
 
-    const response = await fetch(
-      "https://api.openai.com/v1/audio/speech",
-      {
-        method: "POST",
+    if (!voiceId) {
+      sendJSON(res, 500, {
+        success: false,
+        error: "ELEVENLABS_VOICE_ID is not configured in Render."
+      });
+      return;
+    }
 
-        headers: {
-          "Content-Type":
-            "application/json",
+    const modelId =
+      process.env.ELEVENLABS_MODEL_ID ||
+      "eleven_multilingual_v2";
 
-          "Authorization":
-            `Bearer ${apiKey}`
-        },
+    const outputFormat =
+      process.env.ELEVENLABS_OUTPUT_FORMAT ||
+      "mp3_44100_128";
 
-        body: JSON.stringify({
-          model:
-            process.env.OPENAI_TTS_MODEL ||
-            "gpt-4o-mini-tts",
+    const endpoint =
+      "https://api.elevenlabs.io/v1/text-to-speech/" +
+      encodeURIComponent(voiceId) +
+      "?output_format=" +
+      encodeURIComponent(outputFormat);
 
-          voice:
-            process.env.OPENAI_TTS_VOICE ||
-            "coral",
-
-          input: text,
-
-          instructions:
-            "Speak naturally in Bengali when the input is Bengali. " +
-            "Use a warm, friendly female-style voice. " +
-            "Speak clearly and naturally. " +
-            "Never say emojis, markdown symbols, URLs, or formatting characters aloud.",
-
-          response_format:
-            "mp3"
-        })
-      }
-    );
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "xi-api-key": apiKey,
+        "Content-Type": "application/json",
+        "Accept": "audio/mpeg"
+      },
+      body: JSON.stringify({
+        text,
+        model_id: modelId,
+        voice_settings: {
+          stability: 0.48,
+          similarity_boost: 0.78,
+          style: 0.35,
+          use_speaker_boost: true
+        }
+      })
+    });
 
     if (!response.ok) {
-      const errorText =
-        await response.text();
+      const errorText = await response.text();
 
       console.error(
-        "OpenAI TTS API error:",
+        "ElevenLabs TTS error:",
         response.status,
         errorText
       );
 
-      let message =
-        "Voice generation failed.";
+      let message = "ElevenLabs voice generation failed.";
 
       try {
-        const errorData =
-          JSON.parse(errorText);
-
+        const errorData = JSON.parse(errorText);
         message =
-          errorData?.error?.message ||
+          errorData?.detail?.message ||
+          errorData?.detail?.status ||
+          errorData?.message ||
           message;
-
       } catch (_) {}
 
-      sendJSON(res, 500, {
+      sendJSON(res, 502, {
         success: false,
-        error: message
+        error: message,
+        provider: "ElevenLabs"
       });
-
       return;
     }
 
-    const audioBuffer =
-      Buffer.from(
-        await response.arrayBuffer()
-      );
+    const audioBuffer = Buffer.from(
+      await response.arrayBuffer()
+    );
 
     if (!audioBuffer.length) {
-      sendJSON(res, 500, {
+      sendJSON(res, 502, {
         success: false,
-        error:
-          "TTS returned empty audio."
+        error: "ElevenLabs returned empty audio."
       });
-
       return;
     }
-
-    /*
-      IMPORTANT:
-      এখানে আর JSON/Base64 পাঠানো হচ্ছে না।
-      সরাসরি MP3 পাঠানো হচ্ছে।
-    */
 
     res.writeHead(200, {
       "Content-Type": "audio/mpeg",
-
-      "Content-Length":
-        audioBuffer.length,
-
-      "Cache-Control":
-        "no-store, no-cache, must-revalidate",
-
-      "Access-Control-Allow-Origin":
-        "*",
-
-      "Access-Control-Allow-Headers":
-        "Content-Type, Authorization",
-
-      "Access-Control-Allow-Methods":
-        "GET, POST, OPTIONS"
+      "Content-Length": audioBuffer.length,
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Methods": "POST, OPTIONS"
     });
 
     res.end(audioBuffer);
-
   } catch (error) {
-    console.error(
-      "TTS exception:",
-      error
-    );
+    console.error("ElevenLabs TTS exception:", error);
 
     if (!res.headersSent) {
       sendJSON(res, 500, {
         success: false,
-        error:
-          error.message ||
-          "Voice generation failed."
+        error: error.message || "Voice generation failed."
       });
     }
   }
@@ -623,206 +486,106 @@ async function generateSpeech(req, res) {
 ========================================================= */
 
 async function analyzeImage(req, res) {
-  const user =
-    await getCurrentUser(req);
+  const user = await getCurrentUser(req);
 
   if (!user) {
-    sendJSON(res, 401, {
-      error:
-        "Unauthorized."
-    });
-
+    sendJSON(res, 401, { error: "Unauthorized." });
     return;
   }
 
-  const body =
-    await readBody(
-      req,
-      12000000
-    );
+  const body = await readBody(req, 12000000);
+  const image = String(body.image || "").trim();
 
-  const image =
-    String(
-      body.image || ""
-    ).trim();
-
-  const prompt =
-    String(
-      body.message ||
-      body.prompt ||
-      "Describe and analyze this image clearly."
-    ).trim();
+  const prompt = String(
+    body.message ||
+    body.prompt ||
+    "Describe and analyze this image clearly."
+  ).trim();
 
   if (!image) {
-    sendJSON(res, 400, {
-      error:
-        "Image is required."
-    });
-
+    sendJSON(res, 400, { error: "Image is required." });
     return;
   }
 
-  if (
-    !image.startsWith(
-      "data:image/"
-    )
-  ) {
-    sendJSON(res, 400, {
-      error:
-        "Invalid image format."
-    });
-
+  if (!image.startsWith("data:image/")) {
+    sendJSON(res, 400, { error: "Invalid image format." });
     return;
   }
 
   if (image.length > 10000000) {
-    sendJSON(res, 400, {
-      error:
-        "Image is too large."
-    });
-
+    sendJSON(res, 400, { error: "Image is too large." });
     return;
   }
 
-  const apiKey =
-    process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
     sendJSON(res, 500, {
-      error:
-        "OPENAI_API_KEY is not configured."
+      error: "OPENAI_API_KEY is not configured."
     });
-
     return;
   }
 
   try {
-    const model =
-      process.env.OPENAI_MODEL ||
-      "gpt-6-luna";
+    const model = process.env.OPENAI_MODEL || "gpt-6-luna";
 
-    const response =
-      await fetch(
-        "https://api.openai.com/v1/responses",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-
-            "Authorization":
-              `Bearer ${apiKey}`
-          },
-
-          body: JSON.stringify({
-            model,
-
-            instructions:
-              "You are EMORA AI. " +
-              "Analyze the image accurately. " +
-              "If the user writes Bengali, answer in Bengali. " +
-              "Do not unnecessarily use emojis.",
-
-            input: [
-              {
-                role: "user",
-
-                content: [
-                  {
-                    type:
-                      "input_text",
-
-                    text:
-                      prompt
-                  },
-
-                  {
-                    type:
-                      "input_image",
-
-                    image_url:
-                      image,
-
-                    detail:
-                      "auto"
-                  }
-                ]
-              }
+    const response = await fetch(
+      "https://api.openai.com/v1/responses",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          instructions:
+            "You are EMORA AI. Analyze the image accurately. " +
+            "If the user writes Bengali, answer in Bengali.",
+          input: [{
+            role: "user",
+            content: [
+              { type: "input_text", text: prompt },
+              { type: "input_image", image_url: image, detail: "auto" }
             ]
-          })
-        }
-      );
+          }]
+        })
+      }
+    );
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
     if (!response.ok) {
-      console.error(
-        "Image analysis error:",
-        data
-      );
-
-      sendJSON(res, 500, {
-        error:
-          data?.error?.message ||
-          "Image analysis failed."
+      console.error("Image analysis error:", data);
+      sendJSON(res, 502, {
+        error: data?.error?.message || "Image analysis failed."
       });
-
       return;
     }
 
-    let reply =
-      data.output_text || "";
+    let reply = data.output_text || "";
 
-    if (
-      !reply &&
-      Array.isArray(data.output)
-    ) {
+    if (!reply && Array.isArray(data.output)) {
       for (const item of data.output) {
-        if (!Array.isArray(item.content)) {
-          continue;
-        }
+        if (!Array.isArray(item.content)) continue;
 
-        for (
-          const content of item.content
-        ) {
-          if (
-            content.type ===
-              "output_text" &&
-            content.text
-          ) {
-            reply +=
-              content.text;
+        for (const content of item.content) {
+          if (content.type === "output_text" && content.text) {
+            reply += content.text;
           }
         }
       }
     }
 
-    reply =
-      reply.trim();
+    reply = reply.trim();
 
-    if (!reply) {
-      throw new Error(
-        "AI returned an empty image analysis."
-      );
-    }
+    if (!reply) throw new Error("AI returned an empty image analysis.");
 
-    sendJSON(res, 200, {
-      success: true,
-      reply
-    });
-
+    sendJSON(res, 200, { success: true, reply });
   } catch (error) {
-    console.error(
-      "Image analysis exception:",
-      error
-    );
-
+    console.error("Image analysis exception:", error);
     sendJSON(res, 500, {
-      error:
-        error.message ||
-        "Image analysis failed."
+      error: error.message || "Image analysis failed."
     });
   }
 }
@@ -832,176 +595,95 @@ async function analyzeImage(req, res) {
 ========================================================= */
 
 async function generateImage(req, res) {
-  const user =
-    await getCurrentUser(req);
+  const user = await getCurrentUser(req);
 
   if (!user) {
-    sendJSON(res, 401, {
-      error:
-        "Unauthorized."
-    });
-
+    sendJSON(res, 401, { error: "Unauthorized." });
     return;
   }
 
-  const body =
-    await readBody(
-      req,
-      20000
-    );
-
-  const prompt =
-    String(
-      body.prompt || ""
-    ).trim();
+  const body = await readBody(req, 20000);
+  const prompt = String(body.prompt || "").trim();
 
   if (!prompt) {
-    sendJSON(res, 400, {
-      error:
-        "Image prompt is required."
-    });
-
+    sendJSON(res, 400, { error: "Image prompt is required." });
     return;
   }
 
   if (prompt.length > 4000) {
-    sendJSON(res, 400, {
-      error:
-        "Image prompt is too long."
-    });
-
+    sendJSON(res, 400, { error: "Image prompt is too long." });
     return;
   }
 
-  const apiKey =
-    process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
     sendJSON(res, 500, {
-      error:
-        "OPENAI_API_KEY is not configured."
+      error: "OPENAI_API_KEY is not configured."
     });
-
     return;
   }
 
   try {
-    const response =
-      await fetch(
-        "https://api.openai.com/v1/images/generations",
-        {
-          method: "POST",
+    const response = await fetch(
+      "https://api.openai.com/v1/images/generations",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-2",
+          prompt,
+          size: body.size || "1024x1024",
+          quality: body.quality || "auto"
+        })
+      }
+    );
 
-          headers: {
-            "Content-Type":
-              "application/json",
-
-            "Authorization":
-              `Bearer ${apiKey}`
-          },
-
-          body: JSON.stringify({
-            model:
-              process.env.OPENAI_IMAGE_MODEL ||
-              "gpt-image-2",
-
-            prompt,
-
-            size:
-              body.size ||
-              "1024x1024",
-
-            quality:
-              body.quality ||
-              "auto"
-          })
-        }
-      );
-
-    const data =
-      await response.json();
+    const data = await response.json();
 
     if (!response.ok) {
-      console.error(
-        "Image API error:",
-        data
-      );
-
-      sendJSON(res, 500, {
-        error:
-          data?.error?.message ||
-          "Image generation failed."
+      console.error("Image API error:", data);
+      sendJSON(res, 502, {
+        error: data?.error?.message || "Image generation failed."
       });
-
       return;
     }
 
-    if (
-      !Array.isArray(data.data) ||
-      !data.data.length
-    ) {
-      sendJSON(res, 500, {
-        error:
-          "Image API returned no image."
+    if (!Array.isArray(data.data) || !data.data.length) {
+      sendJSON(res, 502, {
+        error: "Image API returned no image."
       });
-
       return;
     }
 
-    const image =
-      data.data[0];
+    const image = data.data[0];
 
     if (image.b64_json) {
       sendJSON(res, 200, {
         success: true,
-
         prompt,
-
-        image: {
-          type:
-            "base64",
-
-          data:
-            image.b64_json
-        }
+        image: { type: "base64", data: image.b64_json }
       });
-
       return;
     }
 
     if (image.url) {
       sendJSON(res, 200, {
         success: true,
-
         prompt,
-
-        image: {
-          type:
-            "url",
-
-          url:
-            image.url
-        }
+        image: { type: "url", url: image.url }
       });
-
       return;
     }
 
-    sendJSON(res, 500, {
-      error:
-        "No usable image data returned."
-    });
-
+    sendJSON(res, 502, { error: "No usable image data returned." });
   } catch (error) {
-    console.error(
-      "Image generation error:",
-      error
-    );
-
+    console.error("Image generation error:", error);
     sendJSON(res, 500, {
-      error:
-        error.message ||
-        "Image generation failed."
+      error: error.message || "Image generation failed."
     });
   }
 }
@@ -1011,45 +693,30 @@ async function generateImage(req, res) {
 ========================================================= */
 
 function sendWebsite(res) {
-  const filePath =
-    path.join(
-      __dirname,
-      "public",
-      "index.html"
-    );
+  const filePath = path.join(__dirname, "public", "index.html");
 
   if (!fs.existsSync(filePath)) {
     sendJSON(res, 404, {
-      error:
-        "public/index.html not found."
+      error: "public/index.html not found."
     });
-
     return;
   }
 
-  fs.readFile(
-    filePath,
-    (error, data) => {
-      if (error) {
-        sendJSON(res, 500, {
-          error:
-            "Could not load website."
-        });
-
-        return;
-      }
-
-      res.writeHead(200, {
-        "Content-Type":
-          "text/html; charset=utf-8",
-
-        "Cache-Control":
-          "no-store"
+  fs.readFile(filePath, (error, data) => {
+    if (error) {
+      sendJSON(res, 500, {
+        error: "Could not load website."
       });
-
-      res.end(data);
+      return;
     }
-  );
+
+    res.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store"
+    });
+
+    res.end(data);
+  });
 }
 
 /* =========================================================
@@ -1057,108 +724,58 @@ function sendWebsite(res) {
 ========================================================= */
 
 async function register(req, res) {
-  const body =
-    await readBody(req);
+  const body = await readBody(req);
 
-  const name =
-    String(
-      body.name || ""
-    ).trim();
+  const name = String(body.name || "").trim();
+  const email = String(body.email || "").trim().toLowerCase();
+  const password = String(body.password || "");
 
-  const email =
-    String(
-      body.email || ""
-    )
-      .trim()
-      .toLowerCase();
-
-  const password =
-    String(
-      body.password || ""
-    );
-
-  if (
-    !name ||
-    !email ||
-    !password
-  ) {
+  if (!name || !email || !password) {
     sendJSON(res, 400, {
-      error:
-        "Name, email and password are required."
+      error: "Name, email and password are required."
     });
+    return;
+  }
 
+  if (name.length > 100 || email.length > 255) {
+    sendJSON(res, 400, { error: "Name or email is too long." });
     return;
   }
 
   if (password.length < 6) {
     sendJSON(res, 400, {
-      error:
-        "Password must be at least 6 characters."
+      error: "Password must be at least 6 characters."
     });
-
     return;
   }
 
-  const existing =
-    await pool.query(
-      `
-        SELECT id
-        FROM users
-        WHERE email = $1
-        LIMIT 1
-      `,
-      [email]
-    );
+  const existing = await pool.query(
+    "SELECT id FROM users WHERE email = $1 LIMIT 1",
+    [email]
+  );
 
   if (existing.rows.length) {
     sendJSON(res, 409, {
-      error:
-        "An account with this email already exists."
+      error: "An account with this email already exists."
     });
-
     return;
   }
 
-  const passwordHash =
-    await hashPassword(
-      password
-    );
+  const passwordHash = await hashPassword(password);
 
-  const result =
-    await pool.query(
-      `
-        INSERT INTO users
-        (name, email, password_hash)
-        VALUES ($1, $2, $3)
-        RETURNING
-          id,
-          name,
-          email,
-          plan,
-          role,
-          created_at
-      `,
-      [
-        name,
-        email,
-        passwordHash
-      ]
-    );
+  const result = await pool.query(
+    `INSERT INTO users (name, email, password_hash)
+     VALUES ($1, $2, $3)
+     RETURNING id, name, email, plan, role, created_at`,
+    [name, email, passwordHash]
+  );
 
-  const user =
-    result.rows[0];
-
-  const token =
-    await createSession(
-      user.id
-    );
+  const user = result.rows[0];
+  const token = await createSession(user.id);
 
   sendJSON(res, 201, {
-    message:
-      "Registration successful.",
-
+    message: "Registration successful.",
     token,
-
     user
   });
 }
@@ -1168,100 +785,48 @@ async function register(req, res) {
 ========================================================= */
 
 async function login(req, res) {
-  const body =
-    await readBody(req);
+  const body = await readBody(req);
 
-  const email =
-    String(
-      body.email || ""
-    )
-      .trim()
-      .toLowerCase();
+  const email = String(body.email || "").trim().toLowerCase();
+  const password = String(body.password || "");
 
-  const password =
-    String(
-      body.password || ""
-    );
-
-  if (
-    !email ||
-    !password
-  ) {
+  if (!email || !password) {
     sendJSON(res, 400, {
-      error:
-        "Email and password are required."
+      error: "Email and password are required."
     });
-
     return;
   }
 
-  const result =
-    await pool.query(
-      `
-        SELECT *
-        FROM users
-        WHERE email = $1
-        LIMIT 1
-      `,
-      [email]
-    );
+  const result = await pool.query(
+    "SELECT * FROM users WHERE email = $1 LIMIT 1",
+    [email]
+  );
 
   if (!result.rows.length) {
-    sendJSON(res, 401, {
-      error:
-        "Invalid email or password."
-    });
-
+    sendJSON(res, 401, { error: "Invalid email or password." });
     return;
   }
 
-  const userRow =
-    result.rows[0];
-
-  const valid =
-    await verifyPassword(
-      password,
-      userRow.password_hash
-    );
+  const userRow = result.rows[0];
+  const valid = await verifyPassword(password, userRow.password_hash);
 
   if (!valid) {
-    sendJSON(res, 401, {
-      error:
-        "Invalid email or password."
-    });
-
+    sendJSON(res, 401, { error: "Invalid email or password." });
     return;
   }
 
-  const token =
-    await createSession(
-      userRow.id
-    );
+  const token = await createSession(userRow.id);
 
   sendJSON(res, 200, {
-    message:
-      "Login successful.",
-
+    message: "Login successful.",
     token,
-
     user: {
-      id:
-        userRow.id,
-
-      name:
-        userRow.name,
-
-      email:
-        userRow.email,
-
-      plan:
-        userRow.plan,
-
-      role:
-        userRow.role,
-
-      created_at:
-        userRow.created_at
+      id: userRow.id,
+      name: userRow.name,
+      email: userRow.email,
+      plan: userRow.plan,
+      role: userRow.role,
+      created_at: userRow.created_at
     }
   });
 }
@@ -1271,21 +836,14 @@ async function login(req, res) {
 ========================================================= */
 
 async function me(req, res) {
-  const user =
-    await getCurrentUser(req);
+  const user = await getCurrentUser(req);
 
   if (!user) {
-    sendJSON(res, 401, {
-      error:
-        "Unauthorized."
-    });
-
+    sendJSON(res, 401, { error: "Unauthorized." });
     return;
   }
 
-  sendJSON(res, 200, {
-    user
-  });
+  sendJSON(res, 200, { user });
 }
 
 /* =========================================================
@@ -1293,25 +851,16 @@ async function me(req, res) {
 ========================================================= */
 
 async function logout(req, res) {
-  const token =
-    getBearerToken(req);
+  const token = getBearerToken(req);
 
   if (token) {
     await pool.query(
-      `
-        DELETE FROM sessions
-        WHERE token_hash = $1
-      `,
-      [
-        hashToken(token)
-      ]
+      "DELETE FROM sessions WHERE token_hash = $1",
+      [hashToken(token)]
     );
   }
 
-  sendJSON(res, 200, {
-    message:
-      "Logged out."
-  });
+  sendJSON(res, 200, { message: "Logged out." });
 }
 
 /* =========================================================
@@ -1319,194 +868,111 @@ async function logout(req, res) {
 ========================================================= */
 
 async function chat(req, res) {
-  const user =
-    await getCurrentUser(req);
+  const user = await getCurrentUser(req);
 
   if (!user) {
-    sendJSON(res, 401, {
-      error:
-        "Unauthorized."
-    });
-
+    sendJSON(res, 401, { error: "Unauthorized." });
     return;
   }
 
-  const body =
-    await readBody(req);
+  const body = await readBody(req);
+  const message = String(body.message || "").trim();
 
-  const message =
-    String(
-      body.message || ""
-    ).trim();
-
-  let chatId =
-    body.chatId
-      ? Number(body.chatId)
-      : null;
+  let chatId = body.chatId ? Number(body.chatId) : null;
 
   if (!message) {
-    sendJSON(res, 400, {
-      error:
-        "Message is required."
-    });
-
+    sendJSON(res, 400, { error: "Message is required." });
     return;
   }
 
   if (message.length > 5000) {
-    sendJSON(res, 400, {
-      error:
-        "Message is too long."
-    });
+    sendJSON(res, 400, { error: "Message is too long." });
+    return;
+  }
 
+  if (chatId !== null && (!Number.isSafeInteger(chatId) || chatId <= 0)) {
+    sendJSON(res, 400, { error: "Invalid chatId." });
     return;
   }
 
   if (!chatId) {
-    const title =
-      message.length > 80
-        ? message.slice(0, 80) + "..."
-        : message;
+    const title = message.length > 80
+      ? message.slice(0, 80) + "..."
+      : message;
 
-    const chatResult =
-      await pool.query(
-        `
-          INSERT INTO chats
-          (user_id, title)
-          VALUES ($1, $2)
-          RETURNING
-            id,
-            title,
-            created_at
-        `,
-        [
-          user.id,
-          title
-        ]
-      );
-
-    chatId =
-      chatResult.rows[0].id;
-  }
-
-  const chatResult =
-    await pool.query(
-      `
-        SELECT
-          id,
-          title,
-          created_at
-        FROM chats
-        WHERE id = $1
-          AND user_id = $2
-        LIMIT 1
-      `,
-      [
-        chatId,
-        user.id
-      ]
+    const chatResult = await pool.query(
+      `INSERT INTO chats (user_id, title)
+       VALUES ($1, $2)
+       RETURNING id, title, created_at`,
+      [user.id, title]
     );
 
-  if (!chatResult.rows.length) {
-    sendJSON(res, 404, {
-      error:
-        "Chat not found."
-    });
+    chatId = chatResult.rows[0].id;
+  }
 
+  const chatResult = await pool.query(
+    `SELECT id, title, created_at
+     FROM chats
+     WHERE id = $1 AND user_id = $2
+     LIMIT 1`,
+    [chatId, user.id]
+  );
+
+  if (!chatResult.rows.length) {
+    sendJSON(res, 404, { error: "Chat not found." });
     return;
   }
 
-  const userMessageResult =
-    await pool.query(
-      `
-        INSERT INTO messages
-        (chat_id, role, content)
-        VALUES ($1, 'user', $2)
-        RETURNING id
-      `,
-      [
-        chatId,
-        message
-      ]
-    );
+  const userMessageResult = await pool.query(
+    `INSERT INTO messages (chat_id, role, content)
+     VALUES ($1, 'user', $2)
+     RETURNING id`,
+    [chatId, message]
+  );
 
-  const userMessageId =
-    userMessageResult.rows[0].id;
+  const userMessageId = userMessageResult.rows[0].id;
 
-  const historyResult =
-    await pool.query(
-      `
-        SELECT
-          role,
-          content
-        FROM messages
-        WHERE chat_id = $1
-        ORDER BY id ASC
-      `,
-      [chatId]
-    );
+  const historyResult = await pool.query(
+    `SELECT role, content
+     FROM messages
+     WHERE chat_id = $1
+     ORDER BY id ASC`,
+    [chatId]
+  );
 
-  const history =
-    historyResult.rows.slice(-40);
+  const history = historyResult.rows.slice(-40);
 
   let reply;
 
   try {
-    reply =
-      await askAI(history);
-
+    reply = await askAI(history);
   } catch (error) {
-
-    console.error(
-      "AI error:",
-      error
-    );
+    console.error("AI error:", error);
 
     await pool.query(
-      `
-        DELETE FROM messages
-        WHERE id = $1
-      `,
-      [
-        userMessageId
-      ]
+      "DELETE FROM messages WHERE id = $1",
+      [userMessageId]
     );
 
-    sendJSON(res, 500, {
-      error:
-        error.message ||
-        "AI request failed."
+    sendJSON(res, 502, {
+      error: error.message || "AI request failed."
     });
-
     return;
   }
 
   await pool.query(
-    `
-      INSERT INTO messages
-      (chat_id, role, content)
-      VALUES ($1, 'assistant', $2)
-    `,
-    [
-      chatId,
-      reply
-    ]
+    `INSERT INTO messages (chat_id, role, content)
+     VALUES ($1, 'assistant', $2)`,
+    [chatId, reply]
   );
 
   sendJSON(res, 200, {
     reply,
-
-    chat:
-      chatResult.rows[0],
-
+    chat: chatResult.rows[0],
     chatId,
-
     message: {
-      role:
-        "assistant",
-
-      content:
-        reply
+      role: "assistant",
+      content: reply
     }
   });
 }
@@ -1516,149 +982,81 @@ async function chat(req, res) {
 ========================================================= */
 
 async function getChats(req, res) {
-  const user =
-    await getCurrentUser(req);
+  const user = await getCurrentUser(req);
 
   if (!user) {
-    sendJSON(res, 401, {
-      error:
-        "Unauthorized."
-    });
-
+    sendJSON(res, 401, { error: "Unauthorized." });
     return;
   }
 
-  const result =
-    await pool.query(
-      `
-        SELECT
-          id,
-          title,
-          created_at
-        FROM chats
-        WHERE user_id = $1
-        ORDER BY created_at DESC
-      `,
-      [user.id]
-    );
+  const result = await pool.query(
+    `SELECT id, title, created_at
+     FROM chats
+     WHERE user_id = $1
+     ORDER BY created_at DESC`,
+    [user.id]
+  );
 
-  sendJSON(res, 200, {
-    chats:
-      result.rows
-  });
+  sendJSON(res, 200, { chats: result.rows });
 }
 
-async function getChat(
-  req,
-  res,
-  chatId
-) {
-  const user =
-    await getCurrentUser(req);
+async function getChat(req, res, chatId) {
+  const user = await getCurrentUser(req);
 
   if (!user) {
-    sendJSON(res, 401, {
-      error:
-        "Unauthorized."
-    });
-
+    sendJSON(res, 401, { error: "Unauthorized." });
     return;
   }
 
-  const chatResult =
-    await pool.query(
-      `
-        SELECT
-          id,
-          title,
-          created_at
-        FROM chats
-        WHERE id = $1
-          AND user_id = $2
-        LIMIT 1
-      `,
-      [
-        chatId,
-        user.id
-      ]
-    );
+  const chatResult = await pool.query(
+    `SELECT id, title, created_at
+     FROM chats
+     WHERE id = $1 AND user_id = $2
+     LIMIT 1`,
+    [chatId, user.id]
+  );
 
   if (!chatResult.rows.length) {
-    sendJSON(res, 404, {
-      error:
-        "Chat not found."
-    });
-
+    sendJSON(res, 404, { error: "Chat not found." });
     return;
   }
 
-  const messagesResult =
-    await pool.query(
-      `
-        SELECT
-          id,
-          role,
-          content,
-          created_at
-        FROM messages
-        WHERE chat_id = $1
-        ORDER BY id ASC
-      `,
-      [chatId]
-    );
+  const messagesResult = await pool.query(
+    `SELECT id, role, content, created_at
+     FROM messages
+     WHERE chat_id = $1
+     ORDER BY id ASC`,
+    [chatId]
+  );
 
   sendJSON(res, 200, {
-    chat:
-      chatResult.rows[0],
-
-    messages:
-      messagesResult.rows
+    chat: chatResult.rows[0],
+    messages: messagesResult.rows
   });
 }
 
-async function deleteChat(
-  req,
-  res,
-  chatId
-) {
-  const user =
-    await getCurrentUser(req);
+async function deleteChat(req, res, chatId) {
+  const user = await getCurrentUser(req);
 
   if (!user) {
-    sendJSON(res, 401, {
-      error:
-        "Unauthorized."
-    });
-
+    sendJSON(res, 401, { error: "Unauthorized." });
     return;
   }
 
-  const result =
-    await pool.query(
-      `
-        DELETE FROM chats
-        WHERE id = $1
-          AND user_id = $2
-        RETURNING id
-      `,
-      [
-        chatId,
-        user.id
-      ]
-    );
+  const result = await pool.query(
+    `DELETE FROM chats
+     WHERE id = $1 AND user_id = $2
+     RETURNING id`,
+    [chatId, user.id]
+  );
 
   if (!result.rows.length) {
-    sendJSON(res, 404, {
-      error:
-        "Chat not found."
-    });
-
+    sendJSON(res, 404, { error: "Chat not found." });
     return;
   }
 
   sendJSON(res, 200, {
-    message:
-      "Chat deleted successfully."
+    message: "Chat deleted successfully."
   });
 }
 
@@ -1666,24 +1064,13 @@ async function deleteChat(
    DATABASE TEST
 ========================================================= */
 
-async function databaseTest(
-  req,
-  res
-) {
-  const result =
-    await pool.query(
-      "SELECT NOW() AS now"
-    );
+async function databaseTest(req, res) {
+  const result = await pool.query("SELECT NOW() AS now");
 
   sendJSON(res, 200, {
-    success:
-      true,
-
-    message:
-      "Database connection is working.",
-
-    time:
-      result.rows[0].now
+    success: true,
+    message: "Database connection is working.",
+    time: result.rows[0].now
   });
 }
 
@@ -1691,312 +1078,125 @@ async function databaseTest(
    SERVER
 ========================================================= */
 
-const server =
-  http.createServer(
-    async (req, res) => {
-
-      try {
-
-        if (
-          req.method ===
-          "OPTIONS"
-        ) {
-
-          res.writeHead(204, {
-            "Access-Control-Allow-Origin":
-              "*",
-
-            "Access-Control-Allow-Headers":
-              "Content-Type, Authorization",
-
-            "Access-Control-Allow-Methods":
-              "GET, POST, DELETE, OPTIONS"
-          });
-
-          res.end();
-
-          return;
-        }
-
-        const url =
-          new URL(
-            req.url,
-            `http://${req.headers.host}`
-          );
-
-        const pathname =
-          url.pathname;
-
-        /* HOME */
-
-        if (
-          req.method === "GET" &&
-          pathname === "/"
-        ) {
-
-          sendWebsite(res);
-
-          return;
-        }
-
-        /* REGISTER */
-
-        if (
-          req.method === "POST" &&
-          pathname === "/register"
-        ) {
-
-          await register(
-            req,
-            res
-          );
-
-          return;
-        }
-
-        /* LOGIN */
-
-        if (
-          req.method === "POST" &&
-          pathname === "/login"
-        ) {
-
-          await login(
-            req,
-            res
-          );
-
-          return;
-        }
-
-        /* ME */
-
-        if (
-          req.method === "GET" &&
-          pathname === "/me"
-        ) {
-
-          await me(
-            req,
-            res
-          );
-
-          return;
-        }
-
-        /* LOGOUT */
-
-        if (
-          req.method === "POST" &&
-          pathname === "/logout"
-        ) {
-
-          await logout(
-            req,
-            res
-          );
-
-          return;
-        }
-
-        /* DATABASE TEST */
-
-        if (
-          req.method === "GET" &&
-          pathname === "/database-test"
-        ) {
-
-          await databaseTest(
-            req,
-            res
-          );
-
-          return;
-        }
-
-        /* TTS */
-
-        if (
-          req.method === "POST" &&
-          pathname === "/tts"
-        ) {
-
-          await generateSpeech(
-            req,
-            res
-          );
-
-          return;
-        }
-
-        /* IMAGE GENERATION */
-
-        if (
-          req.method === "POST" &&
-          pathname === "/generate-image"
-        ) {
-
-          await generateImage(
-            req,
-            res
-          );
-
-          return;
-        }
-
-        /* IMAGE ANALYSIS */
-
-        if (
-          req.method === "POST" &&
-          pathname === "/analyze-image"
-        ) {
-
-          await analyzeImage(
-            req,
-            res
-          );
-
-          return;
-        }
-
-        /* GET CHATS */
-
-        if (
-          req.method === "GET" &&
-          pathname === "/chats"
-        ) {
-
-          await getChats(
-            req,
-            res
-          );
-
-          return;
-        }
-
-        /* CHAT BY ID */
-
-        const chatMatch =
-          pathname.match(
-            /^\/chats\/(\d+)$/
-          );
-
-        if (chatMatch) {
-
-          const chatId =
-            Number(
-              chatMatch[1]
-            );
-
-          if (
-            req.method === "GET"
-          ) {
-
-            await getChat(
-              req,
-              res,
-              chatId
-            );
-
-            return;
-          }
-
-          if (
-            req.method === "DELETE"
-          ) {
-
-            await deleteChat(
-              req,
-              res,
-              chatId
-            );
-
-            return;
-          }
-        }
-
-        /* CHAT */
-
-        if (
-          req.method === "POST" &&
-          pathname === "/chat"
-        ) {
-
-          await chat(
-            req,
-            res
-          );
-
-          return;
-        }
-
-        if (
-          req.method === "GET" &&
-          pathname === "/chat"
-        ) {
-
-          sendJSON(res, 200, {
-            message:
-              "EMORA AI Real Chat API is ready."
-          });
-
-          return;
-        }
-
-        /* NOT FOUND */
-
-        sendJSON(res, 404, {
-          error:
-            "Route not found."
-        });
-
-      } catch (error) {
-
-        console.error(
-          "SERVER ERROR:",
-          error
-        );
-
-        if (!res.headersSent) {
-          sendJSON(res, 500, {
-            error:
-              error.message ||
-              "Internal server error."
-          });
-        }
+const server = http.createServer(async (req, res) => {
+  try {
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS"
+      });
+
+      res.end();
+      return;
+    }
+
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const pathname = url.pathname;
+
+    if (req.method === "GET" && pathname === "/") {
+      sendWebsite(res);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/register") {
+      await register(req, res);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/login") {
+      await login(req, res);
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/me") {
+      await me(req, res);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/logout") {
+      await logout(req, res);
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/database-test") {
+      await databaseTest(req, res);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/tts") {
+      await generateSpeech(req, res);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/generate-image") {
+      await generateImage(req, res);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/analyze-image") {
+      await analyzeImage(req, res);
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/chats") {
+      await getChats(req, res);
+      return;
+    }
+
+    const chatMatch = pathname.match(/^\/chats\/(\d+)$/);
+
+    if (chatMatch) {
+      const chatId = Number(chatMatch[1]);
+
+      if (req.method === "GET") {
+        await getChat(req, res, chatId);
+        return;
+      }
+
+      if (req.method === "DELETE") {
+        await deleteChat(req, res, chatId);
+        return;
       }
     }
-  );
+
+    if (req.method === "POST" && pathname === "/chat") {
+      await chat(req, res);
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/chat") {
+      sendJSON(res, 200, {
+        message: "EMORA AI Real Chat API is ready."
+      });
+      return;
+    }
+
+    sendJSON(res, 404, { error: "Route not found." });
+  } catch (error) {
+    console.error("SERVER ERROR:", error);
+
+    if (!res.headersSent) {
+      sendJSON(res, 500, {
+        error: error.message || "Internal server error."
+      });
+    }
+  }
+});
 
 /* =========================================================
    START
 ========================================================= */
 
 async function start() {
-
   try {
-
     await initDatabase();
 
-    server.listen(
-      PORT,
-      "0.0.0.0",
-      () => {
-
-        console.log(
-          `EMORA AI Server running on port ${PORT}`
-        );
-
-      }
-    );
-
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(`EMORA AI Server running on port ${PORT}`);
+    });
   } catch (error) {
-
-    console.error(
-      "Startup failed:",
-      error
-    );
-
+    console.error("Startup failed:", error);
     process.exit(1);
   }
 }
