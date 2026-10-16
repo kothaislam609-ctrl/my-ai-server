@@ -3,521 +3,500 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0b0b12">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b12">
 <title>EMORA AI</title>
 <style>
-:root {
-  --bg:#0b0b12;
-  --panel:#12121d;
-  --card:#191927;
-  --border:#303047;
-  --text:#f7f5ff;
-  --muted:#9695ad;
-  --purple:#8b5cf6;
-}
-* { box-sizing:border-box; }
-body {
-  margin:0; min-height:100vh;
-  background:var(--bg); color:var(--text);
-  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-}
-button,input { font:inherit; }
-button { -webkit-tap-highlight-color:transparent; }
-.app { min-height:100dvh; display:flex; flex-direction:column; }
-header {
-  height:65px; display:flex; align-items:center;
-  justify-content:space-between; padding:0 16px;
-  border-bottom:1px solid #252536;
-  background:#10101a;
-}
-.brand { display:flex; align-items:center; gap:11px; }
-.logo {
-  width:39px;height:39px;border-radius:13px;
-  display:grid;place-items:center;
-  background:linear-gradient(135deg,#a78bfa,#6d28d9);
-  font-weight:900;font-size:20px;color:white;
-  box-shadow:0 0 25px #8b5cf633;
-}
-.brand-name { font-size:17px;font-weight:800;letter-spacing:1px; }
-.brand-sub { color:var(--muted);font-size:11px;margin-top:2px; }
-.icon-btn {
-  width:40px;height:40px;min-width:40px;
-  display:flex;align-items:center;justify-content:center;
-  border:1px solid var(--border);border-radius:13px;
-  color:#e8e4ff;background:#202031;cursor:pointer;
-  transition:.2s;
-}
-.icon-btn:active { transform:scale(.93); }
-.icon-btn svg {
-  width:20px;height:20px;fill:none;stroke:currentColor;
-  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
-}
-main {
-  flex:1;width:100%;max-width:850px;margin:0 auto;
-  padding:24px 16px 12px;display:flex;flex-direction:column;
-}
-.welcome { margin:auto 0 25px;text-align:center;padding:20px 0; }
-.orb {
-  width:76px;height:76px;border-radius:25px;margin:0 auto 20px;
-  display:grid;place-items:center;font-size:34px;
-  background:radial-gradient(circle at 30% 20%,#c4b5fd,#7c3aed 55%,#32105e);
-  box-shadow:0 0 55px #8b5cf633;
-}
-.welcome h1 { margin:0 0 10px;font-size:clamp(25px,6vw,34px); }
-.welcome h1 span {
-  background:linear-gradient(90deg,#c4b5fd,#8b5cf6);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-}
-.welcome p { color:var(--muted);font-size:14px;line-height:1.7;margin:0; }
-.chat { display:flex;flex-direction:column;gap:15px;padding-bottom:16px; }
-.message {
-  max-width:88%;padding:13px 15px;border-radius:17px;
-  font-size:14px;line-height:1.7;white-space:pre-wrap;
-  overflow-wrap:anywhere;
-}
-.message.user {
-  align-self:flex-end;background:#5530a0;border-bottom-right-radius:5px;
-}
-.message.ai {
-  align-self:flex-start;background:#191927;
-  border:1px solid #2b2b40;border-bottom-left-radius:5px;
-}
-.message .sender {
-  font-size:11px;color:#c4b5fd;margin-bottom:5px;font-weight:700;
-}
-.composer-wrap { position:sticky;bottom:0;padding:10px 12px 14px;background:linear-gradient(180deg,#0b0b1200,#0b0b12 22%); }
-.composer {
-  width:100%;max-width:850px;margin:0 auto;
-  display:flex;align-items:center;gap:6px;
-  padding:8px;border:1px solid #37374f;border-radius:21px;
-  background:#151520;box-shadow:0 8px 35px #0006;
-}
-.composer .icon-btn { width:37px;height:39px;min-width:37px;border-radius:12px; }
-.message-input {
-  flex:1;min-width:0;width:100%;height:42px;
-  color:white;background:transparent;border:0;outline:none;
-  padding:0 3px;font-size:14px;
-}
-.message-input::placeholder { color:#9291a9; }
-.call-btn { color:#d8c5ff;background:#30204a;border-color:#64458c; }
-.call-btn.active { background:#a32b45;color:white;border-color:#e85b77; }
-.image-btn { color:#b8a0ff; }
-.send-btn { color:white;background:linear-gradient(135deg,#9b72ff,#6834df);border:0; }
-.status {
-  max-width:850px;width:100%;margin:0 auto;
-  padding:0 15px 7px;text-align:center;color:var(--muted);font-size:11px;
-}
-.preview {
-  max-width:850px;width:100%;margin:0 auto 7px;
-  display:none;align-items:center;gap:8px;
-  color:#c4b5fd;font-size:12px;overflow:hidden;
-}
-.preview img { max-width:45px;max-height:45px;border-radius:9px; }
-.preview span { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-.hidden { display:none!important; }
-@media(max-width:390px) {
-  header { padding:0 11px; }
-  main { padding-left:11px;padding-right:11px; }
-  .composer-wrap { padding-left:7px;padding-right:7px; }
-  .composer { gap:4px;padding:6px;border-radius:18px; }
-  .composer .icon-btn { width:32px;height:36px;min-width:32px;border-radius:10px; }
-  .composer .icon-btn svg { width:18px;height:18px; }
-  .message-input { font-size:12px; }
-}
+:root{color-scheme:dark;--bg:#090b12;--panel:#111522;--line:#252c3d;--text:#f4f6ff;--muted:#9ca6bb;--accent:#8b7cff;--user:#35305d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;height:100dvh;overflow:hidden}
+button,input,textarea{font:inherit}
+button{cursor:pointer;color:inherit;border:1px solid var(--line);background:#191e2d;border-radius:12px;padding:10px}
+button:disabled{opacity:.5}
+input,textarea{color:var(--text);background:#0d111c;border:1px solid var(--line);border-radius:12px;padding:12px;outline:none;width:100%}
+.app{display:flex;height:100dvh}
+.sidebar{width:270px;flex-shrink:0;background:#0d1019;border-right:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:12px}
+.brand{font-size:23px;font-weight:850;letter-spacing:1px;color:#b9adff;padding:8px}
+.muted{color:var(--muted);font-size:13px}
+.history{overflow:auto;flex:1;display:flex;flex-direction:column;gap:6px}
+.history button{text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.main{min-width:0;flex:1;display:flex;flex-direction:column}
+.topbar{height:62px;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--line);gap:10px}
+.topbar strong{font-size:16px}
+.messages{flex:1;overflow:auto;padding:22px max(16px,calc((100% - 820px)/2));display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth}
+.welcome{text-align:center;margin:auto 0;color:var(--muted)}
+.welcome h1{font-size:32px;color:var(--text);margin-bottom:6px}
+.msg{max-width:90%;padding:13px 15px;border-radius:17px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.user{align-self:flex-end;background:var(--user)}
+.msg.ai{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}
+.msg img{max-width:100%;max-height:300px;border-radius:12px;display:block;margin-top:8px}
+.typing{color:var(--muted);font-size:13px}
+.composer-wrap{padding:10px 14px max(14px,env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.composer{max-width:850px;margin:auto;display:flex;align-items:center;gap:7px;background:var(--panel);padding:8px;border:1px solid var(--line);border-radius:18px}
+.composer textarea{border:0;background:transparent;resize:none;max-height:130px;min-width:0;flex:1;padding:10px}
+.tool{width:42px;height:42px;flex-shrink:0;padding:0;font-size:18px}
+.send{background:var(--accent);color:#090816;border:0;font-weight:800}
+.foot{text-align:center;font-size:11px;color:var(--muted);margin-top:8px}
+.overlay{position:fixed;inset:0;background:#070912f5;z-index:10;display:none;align-items:center;justify-content:center;padding:18px}
+.overlay.show{display:flex}
+.dialog{width:min(430px,100%);max-height:90dvh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.dialog h2{margin:0}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1;min-width:0}
+.primary{background:var(--accent);color:#090816;border:0;font-weight:750}
+.call-screen{text-align:center;width:min(430px,100%)}
+.orb{width:140px;height:140px;border-radius:50%;margin:30px auto;background:radial-gradient(circle at 35% 30%,#b8aaff,#6653d9 50%,#201b47);box-shadow:0 0 60px #7d6aff40;display:grid;place-items:center;font-size:44px}
+.call-status{color:var(--muted);min-height:24px}
+.hidden{display:none!important}
+@media(max-width:650px){.sidebar{display:none}.messages{padding:16px 12px}.msg{max-width:95%}.topbar{height:56px}.composer-wrap{padding-left:7px;padding-right:7px}.composer{gap:4px;padding:5px}.tool{width:37px;height:39px}.composer textarea{padding:8px 5px;font-size:14px}}
 </style>
 </head>
 <body>
 <div class="app">
-  <header>
-    <div class="brand">
-      <div class="logo">E</div>
-      <div>
-        <div class="brand-name">EMORA AI</div>
-        <div class="brand-sub" id="serverStatus">PERSONAL AI ASSISTANT</div>
-      </div>
+<aside class="sidebar">
+  <div class="brand">✦ EMORA AI</div>
+  <button class="primary" id="newChat">＋ নতুন চ্যাট</button>
+  <div class="muted">চ্যাটের ইতিহাস</div>
+  <div class="history" id="history"></div>
+  <button id="settingsBtn">⚙️ সেটিংস</button>
+  <button id="accountBtn">👤 লগইন / অ্যাকাউন্ট</button>
+  <div class="muted">EMORA AI · Assistant</div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="row" style="flex:0;gap:8px">
+      <button id="menuBtn" class="tool" title="Menu">☰</button>
+      <strong>✦ EMORA AI</strong>
     </div>
-    <button class="icon-btn" id="clearBtn" title="নতুন চ্যাট" aria-label="নতুন চ্যাট">
-      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-    </button>
+    <div class="row" style="flex:0">
+      <button id="newChatTop">＋</button>
+      <button id="accountTop">👤</button>
+    </div>
   </header>
-
-  <main>
-    <section class="welcome" id="welcome">
-      <div class="orb">✦</div>
-      <h1>হ্যালো, <span>বন্ধু!</span></h1>
-      <p>আমি EMORA AI। তোমার কী সাহায্য দরকার?<br>মেসেজ লেখো অথবা ভয়েসে কথা বলো।</p>
-    </section>
-    <section class="chat" id="chat" aria-live="polite"></section>
-  </main>
-
-  <div class="preview" id="preview">
-    <img id="previewImage" alt="ছবির প্রিভিউ">
-    <span id="previewName"></span>
-    <button class="icon-btn" id="removeFileBtn" title="ফাইল সরাও" aria-label="ফাইল সরাও">×</button>
-  </div>
-
-  <div class="status" id="status" role="status"></div>
-
+  <section class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <div style="font-size:40px">✦</div>
+      <h1>হ্যালো! 👋</h1>
+      <p>আমি EMORA AI। কীভাবে তোমাকে সাহায্য করতে পারি?</p>
+    </div>
+  </section>
   <div class="composer-wrap">
-    <form class="composer" id="composer">
-      <button class="icon-btn" type="button" id="attachBtn"
-        title="ফাইল যুক্ত করো" aria-label="ফাইল যুক্ত করো">
-        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-      </button>
+    <div class="composer">
+      <button class="tool" id="attachBtn" title="ছবি সংযুক্ত করো">＋</button>
+      <input type="file" id="imageInput" accept="image/*" hidden>
+      <textarea id="prompt" rows="1" placeholder="EMORA AI-কে কিছু জিজ্ঞেস করো..." aria-label="Message"></textarea>
+      <button class="tool" id="micBtn" title="কথা লিখে নাও">🎙️</button>
+      <button class="tool" id="callBtn" title="ভয়েস চ্যাট">📞</button>
+      <button class="tool send" id="sendBtn" title="পাঠাও">➤</button>
+    </div>
+    <div id="attachmentInfo" class="muted" style="max-width:850px;margin:6px auto 0"></div>
+    <div class="foot">AI-এর উত্তর ভুল হতে পারে। গুরুত্বপূর্ণ তথ্য যাচাই করে নিও।</div>
+  </div>
+</main>
+</div>
 
-      <input class="message-input" id="messageInput"
-        type="text" placeholder="মেসেজ লিখো..."
-        autocomplete="off" aria-label="মেসেজ লিখো">
-
-      <button class="icon-btn" type="button" id="recordBtn"
-        title="ভয়েস রেকর্ডিং" aria-label="ভয়েস রেকর্ডিং">
-        <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>
-      </button>
-
-      <button class="icon-btn image-btn" type="button" id="imageBtn"
-        title="ছবি আপলোড" aria-label="ছবি আপলোড">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-      </button>
-
-      <button class="icon-btn call-btn" type="button" id="callBtn"
-        title="AI ভয়েস কল" aria-label="AI ভয়েস কল">
-        <svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z"/></svg>
-      </button>
-
-      <button class="icon-btn send-btn" type="submit"
-        title="মেসেজ পাঠাও" aria-label="মেসেজ পাঠাও">
-        <svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-      </button>
-    </form>
+<!-- Account -->
+<div class="overlay" id="accountOverlay">
+  <div class="dialog">
+    <div class="row"><h2 id="authTitle">অ্যাকাউন্ট</h2><button id="closeAccount" style="flex:0 0 auto">✕</button></div>
+    <p class="muted">সার্ভারে অ্যাকাউন্ট তৈরি বা লগইন করো।</p>
+    <div id="nameWrap"><input id="authName" placeholder="তোমার নাম"></div>
+    <input id="authEmail" type="email" placeholder="ইমেইল">
+    <input id="authPassword" type="password" placeholder="পাসওয়ার্ড">
+    <button class="primary" id="authSubmit">রেজিস্টার</button>
+    <button id="switchAuth">আগে অ্যাকাউন্ট আছে? লগইন</button>
+    <button id="logoutBtn" class="hidden">লগআউট</button>
+    <div id="authStatus" class="muted"></div>
   </div>
 </div>
 
-<input type="file" id="fileInput" hidden>
-<input type="file" id="imageInput" accept="image/*" hidden>
+<!-- Settings -->
+<div class="overlay" id="settingsOverlay">
+  <div class="dialog">
+    <div class="row"><h2>⚙️ সেটিংস</h2><button id="closeSettings" style="flex:0 0 auto">✕</button></div>
+    <label class="muted">সার্ভারের URL</label>
+    <input id="serverUrl" placeholder="https://your-server.onrender.com">
+    <label class="muted">AI মডেল (সার্ভার সমর্থন করলে)</label>
+    <input id="modelName" placeholder="ডিফল্ট মডেল">
+    <label class="muted">উত্তর পড়ে শোনানো</label>
+    <div class="row"><button id="ttsToggle">🔊 ভয়েস চালু</button><button id="stopTts">⏹️ ভয়েস বন্ধ</button></div>
+    <label class="muted">ভাষা</label>
+    <select id="voiceLang"><option value="bn-BD">বাংলা</option><option value="en-US">English</option><option value="hi-IN">हिन्दी</option></select>
+    <button class="primary" id="saveSettings">সেটিংস সংরক্ষণ</button>
+    <button id="clearHistory">এই ডিভাইসের চ্যাট মুছে ফেলো</button>
+    <div id="settingsStatus" class="muted"></div>
+  </div>
+</div>
+
+<!-- Voice call -->
+<div class="overlay" id="callOverlay">
+  <div class="call-screen">
+    <button id="closeCall" style="float:right">✕</button>
+    <div style="clear:both;padding-top:20px" class="muted">EMORA AI · VOICE</div>
+    <div class="orb">✦</div>
+    <h2>EMORA Voice</h2>
+    <div class="call-status" id="callStatus">কথা শুরু করতে মাইক্রোফোন চাপো</div>
+    <p id="callTranscript" class="muted"></p>
+    <div class="row" style="justify-content:center;margin-top:25px">
+      <button id="callMic" class="primary">🎙️ কথা বলো</button>
+      <button id="callMute">🔇 মাইক বন্ধ</button>
+    </div>
+    <p class="muted">ভয়েস ফিচার ব্রাউজারের Speech Recognition ও Speech Synthesis ব্যবহার করে।</p>
+  </div>
+</div>
 
 <script>
+(() => {
+"use strict";
 const $ = id => document.getElementById(id);
-const chat = $("chat");
-const input = $("messageInput");
-const welcome = $("welcome");
-const statusBox = $("status");
-const fileInput = $("fileInput");
-const imageInput = $("imageInput");
+const DEFAULT_SERVER = "https://my-ai-server-hncp.onrender.com";
+let server = localStorage.getItem("emora_server") || DEFAULT_SERVER;
+let model = localStorage.getItem("emora_model") || "";
+let token = localStorage.getItem("emora_token") || "";
+let user = JSON.parse(localStorage.getItem("emora_user") || "null");
+let isRegister = true, busy = false, voiceOn = true;
+let selectedImage = null, chatId = null, chats = [];
+let callMode = false, callListening = false, recognition = null, muted = false;
+let messages = [];
+let activeChatKey = "emora_chat_" + Date.now();
 
-let selectedFile = null;
-let busy = false;
-let recognition = null;
-let recording = false;
-let callActive = false;
-let callRecognition = null;
-let callUtterance = null;
-let callAudio = null;
-
-const API_BASE = location.protocol === "file:"
-  ? "https://my-ai-server-hncp.onrender.com"
-  : location.origin;
-
-function setStatus(text) {
-  statusBox.textContent = text || "";
+function apiUrl(path) {
+  return server.replace(/\/+$/, "") + path;
 }
-
-function addMessage(text, who) {
-  welcome.classList.add("hidden");
-  const el = document.createElement("div");
-  el.className = "message " + who;
-  const sender = document.createElement("div");
-  sender.className = "sender";
-  sender.textContent = who === "user" ? "তুমি" : "EMORA AI";
-  const body = document.createElement("div");
-  body.textContent = text;
-  el.append(sender, body);
-  chat.appendChild(el);
-  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-  return body;
+function authHeaders() {
+  return token ? {"Authorization":"Bearer " + token} : {};
 }
-
-async function readResponse(response) {
-  const text = await response.text();
-  let data;
-  try { data = JSON.parse(text); }
-  catch { throw new Error("সার্ভার থেকে সঠিক উত্তর আসেনি।"); }
-  if (!response.ok) {
-    throw new Error(data.error || data.message || "সার্ভারে সমস্যা হয়েছে।");
+async function api(path, options={}) {
+  const headers = {...authHeaders(), ...(options.headers || {})};
+  if (options.body && !(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
   }
+  const res = await fetch(apiUrl(path), {...options, headers});
+  const raw = await res.text();
+  let data;
+  try { data = raw ? JSON.parse(raw) : {}; } catch { data = {message:raw}; }
+  if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
   return data;
 }
-
-async function sendMessage(text) {
-  text = (text || "").trim();
-  if ((!text && !selectedFile) || busy) return;
-
-  const file = selectedFile;
-  const isImage = file && file.type.startsWith("image/");
-  const shownText = text || (isImage ? "এই ছবিটি বিশ্লেষণ করো।" : "ফাইলটি দেখো।");
-
-  addMessage(shownText + (file ? "\n📎 " + file.name : ""), "user");
-  input.value = "";
-  selectedFile = null;
-  updatePreview();
-  busy = true;
-  $("serverStatus").textContent = "CONNECTING...";
-  setStatus("EMORA AI উত্তর তৈরি করছে...");
-
-  try {
-    let response, data;
-
-    if (file && isImage) {
-      const form = new FormData();
-      form.append("image", file);
-      form.append("message", text || "এই ছবিটি বিশ্লেষণ করো।");
-      response = await fetch(API_BASE + "/analyze-image", {
-        method: "POST", body: form
-      });
-    } else if (file) {
-      throw new Error("এই ডেমোতে ছবি আপলোড সমর্থিত। অন্য ফাইলের জন্য সার্ভারে ফাইল API লাগবে।");
-    } else {
-      response = await fetch(API_BASE + "/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text })
-      });
-    }
-
-    data = await readResponse(response);
-    const reply = data.reply || data.response || data.message ||
-      data.text || data.answer;
-
-    if (typeof reply !== "string" || !reply.trim()) {
-      throw new Error("সার্ভার খালি উত্তর দিয়েছে।");
-    }
-
-    addMessage(reply, "ai");
-    speakReply(reply);
-    $("serverStatus").textContent = "PERSONAL AI ASSISTANT";
-  } catch (err) {
-    addMessage("দুঃখিত, উত্তর পাওয়া যায়নি। " + err.message +
-      "\n\nসার্ভার চালু আছে কি না এবং API endpoint সঠিক কি না পরীক্ষা করো।", "ai");
-    $("serverStatus").textContent = "CONNECTION ISSUE";
-  } finally {
-    busy = false;
-    setStatus("");
-    input.focus();
-  }
+function setStatus(id, text) { $(id).textContent = text; }
+function openOverlay(id) { $(id).classList.add("show"); }
+function closeOverlay(id) { $(id).classList.remove("show"); }
+function saveLocalChat() {
+  try { localStorage.setItem(activeChatKey, JSON.stringify(messages)); } catch {}
 }
-
-$("composer").addEventListener("submit", e => {
-  e.preventDefault();
-  sendMessage(input.value);
-});
-
-$("clearBtn").onclick = () => {
-  stopCall();
-  chat.replaceChildren();
-  welcome.classList.remove("hidden");
-  input.value = "";
-  selectedFile = null;
-  updatePreview();
-  setStatus("");
-};
-
-$("attachBtn").onclick = () => fileInput.click();
-$("imageBtn").onclick = () => imageInput.click();
-
-fileInput.onchange = () => {
-  if (fileInput.files && fileInput.files[0]) {
-    selectedFile = fileInput.files[0];
-    updatePreview();
-  }
-};
-
-imageInput.onchange = () => {
-  if (imageInput.files && imageInput.files[0]) {
-    selectedFile = imageInput.files[0];
-    updatePreview();
-  }
-};
-
-$("removeFileBtn").onclick = () => {
-  selectedFile = null;
-  fileInput.value = "";
-  imageInput.value = "";
-  updatePreview();
-};
-
-function updatePreview() {
-  const preview = $("preview");
-  const img = $("previewImage");
-  if (!selectedFile) {
-    preview.style.display = "none";
-    img.removeAttribute("src");
+function loadLocalChat(key) {
+  activeChatKey = key;
+  try { messages = JSON.parse(localStorage.getItem(key) || "[]"); } catch { messages=[]; }
+  renderMessages();
+}
+function newChat() {
+  if (busy) return;
+  messages = [];
+  chatId = null;
+  activeChatKey = "emora_chat_" + Date.now();
+  renderMessages();
+  renderHistory();
+  $("prompt").focus();
+}
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+function renderMessages() {
+  const root = $("messages");
+  root.innerHTML = "";
+  if (!messages.length) {
+    root.innerHTML = `<div class="welcome"><div style="font-size:40px">✦</div><h1>হ্যালো! 👋</h1><p>আমি EMORA AI। কীভাবে তোমাকে সাহায্য করতে পারি?</p></div>`;
     return;
   }
-  preview.style.display = "flex";
-  $("previewName").textContent = selectedFile.name;
-  if (selectedFile.type.startsWith("image/")) {
-    img.style.display = "block";
-    img.src = URL.createObjectURL(selectedFile);
-  } else {
-    img.style.display = "none";
-  }
-}
-
-function getSpeechRecognition() {
-  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
-}
-
-// Mic button: speech-to-text
-$("recordBtn").onclick = () => {
-  const SR = getSpeechRecognition();
-  if (!SR) {
-    setStatus("এই ব্রাউজারে ভয়েস রেকর্ডিং সমর্থিত নয়। Chrome-এ চেষ্টা করো।");
-    return;
-  }
-
-  if (recording && recognition) {
-    recognition.stop();
-    return;
-  }
-
-  recognition = new SR();
-  recognition.lang = "bn-BD";
-  recognition.interimResults = true;
-  recognition.continuous = false;
-
-  recognition.onstart = () => {
-    recording = true;
-    $("recordBtn").classList.add("call-btn", "active");
-    setStatus("শুনছি... এখন কথা বলো।");
-  };
-
-  recognition.onresult = e => {
-    let words = "";
-    for (let i = 0; i < e.results.length; i++) {
-      words += e.results[i][0].transcript;
+  messages.forEach(m => {
+    const el = document.createElement("div");
+    el.className = "msg " + (m.role === "user" ? "user" : "ai");
+    el.textContent = m.content || "";
+    if (m.imageUrl) {
+      const img = document.createElement("img");
+      img.src = m.imageUrl;
+      img.alt = "সংযুক্ত ছবি";
+      el.appendChild(img);
     }
-    input.value = words;
-  };
+    root.appendChild(el);
+  });
+  root.scrollTop = root.scrollHeight;
+}
+function renderHistory() {
+  const root = $("history");
+  root.innerHTML = "";
+  const keys = Object.keys(localStorage).filter(k=>k.startsWith("emora_chat_")).sort().reverse();
+  keys.forEach(key => {
+    let list;
+    try { list=JSON.parse(localStorage.getItem(key)||"[]"); } catch { list=[]; }
+    if (!list.length) return;
+    const title = (list.find(m=>m.role==="user")?.content || "নতুন চ্যাট").slice(0,32);
+    const b = document.createElement("button");
+    b.textContent = "💬 " + title;
+    b.onclick = () => loadLocalChat(key);
+    root.appendChild(b);
+  });
+}
+function addMessage(role, content, imageUrl=null) {
+  messages.push({role, content, imageUrl, time:Date.now()});
+  saveLocalChat();
+  renderMessages();
+  renderHistory();
+}
+function setBusy(v) {
+  busy=v;
+  $("sendBtn").disabled=v;
+  $("sendBtn").textContent=v?"…":"➤";
+}
+function showTyping() {
+  const el=document.createElement("div");
+  el.id="typing"; el.className="typing"; el.textContent="EMORA AI উত্তর তৈরি করছে…";
+  $("messages").appendChild(el);
+  $("messages").scrollTop=$("messages").scrollHeight;
+}
+function hideTyping(){ $("typing")?.remove(); }
 
-  recognition.onerror = () => setStatus("মাইক্রোফোন অনুমতি পরীক্ষা করো।");
-  recognition.onend = () => {
-    recording = false;
-    $("recordBtn").classList.remove("active");
-    setStatus("");
-    input.focus();
-  };
-
-  try { recognition.start(); }
-  catch { setStatus("মাইক্রোফোন আবার চালু করার আগে একটু অপেক্ষা করো।"); }
-};
-
-// Free browser TTS fallback
-function speakReply(text) {
-  if (!("speechSynthesis" in window) || callActive) return;
+function speak(text) {
+  if (!voiceOn || !("speechSynthesis" in window)) return;
   speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "bn-BD";
-  utterance.rate = 1;
+  const utterance=new SpeechSynthesisUtterance(String(text).slice(0,5000));
+  utterance.lang=$("voiceLang").value || "bn-BD";
+  utterance.rate=1; utterance.pitch=1;
   speechSynthesis.speak(utterance);
 }
-
-// Voice call UI and browser speech loop.
-// Full duplex AI voice requires a compatible real-time audio API.
-$("callBtn").onclick = () => {
-  if (callActive) {
-    stopCall();
-    return;
-  }
-
-  const SR = getSpeechRecognition();
-  if (!SR || !("speechSynthesis" in window)) {
-    setStatus("এই ব্রাউজারে লাইভ ভয়েস ফিচার সমর্থিত নয়।");
-    return;
-  }
-
-  callActive = true;
-  $("callBtn").classList.add("active");
-  $("callBtn").title = "কল বন্ধ করো";
-  setStatus("ভয়েস সেশন চালু হচ্ছে...");
-
-  function listenInCall() {
-    if (!callActive) return;
-    callRecognition = new SR();
-    callRecognition.lang = "bn-BD";
-    callRecognition.interimResults = false;
-    callRecognition.continuous = false;
-
-    callRecognition.onresult = async e => {
-      const spoken = e.results[0][0].transcript;
-      setStatus("তোমার কথা বুঝছি...");
-      await sendCallMessage(spoken);
-    };
-
-    callRecognition.onerror = () => {
-      if (callActive) setStatus("কথা শোনা যায়নি। আবার বলো অথবা কল বন্ধ করো।");
-    };
-
-    callRecognition.onend = () => {
-      if (callActive && !busy && !speechSynthesis.speaking) {
-        setTimeout(listenInCall, 350);
-      }
-    };
-
-    try { callRecognition.start(); }
-    catch { setStatus("মাইক্রোফোন চালু করা যায়নি।"); }
-  }
-
-  async function sendCallMessage(spoken) {
-    if (!callActive || busy) return;
-    addMessage(spoken, "user");
-    busy = true;
-    try {
-      const response = await fetch(API_BASE + "/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: spoken })
-      });
-      const data = await readResponse(response);
-      const reply = data.reply || data.response || data.message ||
-        data.text || data.answer;
-      if (!reply) throw new Error("উত্তর পাওয়া যায়নি।");
-
-      addMessage(reply, "ai");
-      speechSynthesis.cancel();
-      callUtterance = new SpeechSynthesisUtterance(reply);
-      callUtterance.lang = "bn-BD";
-      callUtterance.onend = () => {
-        if (callActive) setTimeout(listenInCall, 250);
-      };
-      callUtterance.onerror = () => {
-        if (callActive) setTimeout(listenInCall, 400);
-      };
-      speechSynthesis.speak(callUtterance);
-      setStatus("EMORA AI কথা বলছে...");
-    } catch (err) {
-      addMessage("ভয়েস কলের উত্তর পাওয়া যায়নি: " + err.message, "ai");
-      if (callActive) setTimeout(listenInCall, 600);
-    } finally {
-      busy = false;
-    }
-  }
-
-  listenInCall();
-};
-
-function stopCall() {
-  callActive = false;
-  if (callRecognition) {
-    try { callRecognition.onend = null; callRecognition.stop(); } catch {}
-    callRecognition = null;
-  }
+function stopSpeaking() {
   if ("speechSynthesis" in window) speechSynthesis.cancel();
-  $("callBtn").classList.remove("active");
-  $("callBtn").title = "AI ভয়েস কল";
-  setStatus("");
+}
+function pickReply(data) {
+  return data.reply ?? data.response ?? data.answer ?? data.message ??
+    data.output_text ?? data.result?.reply ?? data.choices?.[0]?.message?.content ?? "";
+}
+async function sendMessage(textOverride=null, fromCall=false) {
+  if (busy) return null;
+  const text=(textOverride ?? $("prompt").value).trim();
+  if (!text && !selectedImage) return null;
+  const image=selectedImage;
+  const preview=image ? URL.createObjectURL(image) : null;
+  if (!fromCall) $("prompt").value="";
+  selectedImage=null;
+  $("imageInput").value="";
+  setStatus("attachmentInfo","");
+  addMessage("user", text || (image?"ছবি পাঠানো হয়েছে":""));
+  if (preview) messages[messages.length-1].imageUrl=preview;
+  saveLocalChat();
+  setBusy(true); showTyping();
+  try {
+    let data;
+    if (image) {
+      const fd=new FormData();
+      fd.append("image",image);
+      fd.append("message",text);
+      if(model) fd.append("model",model);
+      data=await api("/analyze-image",{method:"POST",body:fd});
+    } else {
+      const payload={message:text, prompt:text, model:model || undefined,
+        chatId:chatId || undefined,
+        history:messages.slice(-16).map(m=>({role:m.role,content:m.content}))};
+      data=await api("/chat",{method:"POST",body:JSON.stringify(payload)});
+    }
+    const reply=pickReply(data);
+    if (data.chatId || data.chat_id || data.id) chatId=data.chatId || data.chat_id || data.id;
+    if (!reply) throw new Error("সার্ভার উত্তর দিয়েছে, কিন্তু উত্তর-টেক্সট পাওয়া যায়নি। API response format পরীক্ষা করতে হবে।");
+    addMessage("assistant",String(reply));
+    if (fromCall) setStatus("callTranscript","EMORA: "+reply);
+    speak(reply);
+    return String(reply);
+  } catch (e) {
+    const errorText="দুঃখিত, সার্ভারের সঙ্গে সংযোগ হয়নি: "+e.message;
+    addMessage("assistant",errorText);
+    if(fromCall) setStatus("callTranscript",errorText);
+    return null;
+  } finally {
+    hideTyping(); setBusy(false);
+    $("prompt").focus();
+  }
 }
 
-window.addEventListener("pagehide", stopCall);
+$("sendBtn").onclick=()=>sendMessage();
+$("prompt").addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}
+});
+$("prompt").addEventListener("input",()=>{
+  $("prompt").style.height="auto";
+  $("prompt").style.height=Math.min($("prompt").scrollHeight,130)+"px";
+});
+$("attachBtn").onclick=()=>$("imageInput").click();
+$("imageInput").onchange=()=>{
+  selectedImage=$("imageInput").files?.[0]||null;
+  if(selectedImage) setStatus("attachmentInfo","📎 "+selectedImage.name+" · আবার ＋ চাপলে ছবি বদলাতে পারবে");
+};
+$("newChat").onclick=newChat;
+$("newChatTop").onclick=newChat;
+$("menuBtn").onclick=()=>{
+  const side=document.querySelector(".sidebar");
+  if(innerWidth<=650) {
+    const visible=side.style.display==="flex";
+    side.style.cssText=visible?"":"display:flex;position:fixed;z-index:5;inset:0 auto 0 0;box-shadow:10px 0 40px #000";
+  } else side.style.display=side.style.display==="none"?"flex":"none";
+};
+$("accountBtn").onclick=$("accountTop").onclick=()=>{
+  updateAccountUI();openOverlay("accountOverlay");
+};
+$("closeAccount").onclick=()=>closeOverlay("accountOverlay");
+$("settingsBtn").onclick=()=>{openOverlay("settingsOverlay");$("serverUrl").value=server;$("modelName").value=model;};
+$("closeSettings").onclick=()=>closeOverlay("settingsOverlay");
+$("saveSettings").onclick=()=>{
+  server=$("serverUrl").value.trim().replace(/\/+$/,"");
+  model=$("modelName").value.trim();
+  if(!/^https?:\/\//i.test(server)){setStatus("settingsStatus","সঠিক https:// সার্ভার URL দাও।");return;}
+  localStorage.setItem("emora_server",server);
+  localStorage.setItem("emora_model",model);
+  setStatus("settingsStatus","সেটিংস এই ডিভাইসে সংরক্ষণ হয়েছে।");
+};
+$("ttsToggle").onclick=()=>{
+  voiceOn=!voiceOn;
+  $("ttsToggle").textContent=voiceOn?"🔊 ভয়েস চালু":"🔇 ভয়েস বন্ধ";
+  if(!voiceOn)stopSpeaking();
+};
+$("stopTts").onclick=stopSpeaking;
+$("clearHistory").onclick=()=>{
+  if(!confirm("এই ডিভাইসের সব EMORA chat history মুছবে?"))return;
+  Object.keys(localStorage).filter(k=>k.startsWith("emora_chat_")).forEach(k=>localStorage.removeItem(k));
+  newChat();setStatus("settingsStatus","লোকাল চ্যাট হিস্ট্রি মুছে ফেলা হয়েছে।");
+};
+$("switchAuth").onclick=()=>{
+  isRegister=!isRegister;
+  $("authTitle").textContent=isRegister?"রেজিস্টার":"লগইন";
+  $("authSubmit").textContent=isRegister?"রেজিস্টার":"লগইন";
+  $("nameWrap").classList.toggle("hidden",!isRegister);
+  $("switchAuth").textContent=isRegister?"আগে অ্যাকাউন্ট আছে? লগইন":"অ্যাকাউন্ট নেই? রেজিস্টার";
+  setStatus("authStatus","");
+};
+function updateAccountUI() {
+  $("logoutBtn").classList.toggle("hidden",!token);
+  $("authTitle").textContent=token?"তোমার অ্যাকাউন্ট":(isRegister?"রেজিস্টার":"লগইন");
+  if(token) setStatus("authStatus","লগইন করা হয়েছে"+(user?.name?" — "+user.name:""));
+}
+$("authSubmit").onclick=async()=>{
+  const email=$("authEmail").value.trim();
+  const password=$("authPassword").value;
+  const name=$("authName").value.trim();
+  if(!email||!password){setStatus("authStatus","ইমেইল ও পাসওয়ার্ড দাও।");return;}
+  setStatus("authStatus","অপেক্ষা করো…");
+  try{
+    const data=await api(isRegister?"/register":"/login",{
+      method:"POST",
+      headers:{},
+      body:JSON.stringify({email,password,name,username:name})
+    });
+    const newToken=data.token||data.access_token||data.accessToken||data.user?.token;
+    if(newToken){token=newToken;localStorage.setItem("emora_token",token);}
+    user=data.user||data.profile||{name,email};
+    localStorage.setItem("emora_user",JSON.stringify(user));
+    if(!newToken && !token) {
+      setStatus("authStatus","সার্ভার অ্যাকাউন্টের উত্তর দিয়েছে, কিন্তু token পাওয়া যায়নি। backend response মিলাতে হবে।");
+    } else {
+      setStatus("authStatus","সফল হয়েছে।");
+      updateAccountUI();
+    }
+  }catch(e){setStatus("authStatus","ব্যর্থ: "+e.message+" — backend-এর সঠিক request format লাগতে পারে।");}
+};
+$("logoutBtn").onclick=()=>{
+  token="";user=null;
+  localStorage.removeItem("emora_token");localStorage.removeItem("emora_user");
+  updateAccountUI();setStatus("authStatus","লগআউট হয়েছে।");
+};
+
+function setupRecognition() {
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR)return null;
+  const r=new SR();r.lang=$("voiceLang").value||"bn-BD";r.interimResults=false;r.continuous=false;
+  return r;
+}
+$("micBtn").onclick=()=>{
+  const r=setupRecognition();
+  if(!r){alert("এই ব্রাউজারে speech recognition নেই। Chrome-এ চেষ্টা করো।");return;}
+  $("micBtn").textContent="🔴";
+  r.onresult=e=>{
+    const words=e.results?.[0]?.[0]?.transcript||"";
+    $("prompt").value=($("prompt").value+" "+words).trim();
+  };
+  r.onerror=()=>setStatus("attachmentInfo","মাইক্রোফোন কাজ করেনি। ব্রাউজারের mic permission পরীক্ষা করো।");
+  r.onend=()=>$("micBtn").textContent="🎙️";
+  try{r.start();}catch{$("micBtn").textContent="🎙️";}
+};
+
+function stopCallRecognition() {
+  callListening=false;
+  try{recognition?.stop();}catch{}
+  recognition=null;
+}
+function listenForCall() {
+  if(!callMode||muted||callListening||busy)return;
+  const r=setupRecognition();
+  if(!r){setStatus("callStatus","এই ব্রাউজারে voice recognition নেই। Chrome ব্যবহার করো।");return;}
+  recognition=r;callListening=true;
+  setStatus("callStatus","🎙️ শুনছি… এখন কথা বলো");
+  r.onresult=async e=>{
+    const words=e.results?.[0]?.[0]?.transcript?.trim();
+    if(!words)return;
+    setStatus("callTranscript","তুমি: "+words);
+    stopCallRecognition();
+    const reply=await sendMessage(words,true);
+    if(callMode&&!muted){
+      if(reply){
+        setStatus("callStatus","🔊 উত্তর শোনো…");
+        // Wait for the browser TTS to finish before restarting listening.
+        if("speechSynthesis" in window) {
+          const waitSpeech=()=>{
+            if(!callMode||muted)return;
+            if(speechSynthesis.speaking||speechSynthesis.pending) {
+              setTimeout(waitSpeech,350);
+            } else {
+              setTimeout(listenForCall,400);
+            }
+          };
+          setTimeout(waitSpeech,350);
+        } else setTimeout(listenForCall,500);
+      } else setTimeout(listenForCall,1000);
+    }
+  };
+  r.onerror=()=>{callListening=false;if(callMode&&!muted)setStatus("callStatus","শোনা যায়নি। আবার মাইক চাপো।");};
+  r.onend=()=>{callListening=false;recognition=null;};
+  try{r.start();}catch{callListening=false;setStatus("callStatus","মাইক্রোফোন চালু করা যায়নি।");}
+}
+$("callBtn").onclick=()=>{
+  callMode=true;muted=false;
+  openOverlay("callOverlay");
+  setStatus("callStatus","কথা শুরু করতে মাইক্রোফোন চাপো");
+};
+$("closeCall").onclick=()=>{
+  callMode=false;stopCallRecognition();stopSpeaking();closeOverlay("callOverlay");
+};
+$("callMic").onclick=()=>{
+  if(!callMode)callMode=true;
+  muted=false;
+  listenForCall();
+};
+$("callMute").onclick=()=>{
+  muted=!muted;
+  if(muted){stopCallRecognition();$("callMute").textContent="🎙️ মাইক চালু";setStatus("callStatus","মাইক বন্ধ");}
+  else{$("callMute").textContent="🔇 মাইক বন্ধ";listenForCall();}
+};
+document.querySelectorAll(".overlay").forEach(o=>{
+  o.addEventListener("click",e=>{if(e.target===o){
+    if(o.id==="callOverlay"){$("closeCall").click();}else closeOverlay(o.id);
+  }});
+});
+$("serverUrl").value=server;
+$("modelName").value=model;
+updateAccountUI();
+renderHistory();
+loadLocalChat(activeChatKey);
+})();
 </script>
 </body>
 </html>
